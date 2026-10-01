@@ -1,0 +1,35 @@
+{
+  "name": "shop-sell-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Production-grade multi-vendor marketplace monorepo (Hosted Supabase, Upstash Redis, Typesense Cloud)",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "scripts": {
+    "dev": "node ./node_modules/concurrently/dist/bin/index.js -n \"api,web\" -c \"blue,green\" \"npm --workspace=@shop-sell/api run start:dev\" \"npm --workspace=@shop-sell/web run dev\"",
+    "dev:web": "npm --workspace=@shop-sell/web run dev",
+    "dev:api": "npm --workspace=@shop-sell/api run start:dev",
+    "worker": "npm --workspace=@shop-sell/api run start:worker",
+    "build": "npm run --workspaces --if-present build && node ./node_modules/typescript/bin/tsc -p tsconfig.json",
+    "test": "npm run --workspaces --if-present test",
+    "lint": "npm run --workspaces --if-present lint",
+    "seed": "node ./node_modules/typescript/bin/tsc -p tsconfig.json && node dist/seed.js",
+    "reindex": "node ./node_modules/typescript/bin/tsc -p tsconfig.json && node dist/reindex.js",
+    "doctor": "node ./node_modules/typescript/bin/tsc -p tsconfig.json && node dist/doctor.js",
+    "test:integration": "npm --workspace=@shop-sell/api run test:integration",
+    "test:e2e": "node ./node_modules/@playwright/test/cli.js test",
+    "test:load": "node ./node_modules/typescript/bin/tsc -p tsconfig.json && node dist/benchmark-load.js",
+    "security:audit": "node ./node_modules/typescript/bin/tsc -p tsconfig.json && node dist/security-audit.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "concurrently": "^10.0.5",
+    "typescript": "^5.7.2"
+  }
+}

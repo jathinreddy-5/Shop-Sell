@@ -1,0 +1,51 @@
+name: Shop:Sell CI Pipeline
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-and-test:
+    name: Build & Test Monorepo
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Shared Package
+        run: npm run build --workspace=@shop-sell/shared
+
+      - name: Test Shared Package
+        run: npm test --workspace=@shop-sell/shared
+
+      - name: Build Backend API (NestJS)
+        run: npm run build --workspace=@shop-sell/api
+
+      - name: Run Backend Test Suite (NestJS)
+        run: npm test --workspace=@shop-sell/api
+
+      - name: Build Web Application (Next.js 15)
+        run: npm run build --workspace=@shop-sell/web
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000/api
+          NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: test-anon-key
+
+      - name: Run Web Test Suite (Next.js)
+        run: npm test --workspace=@shop-sell/web
