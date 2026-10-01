@@ -95,7 +95,7 @@ test.describe('Global Liquid Notch Navigation System Suite', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
 
-    const bottomNav = page.locator('div.fixed.bottom-0 [data-testid="liquid-nav"][data-variant="bottom"]');
+    const bottomNav = page.locator('div.fixed.bottom-0 [data-testid="liquid-nav"][data-variant="bottom"]').first();
     await expect(bottomNav).toBeVisible();
 
     // 2a. Forward sequence: home -> search -> cart -> orders -> account

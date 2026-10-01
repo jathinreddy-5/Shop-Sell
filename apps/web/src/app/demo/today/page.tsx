@@ -297,6 +297,7 @@ export default function TodayDemoPage() {
 
                   <Link
                     href={`/product/${meta.slug || 'sample'}`}
+                    onClick={onClose}
                     className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-base font-bold text-slate-800 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
                   >
                     <span>View full page</span>

@@ -9,6 +9,7 @@ import React, {
 } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import {
   motion,
   AnimatePresence,
@@ -109,6 +110,18 @@ export function ExpandingCardGrid({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const pathname = usePathname();
+  const prevPathnameRef = useRef(pathname);
+  useEffect(() => {
+    if (prevPathnameRef.current !== pathname) {
+      prevPathnameRef.current = pathname;
+      if (activeId) {
+        setActiveId(null);
+        setExitingId(null);
+      }
+    }
+  }, [pathname, activeId, setActiveId]);
 
   const activeItem = items.find((item) => item.id === activeId) || null;
 

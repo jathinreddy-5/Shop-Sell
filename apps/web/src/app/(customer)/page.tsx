@@ -360,6 +360,7 @@ function renderProductDetail(
 
         <Link
           href={`/product/${meta.slug || 'sample'}`}
+          onClick={onClose}
           className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-base font-bold text-slate-800 shadow-sm transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
         >
           <span>View full page</span>
@@ -386,6 +387,7 @@ function renderCategoryDetail(
             <Link
               key={sub}
               href={`/search?q=${encodeURIComponent(sub)}`}
+              onClick={onClose}
               className="rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1 text-xs font-semibold text-slate-700 hover:border-indigo-500 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
             >
               {sub}
@@ -403,6 +405,7 @@ function renderCategoryDetail(
             <Link
               key={p.slug}
               href={`/product/${p.slug}`}
+              onClick={onClose}
               className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-3 hover:border-indigo-400 transition dark:border-slate-800 dark:bg-slate-800/40"
             >
               <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{p.name}</span>
@@ -415,6 +418,7 @@ function renderCategoryDetail(
       <div className="pt-2">
         <Link
           href={`/category/${meta.slug}`}
+          onClick={onClose}
           className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3.5 text-base font-bold text-white shadow-lg transition hover:bg-indigo-500"
         >
           <span>Explore Entire {item.title} Department</span>

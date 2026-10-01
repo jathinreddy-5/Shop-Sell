@@ -48,8 +48,8 @@ export function LiquidNav({
 
   // 2. Derive active item from URL or controlled prop
   const computedActiveId = useMemo(() => {
-    if (controlledActiveId) return controlledActiveId;
-    if (!pathname || visibleItems.length === 0) return visibleItems[0]?.id;
+    if (controlledActiveId !== undefined) return controlledActiveId;
+    if (!pathname || visibleItems.length === 0) return '';
 
     // Best matching route: exact match first, then longest matching prefix
     let bestMatch: LiquidNavItem | null = null;
@@ -70,7 +70,7 @@ export function LiquidNav({
       }
     }
 
-    return bestMatch ? bestMatch.id : visibleItems[0]?.id;
+    return bestMatch ? bestMatch.id : '';
   }, [controlledActiveId, pathname, visibleItems]);
 
   const [activeId, setActiveId] = useState<string>(computedActiveId);
@@ -78,7 +78,7 @@ export function LiquidNav({
   // Sync activeId when computed route changes (e.g. navigation settles, browser back/forward)
   const prevComputedRef = useRef<string>(computedActiveId);
   useEffect(() => {
-    if (computedActiveId && computedActiveId !== prevComputedRef.current) {
+    if (computedActiveId !== prevComputedRef.current) {
       prevComputedRef.current = computedActiveId;
       setActiveId(computedActiveId);
     }
@@ -86,18 +86,18 @@ export function LiquidNav({
 
   // Dimension & animation state
   const [dimensions, setDimensions] = useState<{ width: number; height: number }>({
-    width: variant === 'side' ? 68 : 360,
-    height: variant === 'side' ? 420 : 64,
+    width: variant === 'side' ? 68 : variant === 'top' ? 280 : 360,
+    height: variant === 'side' ? 420 : variant === 'top' ? 56 : 64,
   });
 
   // Center position along the rail (x for top/bottom, y for side)
   const [centerPos, setCenterPos] = useState<number>(() => {
     // Initial SSR heuristic estimate to prevent flash at 0
     const idx = visibleItems.findIndex((it) => it.id === computedActiveId);
-    const validIdx = idx >= 0 ? idx : 0;
+    if (idx < 0) return -1;
     const total = Math.max(1, visibleItems.length);
     const span = variant === 'side' ? 420 : 360;
-    return (validIdx + 0.5) * (span / total);
+    return (idx + 0.5) * (span / total);
   });
 
   const centerPosRef = useRef<number>(centerPos);
@@ -163,7 +163,7 @@ export function LiquidNav({
       }
 
       // Calculate distance for dynamic stretch scaling
-      const currentC = centerPosRef.current;
+      const currentC = centerPosRef.current >= 0 ? centerPosRef.current : targetCenter;
       const distance = Math.abs(targetCenter - currentC);
       if (distance < 0.5) {
         centerPosRef.current = targetCenter;
@@ -238,17 +238,30 @@ export function LiquidNav({
     const container = containerRef.current;
     if (!container) return;
 
+    const updateContainerDimensions = () => {
+      const rect = container.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        setDimensions({ width: rect.width, height: rect.height });
+      }
+    };
+
+    updateContainerDimensions();
+
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        const { width, height } = entry.contentRect;
-        if (width > 0 && height > 0) {
-          setDimensions({ width, height });
-          const currentTarget = activeId;
-          const measured = measureCenter(currentTarget);
-          if (measured !== null && !isTransitioning) {
-            centerPosRef.current = measured;
-            setCenterPos(measured);
+        if (entry.target === container) {
+          const rect = container.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            setDimensions({ width: rect.width, height: rect.height });
           }
+        }
+      }
+
+      if (activeId) {
+        const measured = measureCenter(activeId);
+        if (measured !== null && !isTransitioning) {
+          centerPosRef.current = measured;
+          setCenterPos(measured);
         }
       }
     });
@@ -260,10 +273,12 @@ export function LiquidNav({
     });
 
     // Initial measurement
-    const initialMeasured = measureCenter(activeId);
-    if (initialMeasured !== null) {
-      centerPosRef.current = initialMeasured;
-      setCenterPos(initialMeasured);
+    if (activeId) {
+      const initialMeasured = measureCenter(activeId);
+      if (initialMeasured !== null) {
+        centerPosRef.current = initialMeasured;
+        setCenterPos(initialMeasured);
+      }
     }
 
     return () => {
@@ -322,7 +337,7 @@ export function LiquidNav({
   };
 
   // Active item object
-  const activeItem = visibleItems.find((it) => it.id === activeId) || visibleItems[0];
+  const activeItem = visibleItems.find((it) => it.id === activeId) || null;
 
   // Dynamic SVG path for the bar with the carved notch
   const pathData = useMemo(() => {
@@ -330,12 +345,12 @@ export function LiquidNav({
       variant,
       width: dimensions.width,
       height: dimensions.height,
-      center: centerPos,
+      center: activeItem && centerPos >= 0 ? centerPos : -1,
       notchRadius: DEFAULT_NOTCH_CONFIG.radius,
       notchDepth: DEFAULT_NOTCH_CONFIG.depth,
       stretch,
     });
-  }, [variant, dimensions, centerPos, stretch]);
+  }, [variant, dimensions, centerPos, stretch, activeItem]);
 
   // Compute floating circle transform coordinates
   const circleTransform = useMemo(() => {
@@ -392,7 +407,6 @@ export function LiquidNav({
           width={dimensions.width}
           height={dimensions.height}
           viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
-          preserveAspectRatio="none"
           aria-hidden="true"
         >
           <defs>
@@ -415,18 +429,18 @@ export function LiquidNav({
         </svg>
 
         {/* Floating Elevated Circle with Active Icon in Yellow (#FFE500) */}
-        <div
-          className="absolute left-0 top-0 pointer-events-none z-20 flex items-center justify-center will-change-transform"
-          style={{
-            transform: circleTransform,
-            width: 48,
-            height: 48,
-          }}
-          data-testid="liquid-nav-circle"
-          data-center={centerPos.toFixed(1)}
-        >
-          <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-zinc-900 border-2 border-amber-400/40 shadow-lg shadow-amber-400/20">
-            {activeItem && (
+        {activeItem && centerPos >= 0 && (
+          <div
+            className="absolute left-0 top-0 pointer-events-none z-20 flex items-center justify-center will-change-transform"
+            style={{
+              transform: circleTransform,
+              width: 48,
+              height: 48,
+            }}
+            data-testid="liquid-nav-circle"
+            data-center={centerPos.toFixed(1)}
+          >
+            <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-zinc-900 border-2 border-amber-400/40 shadow-lg shadow-amber-400/20">
               <div
                 key={activeItem.id}
                 className="flex items-center justify-center transition-all duration-300 transform scale-100 opacity-100"
@@ -454,9 +468,9 @@ export function LiquidNav({
                   </span>
                 )}
               </div>
-            )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Navigation Items (Links / Interactive targets) */}
         <div

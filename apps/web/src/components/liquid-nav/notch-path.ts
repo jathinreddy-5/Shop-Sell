@@ -69,6 +69,10 @@ export function generateNotchPath({
   const D = Math.max(10, notchDepth);
   const C = center;
 
+  if (C === undefined || C === null || C < 0) {
+    return `M 0 0 L ${W.toFixed(2)} 0 L ${W.toFixed(2)} ${H.toFixed(2)} L 0 ${H.toFixed(2)} Z`;
+  }
+
   if (variant === 'bottom') {
     // Notch on top edge (y = 0), dipping down into the bar to +D
     const x0 = C - R;
