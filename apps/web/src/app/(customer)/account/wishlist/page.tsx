@@ -3,8 +3,19 @@
 import React from 'react';
 import { Heart, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/lib/auth/auth-context';
+import { LoadingThreeDotsJumping } from '@/components/loading';
 
 export default function AccountWishlistPage() {
+  const { isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-sm">
+        <LoadingThreeDotsJumping label="Loading wishlist" />
+      </div>
+    );
+  }
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-sm">

@@ -3,9 +3,18 @@
 import React from 'react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { Shield, Mail, User as UserIcon, Calendar } from 'lucide-react';
+import { LoadingThreeDotsJumping } from '@/components/loading';
 
 export default function AccountProfilePage() {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[300px] items-center justify-center p-8">
+        <LoadingThreeDotsJumping label="Loading personal information" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

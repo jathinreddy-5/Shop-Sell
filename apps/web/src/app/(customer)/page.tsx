@@ -23,6 +23,7 @@ import {
   ExpandingCardGrid,
   ExpandingCardItem,
 } from '../../components/expanding-cards';
+import { LoadingThreeDotsJumping } from '../../components/loading';
 
 const fallbackHomeData: HomeRecommendationsResponse = ({
   recentSearches: [
@@ -446,6 +447,14 @@ export default function CustomerHomePage() {
     };
     fetchFeed();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto flex min-h-[50vh] items-center justify-center px-4 py-24">
+        <LoadingThreeDotsJumping label="Loading marketplace feed" />
+      </div>
+    );
+  }
 
   const removeSearch = (query: string) => {
     setData((prev) => ({

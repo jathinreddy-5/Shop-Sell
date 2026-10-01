@@ -23,6 +23,9 @@
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
 
+    /* Loading Animation Color System */
+    --loader-color: #6C63FF;
+
     /* Liquid Notch Navigation System Tokens */
     --liquid-nav-bg: #09090b;
     --liquid-nav-fg: #f4f4f5;

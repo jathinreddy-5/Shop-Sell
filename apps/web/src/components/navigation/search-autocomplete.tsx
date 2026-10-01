@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Search, Clock, X, ArrowUpRight, Sparkles } from 'lucide-react';
+import { LoadingThreeDotsJumping } from '@/components/loading';
 
 interface AutocompleteProduct {
   id: string;
@@ -25,6 +26,7 @@ export function SearchAutocomplete() {
   ]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [products, setProducts] = useState<AutocompleteProduct[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Close on outside click
@@ -43,9 +45,11 @@ export function SearchAutocomplete() {
     if (!query.trim()) {
       setSuggestions([]);
       setProducts([]);
+      setIsSearching(false);
       return;
     }
 
+    setIsSearching(true);
     const timer = setTimeout(() => {
       // Mock / fetch autocomplete results
       const q = query.toLowerCase();
@@ -75,6 +79,7 @@ export function SearchAutocomplete() {
           category: 'Home & Kitchen',
         },
       ]);
+      setIsSearching(false);
     }, 150);
 
     return () => clearTimeout(timer);
@@ -165,6 +170,11 @@ export function SearchAutocomplete() {
 
           {/* Section B & C: Query suggestions & Product matches */}
           {query && (
+            isSearching ? (
+              <div className="flex items-center justify-center py-6">
+                <LoadingThreeDotsJumping size={10} jumpHeight={16} gap={6} label="Searching catalog" />
+              </div>
+            ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {/* Query suggestions */}
               <div className="space-y-1 border-r border-slate-100 pr-2 dark:border-slate-800">
@@ -212,6 +222,7 @@ export function SearchAutocomplete() {
                 ))}
               </div>
             </div>
+            )
           )}
         </div>
       )}

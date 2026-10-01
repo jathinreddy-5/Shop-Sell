@@ -11,6 +11,7 @@ import {
   MapPin,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
+import { LoadingThreeDotsJumping } from '@/components/loading';
 
 export default function CheckoutPage() {
   const { user } = useAuth();
@@ -264,7 +265,11 @@ export default function CheckoutPage() {
               disabled={isProcessing}
               className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3.5 text-xs font-bold text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-500 disabled:opacity-50"
             >
-              {isProcessing ? 'Processing Transaction...' : 'Pay ₹4,897 via Razorpay'}
+              {isProcessing ? (
+                <LoadingThreeDotsJumping size={6} jumpHeight={8} gap={4} color="#FFFFFF" label="Processing Transaction" />
+              ) : (
+                'Pay ₹4,897 via Razorpay'
+              )}
             </button>
 
             <div className="mt-4 flex items-center justify-center gap-1.5 text-[10px] text-slate-400">

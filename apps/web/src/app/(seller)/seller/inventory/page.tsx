@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { AlertTriangle, Plus, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { LoadingThreeDotsJumping } from '@/components/loading';
 
 interface LowStockItem {
   id: string;
@@ -42,14 +43,19 @@ const mockAlerts: LowStockItem[] = [
 export default function SellerInventoryPage() {
   const [alerts, setAlerts] = useState<LowStockItem[]>(mockAlerts);
   const [restockedIds, setRestockedIds] = useState<string[]>([]);
+  const [restockingId, setRestockingId] = useState<string | null>(null);
 
   const handleRestock = (id: string, qty: number) => {
-    setAlerts(
-      alerts.map((a) =>
-        a.id === id ? { ...a, currentStock: a.currentStock + qty } : a
-      )
-    );
-    setRestockedIds([...restockedIds, id]);
+    setRestockingId(id);
+    setTimeout(() => {
+      setAlerts((prev) =>
+        prev.map((a) =>
+          a.id === id ? { ...a, currentStock: a.currentStock + qty } : a
+        )
+      );
+      setRestockedIds((prev) => [...prev, id]);
+      setRestockingId(null);
+    }, 400);
   };
 
   return (
@@ -129,12 +135,19 @@ export default function SellerInventoryPage() {
                       </span>
                     ) : (
                       <button
+                        disabled={restockingId === item.id}
                         onClick={() =>
                           handleRestock(item.id, item.reorderSuggestion)
                         }
-                        className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-500"
+                        className="inline-flex items-center justify-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-500 disabled:opacity-50 min-w-[100px]"
                       >
-                        <Plus className="h-3.5 w-3.5" /> Restock +{item.reorderSuggestion}
+                        {restockingId === item.id ? (
+                          <LoadingThreeDotsJumping size={5} jumpHeight={6} gap={3} color="#FFFFFF" label="Restocking" />
+                        ) : (
+                          <>
+                            <Plus className="h-3.5 w-3.5" /> Restock +{item.reorderSuggestion}
+                          </>
+                        )}
                       </button>
                     )}
                   </td>

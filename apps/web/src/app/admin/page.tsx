@@ -22,6 +22,7 @@ import {
   ExpandingCardGrid,
   ExpandingCardItem,
 } from '../../components/expanding-cards';
+import { LoadingThreeDotsJumping } from '@/components/loading';
 
 interface MockApp {
   id: string;

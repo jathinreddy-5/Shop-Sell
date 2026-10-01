@@ -12,6 +12,7 @@ import {
   X,
   Package,
 } from 'lucide-react';
+import { LoadingThreeDotsJumping } from '@/components/loading';
 
 interface MockProduct {
   id: string;
@@ -73,6 +74,8 @@ export default function SellerProductsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showCsvModal, setShowCsvModal] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
 
   // New product form state
   const [newProd, setNewProd] = useState({
@@ -93,55 +96,63 @@ export default function SellerProductsPage() {
     e.preventDefault();
     if (!newProd.name || !newProd.price || !newProd.stock) return;
 
-    const created: MockProduct = {
-      id: `prod-${Date.now()}`,
-      name: newProd.name,
-      category: newProd.category,
-      price: parseFloat(newProd.price),
-      stock: parseInt(newProd.stock, 10),
-      salesCount: 0,
-      status: 'active',
-      image:
-        newProd.image ||
-        'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&q=80',
-    };
+    setIsSaving(true);
+    setTimeout(() => {
+      const created: MockProduct = {
+        id: `prod-${Date.now()}`,
+        name: newProd.name,
+        category: newProd.category,
+        price: parseFloat(newProd.price),
+        stock: parseInt(newProd.stock, 10),
+        salesCount: 0,
+        status: 'active',
+        image:
+          newProd.image ||
+          'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&q=80',
+      };
 
-    setProducts([created, ...products]);
-    setShowAddModal(false);
-    setNewProd({
-      name: '',
-      category: 'Audio & Headphones',
-      price: '',
-      stock: '',
-      image: '',
-      description: '',
-    });
+      setProducts([created, ...products]);
+      setIsSaving(false);
+      setShowAddModal(false);
+      setNewProd({
+        name: '',
+        category: 'Audio & Headphones',
+        price: '',
+        stock: '',
+        image: '',
+        description: '',
+      });
+    }, 400);
   };
 
   const handleCsvImport = () => {
-    const lines = csvText.trim().split('\n').slice(1);
-    const imported: MockProduct[] = lines.flatMap((line, idx) => {
-      const parts = line.split(',');
-      if (parts.length >= 3) {
-        return [
-          {
-            id: `prod-csv-${Date.now()}-${idx}`,
-            name: parts[0].trim(),
-            price: parseFloat(parts[1].trim()) || 999,
-            stock: parseInt(parts[2].trim(), 10) || 10,
-            category: parts[3]?.trim() || 'General',
-            salesCount: 0,
-            status: 'active' as const,
-            image:
-              'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&q=80',
-          },
-        ];
-      }
-      return [];
-    });
+    setIsImporting(true);
+    setTimeout(() => {
+      const lines = csvText.trim().split('\n').slice(1);
+      const imported: MockProduct[] = lines.flatMap((line, idx) => {
+        const parts = line.split(',');
+        if (parts.length >= 3) {
+          return [
+            {
+              id: `prod-csv-${Date.now()}-${idx}`,
+              name: parts[0].trim(),
+              price: parseFloat(parts[1].trim()) || 999,
+              stock: parseInt(parts[2].trim(), 10) || 10,
+              category: parts[3]?.trim() || 'General',
+              salesCount: 0,
+              status: 'active' as const,
+              image:
+                'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&q=80',
+            },
+          ];
+        }
+        return [];
+      });
 
-    setProducts([...imported, ...products]);
-    setShowCsvModal(false);
+      setProducts([...imported, ...products]);
+      setIsImporting(false);
+      setShowCsvModal(false);
+    }, 400);
   };
 
   const handleArchive = (id: string) => {
@@ -379,9 +390,14 @@ export default function SellerProductsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white shadow-sm hover:bg-emerald-500"
+                  disabled={isSaving}
+                  className="flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white shadow-sm hover:bg-emerald-500 disabled:opacity-50"
                 >
-                  Save & Publish
+                  {isSaving ? (
+                    <LoadingThreeDotsJumping size={6} jumpHeight={8} gap={4} color="#FFFFFF" label="Saving product" />
+                  ) : (
+                    'Save & Publish'
+                  )}
                 </button>
               </div>
             </form>
@@ -423,10 +439,15 @@ export default function SellerProductsPage() {
               </button>
               <button
                 type="button"
+                disabled={isImporting}
                 onClick={handleCsvImport}
-                className="rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-500"
+                className="flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-500 disabled:opacity-50"
               >
-                Process & Import Listings
+                {isImporting ? (
+                  <LoadingThreeDotsJumping size={6} jumpHeight={8} gap={4} color="#FFFFFF" label="Importing listings" />
+                ) : (
+                  'Process & Import Listings'
+                )}
               </button>
             </div>
           </div>

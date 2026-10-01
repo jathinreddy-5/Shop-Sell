@@ -59,7 +59,7 @@ test.describe('Global Liquid Notch Navigation System Suite', () => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.goto('/');
 
-    const headerNav = page.locator('header [data-testid="liquid-nav"][data-variant="top"]');
+    const headerNav = page.locator('header [data-testid="liquid-nav"][data-variant="top"]').first();
     await expect(headerNav).toBeVisible();
 
     // 1a. Forward sequence: wishlist -> cart -> account
@@ -138,7 +138,7 @@ test.describe('Global Liquid Notch Navigation System Suite', () => {
     ]);
     await page.goto('/seller');
 
-    const sellerNav = page.locator('aside [data-testid="liquid-nav"][data-variant="side"]');
+    const sellerNav = page.locator('aside [data-testid="liquid-nav"][data-variant="side"]').first();
     await expect(sellerNav).toBeVisible();
 
     // 3a. Forward sequence: dashboard -> products -> orders -> payouts -> settings
@@ -183,7 +183,7 @@ test.describe('Global Liquid Notch Navigation System Suite', () => {
     ]);
     await page.goto('/admin');
 
-    const adminNav = page.locator('aside [data-testid="liquid-nav"][data-variant="side"]');
+    const adminNav = page.locator('aside [data-testid="liquid-nav"][data-variant="side"]').first();
     await expect(adminNav).toBeVisible();
 
     // 4a. Forward sequence: overview -> products -> categories -> disputes -> analytics

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ShieldCheck, Mail, ArrowRight, UserCheck, Store, Shield } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
+import { LoadingThreeDotsJumping } from '@/components/loading';
 
 function LoginForm() {
   const router = useRouter();
@@ -97,8 +98,14 @@ function LoginForm() {
               disabled={isSubmitting}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:opacity-50"
             >
-              <span>{isSubmitting ? 'Sending OTP...' : 'Send Magic OTP'}</span>
-              <ArrowRight className="h-4 w-4" />
+              {isSubmitting ? (
+                <LoadingThreeDotsJumping size={6} jumpHeight={8} gap={4} color="#FFFFFF" label="Sending OTP" />
+              ) : (
+                <>
+                  <span>Send Magic OTP</span>
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              )}
             </button>
           </form>
         ) : (
@@ -124,9 +131,13 @@ function LoginForm() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full rounded-xl bg-indigo-600 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:opacity-50"
+              className="flex w-full items-center justify-center rounded-xl bg-indigo-600 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:opacity-50"
             >
-              {isSubmitting ? 'Verifying...' : 'Verify & Continue'}
+              {isSubmitting ? (
+                <LoadingThreeDotsJumping size={6} jumpHeight={8} gap={4} color="#FFFFFF" label="Verifying OTP" />
+              ) : (
+                'Verify & Continue'
+              )}
             </button>
           </form>
         )}
@@ -181,7 +192,7 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div className="flex min-h-[50vh] items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+          <LoadingThreeDotsJumping label="Loading sign in form" />
         </div>
       }
     >

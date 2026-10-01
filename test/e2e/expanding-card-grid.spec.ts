@@ -6,7 +6,7 @@ const SCREENSHOTS_DIR = path.resolve(__dirname, './screenshots');
 test.describe('App Store "Today" Style Expanding Card Grid Animation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/demo/today');
-    await expect(page.locator('h1')).toContainText('Today in Shop:Sell');
+    await expect(page.locator('h1').first()).toContainText('Today in Shop:Sell');
   });
 
   test('Renders responsive grid with 6 cards and dark theme', async ({ page }) => {
@@ -97,12 +97,16 @@ test.describe('App Store "Today" Style Expanding Card Grid Animation', () => {
     }
 
     await page.screenshot({ path: `${SCREENSHOTS_DIR}/expanding-03-switch-card.png` });
+
+    // Close dialog
+    await page.keyboard.press('Escape');
+    await expect(dialog).not.toBeVisible({ timeout: 5000 });
   });
 
   test('Can open each of the 6 cards in succession', async ({ page }) => {
-    const cards = page.locator('button[aria-haspopup="dialog"]');
+    const cards = page.locator('main button[aria-haspopup="dialog"]');
+    await expect(cards).toHaveCount(6);
     const count = await cards.count();
-    expect(count).toBe(6);
 
     for (let i = 0; i < count; i++) {
       await cards.nth(i).click();

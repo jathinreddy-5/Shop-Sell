@@ -20,6 +20,7 @@ import { X } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 import { clsx } from 'clsx';
 import { useLockBodyScroll } from '../../hooks/use-lock-body-scroll';
+import { LoadingThreeDotsJumping } from '../loading';
 
 export interface ExpandingCardItem {
   id: string;
@@ -28,9 +29,11 @@ export interface ExpandingCardItem {
   title: string;
   subtitle: string;
   content?: React.ReactNode;
+  detailContent?: React.ReactNode;
   priority?: boolean;
   aspectRatio?: string;
   badge?: string;
+  isLoading?: boolean;
   metadata?: Record<string, any>;
 }
 
@@ -429,9 +432,15 @@ export function ExpandingCardGrid({
                       }}
                       className="p-6 sm:p-8"
                     >
-                      {renderDetail
-                        ? renderDetail(activeItem, handleClose, handleSwitchCard)
-                        : activeItem.content}
+                      {activeItem.isLoading ? (
+                        <div className="flex min-h-[220px] items-center justify-center p-8">
+                          <LoadingThreeDotsJumping label="Loading details" />
+                        </div>
+                      ) : renderDetail ? (
+                        renderDetail(activeItem, handleClose, handleSwitchCard)
+                      ) : (
+                        activeItem.content
+                      )}
                     </motion.div>
                   </motion.div>
                 </div>

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Store, CheckCircle2, AlertCircle } from 'lucide-react';
 import { OwnerApplicationSchema } from '@shop-sell/shared';
 import { useAuth } from '@/lib/auth/auth-context';
+import { LoadingThreeDotsJumping } from '@/components/loading';
 
 export default function BecomeASellerPage() {
   const { user } = useAuth();
@@ -22,6 +23,7 @@ export default function BecomeASellerPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,8 +39,11 @@ export default function BecomeASellerPage() {
       return;
     }
 
-    // Successfully validated
-    setSubmitted(true);
+    setIsSubmitting(true);
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setSubmitted(true);
+    }, 400);
   };
 
   if (submitted) {
@@ -256,9 +261,14 @@ export default function BecomeASellerPage() {
 
         <button
           type="submit"
-          className="w-full rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700"
+          disabled={isSubmitting}
+          className="flex w-full items-center justify-center rounded-xl bg-indigo-600 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-700 disabled:opacity-50"
         >
-          Submit Seller Application
+          {isSubmitting ? (
+            <LoadingThreeDotsJumping size={6} jumpHeight={8} gap={4} color="#FFFFFF" label="Submitting application" />
+          ) : (
+            'Submit Seller Application'
+          )}
         </button>
       </form>
     </div>

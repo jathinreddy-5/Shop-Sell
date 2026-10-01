@@ -8,6 +8,7 @@ import {
   ExpandingCardGrid,
   ExpandingCardItem,
 } from '../../../components/expanding-cards';
+import { LoadingThreeDotsJumping } from '@/components/loading';
 
 interface ProductItem {
   id: string;
@@ -324,7 +325,13 @@ function SearchContent() {
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div className="container mx-auto p-12 text-center text-xs text-slate-400">Loading catalog...</div>}>
+    <Suspense
+      fallback={
+        <div className="container mx-auto flex min-h-[50vh] items-center justify-center p-12">
+          <LoadingThreeDotsJumping label="Loading product catalog" />
+        </div>
+      }
+    >
       <SearchContent />
     </Suspense>
   );
