@@ -7,19 +7,25 @@ import {
   UserCheck,
   PackageCheck,
   FolderTree,
-  FileSpreadsheet,
   ArrowLeft,
   Shield,
+  CheckCircle2,
+  History,
+  KeyRound,
+  PowerOff,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { LiquidNav, LiquidNavItem } from '@/components/liquid-nav';
 
 const adminNavItems: LiquidNavItem[] = [
   { id: 'overview', label: 'Overview', href: '/admin', icon: UserCheck },
+  { id: 'approvals', label: 'Approvals', href: '/admin/approvals', icon: CheckCircle2 },
+  { id: 'audit', label: 'Audit Trail', href: '/admin/audit', icon: History },
+  { id: 'governance', label: 'Governance', href: '/admin/governance', icon: KeyRound },
+  { id: 'kill-switches', label: 'Kill Switches', href: '/admin/kill-switches', icon: PowerOff },
   { id: 'products', label: 'Products', href: '/admin/products', icon: PackageCheck },
   { id: 'categories', label: 'Categories', href: '/admin/categories', icon: FolderTree },
   { id: 'disputes', label: 'Disputes', href: '/admin/disputes', icon: ShieldAlert },
-  { id: 'analytics', label: 'Audit Logs', href: '/admin/analytics', icon: FileSpreadsheet },
 ];
 
 export default function AdminLayout({

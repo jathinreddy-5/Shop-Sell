@@ -375,3 +375,163 @@ export interface ServiceabilityResult {
   message: string;
 }
 
+// ==============================================================================
+// ADMIN OPERATIONS & GOVERNANCE TYPES (PHASE 1)
+// ==============================================================================
+
+export type AdminStatus = 'active' | 'suspended' | 'offboarded';
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  full_name: string;
+  status: AdminStatus;
+  mfa_enrolled: boolean;
+  requires_passkey: boolean;
+  sso_subject?: string | null;
+  created_by?: string | null;
+  last_review_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type AdminRoleSlug =
+  | 'super_admin'
+  | 'finance_controller'
+  | 'trust_safety'
+  | 'customer_support'
+  | 'seller_ops'
+  | 'catalog_manager'
+  | 'merchandiser'
+  | 'auditor'
+  | 'support_engineer';
+
+export interface AdminRole {
+  id: string;
+  name: string;
+  slug: AdminRoleSlug | string;
+  description?: string | null;
+  is_system: boolean;
+  max_session_duration_minutes: number;
+  requires_passkey: boolean;
+  created_at: string;
+  permissions?: string[]; // array of "resource:action" strings
+}
+
+export interface AdminPermission {
+  id: string;
+  resource: string;
+  action: string;
+  description?: string | null;
+  risk_level: 'low' | 'standard' | 'high' | 'critical';
+  created_at: string;
+}
+
+export interface AdminRoleAssignment {
+  id: string;
+  admin_id: string;
+  role_id: string;
+  role?: AdminRole;
+  scope_type?: string | null;
+  scope_value?: string | null;
+  granted_by?: string | null;
+  expires_at?: string | null;
+  created_at: string;
+}
+
+export interface ElevatedAccessGrant {
+  id: string;
+  admin_id: string;
+  role_id?: string | null;
+  permission_id?: string | null;
+  reason: string;
+  ticket_ref: string;
+  approved_by?: string | null;
+  starts_at: string;
+  expires_at: string;
+  is_revoked: boolean;
+  revoked_at?: string | null;
+  is_break_glass: boolean;
+  created_at: string;
+}
+
+export interface AdminAuditLog {
+  id: string;
+  created_at: string;
+  actor_admin_id?: string | null;
+  actor_role_at_time: string;
+  action: string;
+  resource_type: string;
+  resource_id?: string | null;
+  outcome: 'success' | 'denied' | 'error';
+  reason?: string | null;
+  ticket_ref?: string | null;
+  before_state?: any;
+  after_state?: any;
+  approver_ids?: string[];
+  request_id?: string | null;
+  session_id?: string | null;
+  ip_address?: string | null;
+  user_agent?: string | null;
+  prev_hash?: string | null;
+  row_hash: string;
+}
+
+export interface ApprovalPolicy {
+  id: string;
+  action_key: string;
+  threshold_params: Record<string, any>;
+  required_approvals: number;
+  required_permission: string;
+  expiry_hours: number;
+  allow_emergency_single: boolean;
+  created_at: string;
+}
+
+export interface ApprovalRequest {
+  id: string;
+  action_key: string;
+  payload: any;
+  payload_hash: string;
+  requester_id: string;
+  requester?: Partial<AdminUser>;
+  status: 'pending' | 'approved' | 'rejected' | 'expired' | 'executed' | 'cancelled';
+  expires_at: string;
+  executed_at?: string | null;
+  created_at: string;
+  decisions?: ApprovalDecision[];
+}
+
+export interface ApprovalDecision {
+  id: string;
+  request_id: string;
+  approver_id: string;
+  approver?: Partial<AdminUser>;
+  decision: 'approved' | 'rejected';
+  step_up_proof?: any;
+  reason?: string | null;
+  decided_at: string;
+}
+
+export interface AdminKillSwitch {
+  key: string;
+  enabled: boolean;
+  reason?: string | null;
+  updated_by?: string | null;
+  updated_at: string;
+}
+
+export interface AdminSession {
+  admin_id: string;
+  email: string;
+  session_id: string;
+  roles: string[];
+  permissions: string[];
+  ip_address?: string;
+  user_agent?: string;
+  mfa_verified: boolean;
+  last_active_at: number;
+  expires_at: number;
+  step_up_at?: number;
+}
+
