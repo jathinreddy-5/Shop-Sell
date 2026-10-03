@@ -45,12 +45,40 @@ export interface PayoutDetails {
   upi_id?: string;
 }
 
+export type GenderType = 'female' | 'male' | 'non_binary' | 'prefer_not_to_say';
+export type ShoppingForType = 'womens' | 'mens' | 'unisex' | 'kids' | 'prefer_not_to_say';
+export type OnboardingStatus = 'not_started' | 'step1_done' | 'completed' | 'skipped';
+
 export interface Profile {
   id: string; // references auth.users.id
   full_name: string | null;
+  display_name?: string | null;
   phone: string | null;
+  phone_e164?: string | null;
+  phone_verified?: boolean;
+  email_verified?: boolean;
   avatar_url: string | null;
   roles: UserRole[];
+  gender?: GenderType | null;
+  shopping_for?: ShoppingForType | null;
+  default_pincode?: string | null;
+  is_18_plus?: boolean | null;
+  age_range?: string | null;
+  locale?: string;
+  currency?: string;
+  size_profile?: Record<string, string>;
+  notification_preferences?: {
+    transactional: boolean;
+    marketing: boolean;
+    [key: string]: boolean;
+  };
+  marketing_consent?: boolean;
+  marketing_consent_at?: string | null;
+  marketing_consent_text_version?: string | null;
+  onboarding_status?: OnboardingStatus;
+  onboarding_skipped_count?: number;
+  onboarding_last_prompted_at?: string | null;
+  profile_completeness?: number;
   created_at: string;
   updated_at: string;
 }
@@ -237,6 +265,7 @@ export interface UserEvent {
 export interface AuthUserPayload {
   sub: string; // user id
   email?: string;
+  phone?: string;
   roles: UserRole[];
   app_metadata?: {
     roles?: UserRole[];
@@ -257,3 +286,92 @@ export interface HomeRecommendationsResponse {
   recommended: Product[];
   trending: Product[];
 }
+
+export interface InterestCategory {
+  id: string;
+  slug: string;
+  label: string;
+  parent_id?: string | null;
+  is_apparel: boolean;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface ProfileInterest {
+  profile_id: string;
+  interest_id: string;
+  created_at: string;
+}
+
+export interface ServiceablePincode {
+  pincode: string;
+  city: string;
+  state: string;
+  estimated_days: number;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface PincodeWaitlistEntry {
+  id: string;
+  pincode: string;
+  user_id?: string | null;
+  email?: string | null;
+  created_at: string;
+}
+
+export interface Address {
+  id: string;
+  user_id: string;
+  label: string;
+  type: 'shipping' | 'billing';
+  recipient_name: string;
+  phone_e164: string;
+  line1: string;
+  line2?: string | null;
+  landmark?: string | null;
+  city: string;
+  state: string;
+  pincode: string;
+  country_code: string;
+  gstin?: string | null;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ConsentLog {
+  id: string;
+  user_id: string;
+  consent_type: string;
+  granted: boolean;
+  text_version: string;
+  ip_hash?: string | null;
+  user_agent?: string | null;
+  created_at: string;
+}
+
+export interface Step1OnboardingInput {
+  full_name: string;
+  pincode?: string;
+  interest_ids?: string[];
+  size_profile?: Record<string, string>;
+}
+
+export interface Step2OnboardingInput {
+  shopping_for?: ShoppingForType;
+  gender?: GenderType;
+  marketing_consent?: boolean;
+  marketing_consent_text_version?: string;
+}
+
+export interface ServiceabilityResult {
+  pincode: string;
+  isServiceable: boolean;
+  city?: string;
+  state?: string;
+  estimatedDays?: number;
+  message: string;
+}
+

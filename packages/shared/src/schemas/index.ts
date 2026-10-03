@@ -104,3 +104,38 @@ export const ReviewInputSchema = z.object({
   rating: z.number().int().min(1).max(5),
   body: z.string().min(5, 'Review must be at least 5 characters'),
 });
+
+export const Step1OnboardingSchema = z.object({
+  full_name: z.string().min(2, 'Full name must be at least 2 characters').max(80, 'Full name cannot exceed 80 characters'),
+  pincode: z.string().regex(/^[1-9][0-9]{5}$/, 'Invalid Indian 6-digit postal pincode').optional().nullable(),
+  interest_ids: z.array(z.string().uuid()).optional(),
+  size_profile: z.record(z.string()).optional(),
+});
+
+export const Step2OnboardingSchema = z.object({
+  shopping_for: z.enum(['womens', 'mens', 'unisex', 'kids', 'prefer_not_to_say']).optional().nullable(),
+  gender: z.enum(['female', 'male', 'non_binary', 'prefer_not_to_say']).optional().nullable(),
+  marketing_consent: z.boolean().optional(),
+  marketing_consent_text_version: z.string().optional(),
+});
+
+export const AddressInputSchema = z.object({
+  label: z.string().min(1).default('Home'),
+  type: z.enum(['shipping', 'billing']),
+  recipient_name: z.string().min(2, 'Recipient name must be at least 2 characters').max(80),
+  phone_e164: z.string().regex(/^\+[1-9]\d{6,14}$/, 'Invalid phone number. Must be valid E.164 format (+91...)'),
+  line1: z.string().min(5, 'Address line 1 is required'),
+  line2: z.string().optional().nullable(),
+  landmark: z.string().optional().nullable(),
+  city: z.string().min(2, 'City is required'),
+  state: z.string().min(2, 'State is required'),
+  pincode: z.string().regex(/^[1-9][0-9]{5}$/, 'Valid 6-digit Indian pincode required'),
+  country_code: z.string().length(2).default('IN'),
+  gstin: z.string().regex(/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/, 'Invalid Indian GSTIN format').optional().nullable(),
+  is_default: z.boolean().default(false),
+});
+
+export const PincodeWaitlistSchema = z.object({
+  pincode: z.string().regex(/^[1-9][0-9]{5}$/, 'Invalid Indian 6-digit pincode'),
+  email: z.string().email('Valid email address required').optional().nullable(),
+});
