@@ -43,3 +43,4 @@ redis-data/
 # Test output
 playwright-report/
 test-results/
+auth_login_screenshot.png

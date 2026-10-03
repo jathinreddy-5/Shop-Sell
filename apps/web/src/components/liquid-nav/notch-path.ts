@@ -126,3 +126,27 @@ export function generateNotchPath({
 
   return `M 0 0 L ${W.toFixed(2)} 0 L ${W.toFixed(2)} ${y0.toFixed(2)} C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${(W - D).toFixed(2)} ${C.toFixed(2)} C ${cp3x.toFixed(2)} ${cp3y.toFixed(2)}, ${cp4x.toFixed(2)} ${cp4y.toFixed(2)}, ${W.toFixed(2)} ${y1.toFixed(2)} L ${W.toFixed(2)} ${H.toFixed(2)} L 0 ${H.toFixed(2)} Z`;
 }
+
+/**
+ * Deterministic liquid SVG path generator.
+ * Produces an identical SVG command structure (M, L, C, C, L, ...) regardless
+ * of the active center coordinate, ensuring Motion can smoothly interpolate
+ * between navigation states without snapping.
+ */
+export function createLiquidPath(
+  variant: LiquidNavVariant,
+  width: number,
+  height: number,
+  center: number
+): string {
+  return generateNotchPath({
+    variant,
+    width,
+    height,
+    center: Math.max(0, center),
+    notchRadius: DEFAULT_NOTCH_CONFIG.radius,
+    notchDepth: DEFAULT_NOTCH_CONFIG.depth,
+    stretch: 1.0,
+  });
+}
+

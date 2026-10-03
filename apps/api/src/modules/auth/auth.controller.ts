@@ -17,6 +17,70 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
+  @Post('login')
+  async login(@Body() body: { email: string; password?: string }) {
+    return this.authService.login(body.email, body.password);
+  }
+
+  @Public()
+  @Post('signup')
+  async signup(
+    @Body()
+    body: {
+      fullName: string;
+      email: string;
+      password: string;
+      phone?: string;
+    }
+  ) {
+    return this.authService.signup(body);
+  }
+
+  @Public()
+  @Post('request-otp')
+  async requestOtp(@Body() body: { phone?: string; identifier?: string }) {
+    const target = body.phone || body.identifier;
+    return this.authService.sendOtp(target!);
+  }
+
+  @Public()
+  @Post('otp/send')
+  async sendOtp(@Body() body: { phone?: string; identifier?: string }) {
+    const target = body.phone || body.identifier;
+    return this.authService.sendOtp(target!);
+  }
+
+  @Public()
+  @Post('verify-otp')
+  async verifyOtpLegacy(
+    @Body() body: { phone?: string; identifier?: string; otp: string; firebaseVerified?: boolean }
+  ) {
+    const target = body.phone || body.identifier;
+    return this.authService.verifyOtp(target!, body.otp, body.firebaseVerified);
+  }
+
+  @Public()
+  @Post('otp/verify')
+  async verifyOtp(
+    @Body() body: { phone?: string; identifier?: string; otp: string; firebaseVerified?: boolean }
+  ) {
+    const target = body.phone || body.identifier;
+    return this.authService.verifyOtp(target!, body.otp, body.firebaseVerified);
+  }
+
+  @Public()
+  @Post('forgot-password')
+  async forgotPassword(@Body() body: { email: string }) {
+    return this.authService.forgotPassword(body.email);
+  }
+
+  @Public()
+  @Post('reset-password')
+  async resetPassword(@Body() body: { token: string; newPassword: string }) {
+    return this.authService.resetPassword(body.token, body.newPassword);
+  }
+
   @Get('me')
   async getMe(@CurrentUser() user: AuthUserPayload) {
     try {
@@ -65,3 +129,4 @@ export class AuthController {
     return { token, roles: body.roles || ['customer'] };
   }
 }
+

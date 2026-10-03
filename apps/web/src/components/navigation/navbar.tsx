@@ -7,8 +7,16 @@ import { useAuth } from '@/lib/auth/auth-context';
 import { SearchAutocomplete } from './search-autocomplete';
 import { LiquidNav } from '@/components/liquid-nav';
 
+import { useRouter } from 'next/navigation';
+
 export function Navbar() {
+  const router = useRouter();
   const { user, isCustomer, isSeller, isAdmin, loginAsDevRole, logout } = useAuth();
+
+  const handleReset = () => {
+    logout();
+    router.push('/login');
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:border-slate-800 dark:bg-slate-900/90">
@@ -18,7 +26,7 @@ export function Navbar() {
           <div className="flex items-center gap-2">
             <span className="font-semibold text-emerald-400">Current Role:</span>
             <span className="rounded bg-slate-800 px-2 py-0.5 font-mono uppercase tracking-wider text-slate-200">
-              {user ? user.roles.join(' + ') : 'Guest / Customer'}
+              {user ? user.roles.join(' + ') : 'Guest / Unauthenticated'}
             </span>
           </div>
           <div className="flex items-center gap-2">
@@ -41,15 +49,22 @@ export function Navbar() {
             >
               Admin
             </button>
-            {user && (
+            {user ? (
               <button
-                onClick={logout}
+                onClick={handleReset}
                 className="ml-2 flex items-center gap-1 text-slate-400 hover:text-rose-400"
-                title="Logout"
+                title="Logout and return to Login screen"
               >
                 <LogOut className="h-3 w-3" />
-                Reset
+                Reset (Logout)
               </button>
+            ) : (
+              <Link
+                href="/login"
+                className="ml-2 rounded bg-indigo-600 px-2 py-0.5 font-medium text-white transition hover:bg-indigo-500"
+              >
+                Mobile Login →
+              </Link>
             )}
           </div>
         </div>

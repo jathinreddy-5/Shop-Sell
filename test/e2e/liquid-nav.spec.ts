@@ -45,7 +45,21 @@ async function assertNotchAlignment(
 
 test.describe('Global Liquid Notch Navigation System Suite', () => {
   test.beforeEach(async ({ page }) => {
+    await page.context().addCookies([
+      { name: 'shopsell_token', value: 'dev_customer_token_active', url: 'http://localhost:3008' },
+      { name: 'shopsell_roles', value: encodeURIComponent(JSON.stringify(['customer'])), url: 'http://localhost:3008' },
+    ]);
+
     await page.addInitScript(() => {
+      window.localStorage.setItem('shopsell_token', 'dev_customer_token_active');
+      window.localStorage.setItem(
+        'shopsell_user',
+        JSON.stringify({
+          id: 'dev_customer_id',
+          email: 'customer@shopsell.dev',
+          roles: ['customer'],
+        })
+      );
       const style = document.createElement('style');
       style.textContent = 'nextjs-portal { display: none !important; pointer-events: none !important; }';
       document.head.appendChild(style);
@@ -86,6 +100,72 @@ test.describe('Global Liquid Notch Navigation System Suite', () => {
     // Skip jump back: account -> wishlist
     await headerNav.locator('[data-testid="liquid-nav-item-wishlist"]').click({ force: true });
     await assertNotchAlignment(page, headerNav, 'wishlist');
+  });
+
+  // ---------------------------------------------------------------------------
+  // 1b. Customer Header Smooth Transitions & Continuity Suite
+  // ---------------------------------------------------------------------------
+  test('Customer Header: Smooth spring transitions across Seller, Wishlist, Cart, and Account', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.goto('/');
+
+    const headerNav = page.locator('header [data-testid="liquid-nav"][data-variant="top"]').first();
+    await expect(headerNav).toBeVisible();
+
+    const circle = headerNav.locator('[data-testid="liquid-nav-circle"]');
+    const svgPath = headerNav.locator('[data-testid="liquid-nav-svg-path"]');
+
+    // 1. Seller -> Wishlist
+    await headerNav.locator('[data-testid="liquid-nav-item-become-a-seller"]').click({ force: true });
+    await assertNotchAlignment(page, headerNav, 'become-a-seller');
+    await expect(circle).toBeVisible();
+
+    await headerNav.locator('[data-testid="liquid-nav-item-wishlist"]').click({ force: true });
+    await expect(circle).toBeVisible();
+    await assertNotchAlignment(page, headerNav, 'wishlist');
+
+    // 2. Seller -> Cart (Skip jump from Seller)
+    await headerNav.locator('[data-testid="liquid-nav-item-become-a-seller"]').click({ force: true });
+    await assertNotchAlignment(page, headerNav, 'become-a-seller');
+    await expect(circle).toBeVisible();
+
+    await headerNav.locator('[data-testid="liquid-nav-item-cart"]').click({ force: true });
+    await expect(circle).toBeVisible();
+    await assertNotchAlignment(page, headerNav, 'cart');
+
+    // 3. Seller -> Account (Full span Skip jump)
+    await headerNav.locator('[data-testid="liquid-nav-item-become-a-seller"]').click({ force: true });
+    await assertNotchAlignment(page, headerNav, 'become-a-seller');
+    await expect(circle).toBeVisible();
+
+    await headerNav.locator('[data-testid="liquid-nav-item-account"]').click({ force: true });
+    await expect(circle).toBeVisible();
+    await assertNotchAlignment(page, headerNav, 'account');
+
+    // 4. Account -> Seller (Reverse full span Skip jump)
+    await headerNav.locator('[data-testid="liquid-nav-item-become-a-seller"]').click({ force: true });
+    await expect(circle).toBeVisible();
+    await assertNotchAlignment(page, headerNav, 'become-a-seller');
+
+    // 5. Account -> Cart
+    await headerNav.locator('[data-testid="liquid-nav-item-account"]').click({ force: true });
+    await assertNotchAlignment(page, headerNav, 'account');
+    await expect(circle).toBeVisible();
+
+    await headerNav.locator('[data-testid="liquid-nav-item-cart"]').click({ force: true });
+    await expect(circle).toBeVisible();
+    await assertNotchAlignment(page, headerNav, 'cart');
+
+    // 6. Cart -> Wishlist
+    await headerNav.locator('[data-testid="liquid-nav-item-wishlist"]').click({ force: true });
+    await expect(circle).toBeVisible();
+    await assertNotchAlignment(page, headerNav, 'wishlist');
+
+    // Verify SVG path continuity & valid d attribute throughout
+    const pathD = await svgPath.getAttribute('d');
+    expect(pathD).not.toBeNull();
+    expect(pathD).toContain('M 0 0');
+    expect(pathD).toContain('Z');
   });
 
   // ---------------------------------------------------------------------------

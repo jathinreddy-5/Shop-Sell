@@ -1,4 +1,29 @@
 import 'reflect-metadata';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as dns from 'dns';
+dns.setDefaultResultOrder('ipv4first');
+
+// Ensure root .env variables are available to early constructors like DatabaseService
+for (const envFile of ['.env', '../../.env', '../.env']) {
+  const envPath = path.resolve(process.cwd(), envFile);
+  if (fs.existsSync(envPath)) {
+    const lines = fs.readFileSync(envPath, 'utf8').split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const eqIdx = trimmed.indexOf('=');
+      if (eqIdx > 0) {
+        const key = trimmed.slice(0, eqIdx).trim();
+        const val = trimmed.slice(eqIdx + 1).trim();
+        if (!process.env[key]) {
+          process.env[key] = val;
+        }
+      }
+    }
+  }
+}
+
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';

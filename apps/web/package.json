@@ -17,8 +17,9 @@
   "dependencies": {
     "@shop-sell/shared": "file:../../packages/shared",
     "clsx": "^2.1.1",
+    "firebase": "^12.19.0",
     "lucide-react": "^0.475.0",
-    "motion": "^13.5.0",
+    "motion": "^13.5.1",
     "next": "^15.1.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
