@@ -45,14 +45,12 @@ export class SupabaseAuthGuard implements CanActivate {
         }
       }
 
-      // Extract user claims and roles
+      // Extract user claims and roles (roles only from app_metadata or server-side tables)
       const appMetadata = decoded.app_metadata || {};
       const userMetadata = decoded.user_metadata || {};
       
       const roles: UserRole[] = Array.isArray(appMetadata.roles)
         ? appMetadata.roles
-        : Array.isArray(userMetadata.roles)
-        ? userMetadata.roles
         : ['customer'];
 
       const userPayload: AuthUserPayload = {

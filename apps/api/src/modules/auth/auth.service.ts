@@ -145,7 +145,6 @@ export class AuthService {
       roles,
       user_metadata: {
         full_name: profile.full_name || user.raw_user_meta_data?.full_name || null,
-        roles,
       },
       app_metadata: {
         provider: 'email',
@@ -217,7 +216,7 @@ export class AuthService {
       sub: userId,
       email: cleanEmail,
       roles: ['customer'],
-      user_metadata: { full_name: fullName.trim(), roles: ['customer'] },
+      user_metadata: { full_name: fullName.trim() },
       app_metadata: { provider: 'email', roles: ['customer'] },
     };
 
@@ -409,7 +408,7 @@ export class AuthService {
       email,
       phone: phone || undefined,
       roles,
-      user_metadata: { full_name: fullName, phone, roles },
+      user_metadata: { full_name: fullName, phone },
       app_metadata: { provider: isPhone ? 'sms_otp' : 'email_otp', roles },
     };
 
@@ -537,7 +536,7 @@ export class AuthService {
       email: user.email,
       role: 'authenticated',
       app_metadata: user.app_metadata || { provider: 'email', roles: user.roles },
-      user_metadata: user.user_metadata || { roles: user.roles },
+      user_metadata: user.user_metadata || {},
     };
     return jwt.sign(payload, this.jwtSecret, { expiresIn: '7d' });
   }
@@ -548,7 +547,7 @@ export class AuthService {
       email,
       roles,
       app_metadata: { provider: 'email', roles },
-      user_metadata: { roles },
+      user_metadata: {},
     };
     return this.generateToken(payload);
   }
