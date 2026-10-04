@@ -4,7 +4,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'motion/react';
-import { ShieldCheck, ArrowLeft, Mail, Lock, Eye, EyeOff, KeyRound } from 'lucide-react';
+import { ShieldCheck, ArrowLeft, Mail } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { OtpInput } from '@/components/auth/otp-input';
 import { LoadingThreeDotsJumping } from '@/components/loading';
@@ -15,19 +15,14 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get('redirect') || searchParams.get('returnUrl') || '/';
 
-  const { login, sendOtp, verifyOtp, loginAsDevRole } = useAuth();
+  const { sendOtp, verifyOtp, loginAsDevRole } = useAuth();
   const shouldReduceMotion = useReducedMotion();
 
-  // Email authentication method: 'password' | 'otp'
-  const [authMethod, setAuthMethod] = useState<'password' | 'otp'>('password');
-
-  // Screen step for OTP mode: 'input' | 'verify'
+  // Screen step: 'input' (enter email) | 'verify' (enter 6-digit code)
   const [step, setStep] = useState<'input' | 'verify'>('input');
 
   // Input states
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [activeIdentifier, setActiveIdentifier] = useState('');
   const [maskedTarget, setMaskedTarget] = useState('');
   const [otp, setOtp] = useState('');
@@ -59,35 +54,6 @@ function LoginForm() {
       return { error: 'Please enter a valid email address (e.g. name@example.com)' };
     }
     return { email: clean };
-  };
-
-  // Handle Login with Email & Password
-  const handlePasswordLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setInfoMessage(null);
-    setErrorMessage(null);
-
-    const check = validateEmail(email);
-    if (check.error) {
-      setErrorMessage(check.error);
-      return;
-    }
-
-    if (!password) {
-      setErrorMessage('Please enter your password');
-      return;
-    }
-
-    setIsSubmitting(true);
-    const res = await login(check.email!, password, turnstileToken);
-    setIsSubmitting(false);
-
-    if (res.success) {
-      const target = redirectUrl.startsWith('/') && !redirectUrl.startsWith('//') ? redirectUrl : '/';
-      router.push(target);
-    } else {
-      setErrorMessage(res.error || 'Invalid email or password. Please try again.');
-    }
   };
 
   // Handle Send OTP to Email
@@ -254,218 +220,70 @@ function LoginForm() {
         </div>
       )}
 
-      {/* STEP 1: EMAIL AUTHENTICATION (PASSWORD OR EMAIL OTP) */}
+      {/* STEP 1: EMAIL-ONLY AUTHENTICATION */}
       {step === 'input' && (
         <div className="space-y-4">
-          {/* Email Authentication Mode Switcher */}
-          <div className="flex rounded-2xl bg-slate-100 p-1 dark:bg-slate-800">
-            <button
-              type="button"
-              onClick={() => {
-                setAuthMethod('password');
-                setErrorMessage(null);
-              }}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs sm:text-sm font-semibold transition ${
-                authMethod === 'password'
-                  ? 'bg-white text-[#111827] shadow-sm dark:bg-slate-700 dark:text-white'
-                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
-              }`}
-            >
-              <Lock className="h-4 w-4" />
-              <span>Password</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setAuthMethod('otp');
-                setErrorMessage(null);
-              }}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs sm:text-sm font-semibold transition ${
-                authMethod === 'otp'
-                  ? 'bg-white text-[#111827] shadow-sm dark:bg-slate-700 dark:text-white'
-                  : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
-              }`}
-            >
-              <KeyRound className="h-4 w-4" />
-              <span>Email Code</span>
-            </button>
-          </div>
-
-          {/* METHOD A: Email & Password Sign In */}
-          {authMethod === 'password' ? (
-            <form onSubmit={handlePasswordLogin} className="space-y-4" noValidate>
-              {/* Email Address */}
-              <div>
-                <label
-                  htmlFor="email-input"
-                  className="block text-xs sm:text-sm font-semibold text-[#111827] dark:text-slate-200 mb-1.5"
-                >
-                  Email address
-                </label>
-                <div
-                  className={`relative flex items-center rounded-2xl border bg-white dark:bg-slate-800 transition-all duration-200 ${
-                    errorMessage && !password
-                      ? 'border-red-300 ring-2 ring-red-100 dark:border-red-800 dark:ring-red-950'
-                      : 'border-[#E2E8F0] focus-within:border-[#6D3DF5] focus-within:ring-2 focus-within:ring-[#6D3DF5]/20 dark:border-slate-700'
-                  }`}
-                >
-                  <div className="pl-3.5 pr-2 text-[#64748B] dark:text-slate-400">
-                    <Mail className="h-5 w-5" />
-                  </div>
-                  <input
-                    id="email-input"
-                    type="email"
-                    autoComplete="email"
-                    placeholder="name@example.com"
-                    value={email}
-                    onChange={(e) => {
-                      setErrorMessage(null);
-                      setEmail(e.target.value);
-                    }}
-                    aria-label="Email address"
-                    className="w-full bg-transparent px-2.5 py-3 text-base font-medium text-[#111827] placeholder-[#94A3B8] focus:outline-none dark:text-white dark:placeholder-slate-500"
-                  />
+          <form onSubmit={handleSendEmailOtp} className="space-y-4" noValidate>
+            <div>
+              <label
+                htmlFor="email-input"
+                className="block text-xs sm:text-sm font-semibold text-[#111827] dark:text-slate-200 mb-1.5"
+              >
+                Email address
+              </label>
+              <div
+                className={`relative flex items-center rounded-2xl border bg-white dark:bg-slate-800 transition-all duration-200 ${
+                  errorMessage
+                    ? 'border-red-300 ring-2 ring-red-100 dark:border-red-800 dark:ring-red-950'
+                    : 'border-[#E2E8F0] focus-within:border-[#6D3DF5] focus-within:ring-2 focus-within:ring-[#6D3DF5]/20 dark:border-slate-700'
+                }`}
+              >
+                <div className="pl-3.5 pr-2 text-[#64748B] dark:text-slate-400">
+                  <Mail className="h-5 w-5" />
                 </div>
-              </div>
-
-              {/* Password */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label
-                    htmlFor="password-input"
-                    className="block text-xs sm:text-sm font-semibold text-[#111827] dark:text-slate-200"
-                  >
-                    Password
-                  </label>
-                  <Link
-                    href="/forgot-password"
-                    className="text-xs font-semibold text-[#6D3DF5] hover:underline dark:text-purple-400"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
-                <div
-                  className={`relative flex items-center rounded-2xl border bg-white dark:bg-slate-800 transition-all duration-200 ${
-                    errorMessage && password
-                      ? 'border-red-300 ring-2 ring-red-100 dark:border-red-800 dark:ring-red-950'
-                      : 'border-[#E2E8F0] focus-within:border-[#6D3DF5] focus-within:ring-2 focus-within:ring-[#6D3DF5]/20 dark:border-slate-700'
-                  }`}
-                >
-                  <div className="pl-3.5 pr-2 text-[#64748B] dark:text-slate-400">
-                    <Lock className="h-5 w-5" />
-                  </div>
-                  <input
-                    id="password-input"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="current-password"
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => {
-                      setErrorMessage(null);
-                      setPassword(e.target.value);
-                    }}
-                    aria-label="Password"
-                    className="w-full bg-transparent px-2.5 py-3 text-base font-medium text-[#111827] placeholder-[#94A3B8] focus:outline-none dark:text-white dark:placeholder-slate-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    className="pr-3.5 text-[#64748B] hover:text-[#111827] dark:text-slate-400 dark:hover:text-white transition"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Cloudflare Turnstile */}
-              <div className="flex justify-center my-3">
-                <Turnstile
-                  siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
-                  onSuccess={(token) => setTurnstileToken(token)}
-                  onError={() => setTurnstileToken('')}
-                  onExpire={() => setTurnstileToken('')}
+                <input
+                  id="email-input"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="name@example.com"
+                  value={email}
+                  onChange={(e) => {
+                    setErrorMessage(null);
+                    setEmail(e.target.value);
+                  }}
+                  aria-label="Email address"
+                  className="w-full bg-transparent px-2.5 py-3 text-base font-medium text-[#111827] placeholder-[#94A3B8] focus:outline-none dark:text-white dark:placeholder-slate-500"
                 />
               </div>
+              <p className="mt-1.5 text-xs text-[#64748B] dark:text-slate-400">
+                We&apos;ll send a 6-digit one-time verification code directly to this email.
+              </p>
+            </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                data-testid="login-submit-btn"
-                disabled={isSubmitting}
-                className="relative flex w-full items-center justify-center rounded-2xl bg-[#6D3DF5] py-3.5 text-sm font-bold text-white shadow-lg shadow-[#6D3DF5]/25 transition duration-200 hover:bg-[#5B2FE0] focus:outline-none focus:ring-2 focus:ring-[#6D3DF5] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? (
-                  <LoadingThreeDotsJumping color="#FFFFFF" size={24} />
-                ) : (
-                  <span>Sign In</span>
-                )}
-              </button>
-            </form>
-          ) : (
-            /* METHOD B: Email Verification Code (OTP) */
-            <form onSubmit={handleSendEmailOtp} className="space-y-4" noValidate>
-              <div>
-                <label
-                  htmlFor="email-input"
-                  className="block text-xs sm:text-sm font-semibold text-[#111827] dark:text-slate-200 mb-1.5"
-                >
-                  Email address
-                </label>
-                <div
-                  className={`relative flex items-center rounded-2xl border bg-white dark:bg-slate-800 transition-all duration-200 ${
-                    errorMessage
-                      ? 'border-red-300 ring-2 ring-red-100 dark:border-red-800 dark:ring-red-950'
-                      : 'border-[#E2E8F0] focus-within:border-[#6D3DF5] focus-within:ring-2 focus-within:ring-[#6D3DF5]/20 dark:border-slate-700'
-                  }`}
-                >
-                  <div className="pl-3.5 pr-2 text-[#64748B] dark:text-slate-400">
-                    <Mail className="h-5 w-5" />
-                  </div>
-                  <input
-                    id="email-input"
-                    type="email"
-                    autoComplete="email"
-                    placeholder="name@example.com"
-                    value={email}
-                    onChange={(e) => {
-                      setErrorMessage(null);
-                      setEmail(e.target.value);
-                    }}
-                    aria-label="Email address"
-                    className="w-full bg-transparent px-2.5 py-3 text-base font-medium text-[#111827] placeholder-[#94A3B8] focus:outline-none dark:text-white dark:placeholder-slate-500"
-                  />
-                </div>
-                <p className="mt-1.5 text-xs text-[#64748B] dark:text-slate-400">
-                  We&apos;ll send a 6-digit one-time verification code directly to this email.
-                </p>
-              </div>
+            {/* Cloudflare Turnstile */}
+            <div className="flex justify-center my-3">
+              <Turnstile
+                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
+                onSuccess={(token) => setTurnstileToken(token)}
+                onError={() => setTurnstileToken('')}
+                onExpire={() => setTurnstileToken('')}
+              />
+            </div>
 
-              {/* Cloudflare Turnstile */}
-              <div className="flex justify-center my-3">
-                <Turnstile
-                  siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
-                  onSuccess={(token) => setTurnstileToken(token)}
-                  onError={() => setTurnstileToken('')}
-                  onExpire={() => setTurnstileToken('')}
-                />
-              </div>
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                data-testid="send-otp-btn"
-                disabled={isSubmitting}
-                className="relative flex w-full items-center justify-center rounded-2xl bg-[#6D3DF5] py-3.5 text-sm font-bold text-white shadow-lg shadow-[#6D3DF5]/25 transition duration-200 hover:bg-[#5B2FE0] focus:outline-none focus:ring-2 focus:ring-[#6D3DF5] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? (
-                  <LoadingThreeDotsJumping color="#FFFFFF" size={24} />
-                ) : (
-                  <span>Send Verification Code</span>
-                )}
-              </button>
-            </form>
-          )}
+            {/* Submit Button */}
+            <button
+              type="submit"
+              data-testid="send-otp-btn"
+              disabled={isSubmitting}
+              className="relative flex w-full items-center justify-center rounded-2xl bg-[#6D3DF5] py-3.5 text-sm font-bold text-white shadow-lg shadow-[#6D3DF5]/25 transition duration-200 hover:bg-[#5B2FE0] focus:outline-none focus:ring-2 focus:ring-[#6D3DF5] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? (
+                <LoadingThreeDotsJumping color="#FFFFFF" size={24} />
+              ) : (
+                <span>Continue with Email</span>
+              )}
+            </button>
+          </form>
 
           {/* Terms Agreement */}
           <p className="pt-1 text-center text-xs leading-relaxed text-[#64748B] dark:text-slate-400">
