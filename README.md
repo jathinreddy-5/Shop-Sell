@@ -69,7 +69,7 @@ cp .env.example .env
 | `SUPABASE_JWT_SECRET` | `dev-jwt-secret-min-32-chars-long!` | Supabase token signature secret (must match JWT_SECRET in dev) |
 | `INTERNAL_API_SECRET` | `dev-internal-api-secret-min-32-chars!` | Shared secret for trusted web-to-API proxy endpoints |
 | `LOG_HASH_KEY` | `dev-log-hash-key-min-32-chars-long!` | HMAC-SHA256 salt for GDPR-compliant PII log redaction |
-| `ENABLE_DEMO_ACCOUNTS` | `true` | Enables deterministic OTP bypass (`123456`) in dev mode |
+| `ENABLE_DEMO_ACCOUNTS` | `false` | Development flag for local testing accounts |
 | `UPSTASH_REDIS_REST_URL` | *(Optional in dev)* | Upstash Redis URL for distributed rate limiting & token blacklist |
 | `UPSTASH_REDIS_REST_TOKEN` | *(Optional in dev)* | Upstash REST authentication token |
 | `CLOUDFLARE_TURNSTILE_SECRET_KEY` | *(Optional in dev)* | Cloudflare Turnstile CAPTCHA secret |
