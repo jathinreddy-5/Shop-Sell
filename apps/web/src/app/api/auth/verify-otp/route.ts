@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyOriginAndHost } from '@/lib/security/csrf';
 import { getClientIp } from '@/lib/security/turnstile';
+import { checkOtpVerifyAttempts } from '@/lib/security/rate-limit';
 import { validateInternalApiSecret } from '@shop-sell/shared';
 
 export const runtime = 'nodejs';
@@ -23,6 +24,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Valid identifier and 6-digit verification code are required' },
         { status: 400 }
+      );
+    }
+
+    // 2. Verification attempt check (fails closed if Redis offline in production)
+    const rateCheck = await checkOtpVerifyAttempts(target);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        { success: false, error: rateCheck.error },
+        { status: rateCheck.status || 429 }
       );
     }
 

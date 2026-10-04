@@ -4,6 +4,7 @@ import {
   validateJwtSecret,
   validateDemoAccountsConfig,
   validateInternalApiSecret,
+  validateUpstashConfig,
 } from '@shop-sell/shared';
 import { verifyOriginAndHost } from './lib/security/csrf.ts';
 
@@ -15,6 +16,11 @@ function getJwtSecretKey(): Uint8Array {
   const validated = validateJwtSecret(secret, process.env.NODE_ENV);
   validateDemoAccountsConfig(
     process.env.ENABLE_DEMO_ACCOUNTS || process.env.NEXT_PUBLIC_ENABLE_DEMO_ACCOUNTS,
+    process.env.NODE_ENV
+  );
+  validateUpstashConfig(
+    process.env.UPSTASH_REDIS_REST_URL,
+    process.env.UPSTASH_REDIS_REST_TOKEN,
     process.env.NODE_ENV
   );
   return new TextEncoder().encode(validated);

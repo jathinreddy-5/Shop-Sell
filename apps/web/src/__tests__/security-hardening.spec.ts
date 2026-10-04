@@ -10,9 +10,9 @@ import {
   isCloudflareRequest,
   isCloudflareIp,
 } from '../lib/security/turnstile.ts';
-import { checkLoginRateLimit, resetLoginRateLimit } from '../lib/security/rate-limit.ts';
+import { checkLoginRateLimit, resetLoginRateLimit, checkRateLimit } from '../lib/security/rate-limit.ts';
 import { verifySellerAuth } from '../lib/auth/server-auth.ts';
-import { validateJwtSecret, validateDemoAccountsConfig } from '@shop-sell/shared';
+import { validateJwtSecret, validateDemoAccountsConfig, validateUpstashConfig } from '@shop-sell/shared';
 
 const TEST_JWT_SECRET = 'valid-super-secure-jwt-secret-string-at-least-32-chars-long';
 process.env.JWT_SECRET = TEST_JWT_SECRET;
@@ -438,6 +438,72 @@ describe('Security Hardening Test Suite (Next.js apps/web)', () => {
     } finally {
       process.env.NODE_ENV = prevNodeEnv;
       process.env.CLOUDFLARE_ORIGIN_SECRET = prevOriginSecret;
+    }
+  });
+
+  // 12. FIX 7: Rate limiter failure mode & Upstash startup check
+  it('should enforce startup presence of Upstash URL and token in production', () => {
+    // Missing URL
+    assert.throws(
+      () => validateUpstashConfig(undefined, 'valid-token-12345678', 'production'),
+      /UPSTASH_REDIS_REST_URL is missing/
+    );
+
+    // Missing Token
+    assert.throws(
+      () => validateUpstashConfig('https://my-redis.upstash.io', undefined, 'production'),
+      /UPSTASH_REDIS_REST_TOKEN is missing/
+    );
+
+    // Known placeholder token
+    assert.throws(
+      () => validateUpstashConfig('https://my-redis.upstash.io', 'your-upstash-rest-token', 'production'),
+      /UPSTASH_REDIS_REST_TOKEN is missing, empty, or placeholder/
+    );
+
+    // Valid configuration
+    const valid = validateUpstashConfig(
+      'https://my-redis.upstash.io',
+      'valid-real-upstash-rest-token-987654',
+      'production'
+    );
+    assert.strictEqual(valid?.url, 'https://my-redis.upstash.io');
+    assert.strictEqual(valid?.token, 'valid-real-upstash-rest-token-987654');
+  });
+
+  it('should fail closed (status 503, allowed false) on login when Upstash Redis is unreachable or errors in production', async () => {
+    const prevNodeEnv = process.env.NODE_ENV;
+    const prevUrl = process.env.UPSTASH_REDIS_REST_URL;
+    const prevToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+    const originalFetch = globalThis.fetch;
+
+    try {
+      process.env.NODE_ENV = 'production';
+      process.env.UPSTASH_REDIS_REST_URL = 'https://prod-redis.upstash.io';
+      process.env.UPSTASH_REDIS_REST_TOKEN = 'prod-token-valid-string-12345';
+
+      // Simulate network / Redis failure
+      globalThis.fetch = async (url: any) => {
+        if (typeof url === 'string' && url.includes('prod-redis.upstash.io')) {
+          throw new Error('Connection refused: Upstash Redis unreachable');
+        }
+        return originalFetch(url);
+      };
+
+      // 1. Password login check MUST fail closed (allowed: false, status: 503)
+      const loginCheck = await checkLoginRateLimit('target@example.com', '198.51.100.22');
+      assert.strictEqual(loginCheck.allowed, false, 'Login must fail closed when Redis fails in production');
+      assert.strictEqual(loginCheck.status, 503, 'Login rate limiter failure should return HTTP 503');
+      assert.ok(loginCheck.error?.includes('unavailable') || loginCheck.error?.includes('blocked'));
+
+      // 2. Low-risk route with failClosed: false should fail open
+      const lowRiskCheck = await checkRateLimit('rl:search:keyword', 20, 60, { failClosed: false });
+      assert.strictEqual(lowRiskCheck.allowed, true, 'Low-risk route should fail open when Redis fails');
+    } finally {
+      globalThis.fetch = originalFetch;
+      process.env.NODE_ENV = prevNodeEnv;
+      process.env.UPSTASH_REDIS_REST_URL = prevUrl;
+      process.env.UPSTASH_REDIS_REST_TOKEN = prevToken;
     }
   });
 });

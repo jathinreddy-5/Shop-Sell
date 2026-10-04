@@ -36,7 +36,10 @@ export async function POST(request: NextRequest) {
     // 3. Rate Limiting: 5 per hour per email & per IP
     const rateCheck = await checkOtpRequestRateLimit(target, clientIp);
     if (!rateCheck.allowed) {
-      return NextResponse.json({ success: false, error: rateCheck.error }, { status: 429 });
+      return NextResponse.json(
+        { success: false, error: rateCheck.error },
+        { status: rateCheck.status || 429 }
+      );
     }
 
     // 4. Forward to Backend Auth Service

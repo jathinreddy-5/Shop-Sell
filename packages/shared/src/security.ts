@@ -236,3 +236,46 @@ export function createProxyMiddleware(proxySecret: string, isTestEnv = false) {
     next();
   };
 }
+
+/**
+ * Validates that Upstash Redis REST URL and token are present and not placeholders in production.
+ */
+export function validateUpstashConfig(
+  url?: string,
+  token?: string,
+  nodeEnv?: string
+): { url: string; token: string } | undefined {
+  const env = nodeEnv || process.env.NODE_ENV || 'development';
+  const isProd = env === 'production';
+
+  if (!isProd) {
+    return url && token ? { url: url.trim(), token: token.trim() } : undefined;
+  }
+
+  if (
+    !url ||
+    typeof url !== 'string' ||
+    !url.trim() ||
+    url.includes('[YOUR-') ||
+    url.includes('example.com')
+  ) {
+    throw new Error(
+      'FATAL SECURITY ERROR: UPSTASH_REDIS_REST_URL is missing, empty, or placeholder in production.'
+    );
+  }
+
+  if (
+    !token ||
+    typeof token !== 'string' ||
+    !token.trim() ||
+    token.includes('[YOUR-') ||
+    token.includes('your-upstash')
+  ) {
+    throw new Error(
+      'FATAL SECURITY ERROR: UPSTASH_REDIS_REST_TOKEN is missing, empty, or placeholder in production.'
+    );
+  }
+
+  return { url: url.trim(), token: token.trim() };
+}
+

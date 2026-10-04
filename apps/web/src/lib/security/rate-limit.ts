@@ -1,21 +1,48 @@
+import { validateUpstashConfig } from '@shop-sell/shared';
+
 /**
  * Shared Rate Limiter for Shop:Sell
  * Backed by Upstash Redis REST or Redis / Database shared KV store.
  */
 
-interface RateLimitResult {
+export interface RateLimitResult {
   allowed: boolean;
   remaining: number;
   resetSeconds: number;
   totalAttempts: number;
+  status?: number;
+  error?: string;
+}
+
+export class RateLimiterStoreError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'RateLimiterStoreError';
+  }
+}
+
+/**
+ * Validates Upstash configuration at startup in production.
+ */
+export function validateRateLimiterStartup(): void {
+  validateUpstashConfig(
+    process.env.UPSTASH_REDIS_REST_URL,
+    process.env.UPSTASH_REDIS_REST_TOKEN,
+    process.env.NODE_ENV
+  );
 }
 
 /**
  * Executes a shared Redis command via Upstash REST or local fallback.
  */
 async function redisCommand(command: string[]): Promise<any> {
+  const isProd = process.env.NODE_ENV === 'production';
   const upstashUrl = process.env.UPSTASH_REDIS_REST_URL;
   const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (isProd) {
+    validateUpstashConfig(upstashUrl, upstashToken, 'production');
+  }
 
   if (upstashUrl && upstashToken && !upstashUrl.includes('[YOUR-')) {
     try {
@@ -28,9 +55,17 @@ async function redisCommand(command: string[]): Promise<any> {
         const data = await res.json();
         return data.result;
       }
+      throw new Error(`Upstash returned HTTP ${res.status}: ${res.statusText}`);
     } catch (err) {
+      if (isProd) {
+        console.error('[SECURITY ALERT] Upstash Redis rate limiter error in production:', err);
+        throw new RateLimiterStoreError('Upstash Redis store unreachable or returned error');
+      }
       console.warn('Upstash Redis REST call failed, attempting fallback store:', err);
     }
+  } else if (isProd) {
+    console.error('[SECURITY ALERT] Missing Upstash Redis configuration in production');
+    throw new RateLimiterStoreError('Upstash Redis unconfigured in production');
   }
 
   // Fallback to shared memory map if external Redis endpoint not configured in dev
@@ -82,80 +117,121 @@ function localSharedStore(command: string[]): any {
 
 /**
  * Checks and increments rate limit counter in the shared store.
+ * In production or when failClosed=true, storage failures fail closed (returning 503).
+ * Low-risk routes with failClosed=false log a warning and fail open.
  */
 export async function checkRateLimit(
   key: string,
   maxAttempts: number,
-  windowSeconds: number
+  windowSeconds: number,
+  options?: { failClosed?: boolean }
 ): Promise<RateLimitResult> {
-  const count = await redisCommand(['INCR', key]);
-  if (count === 1) {
-    await redisCommand(['EXPIRE', key, windowSeconds.toString()]);
+  try {
+    const count = await redisCommand(['INCR', key]);
+    if (count === 1) {
+      await redisCommand(['EXPIRE', key, windowSeconds.toString()]);
+    }
+    const ttl = await redisCommand(['TTL', key]);
+    const resetSeconds = typeof ttl === 'number' && ttl > 0 ? ttl : windowSeconds;
+
+    const allowed = count <= maxAttempts;
+    const remaining = Math.max(0, maxAttempts - count);
+
+    return {
+      allowed,
+      remaining,
+      resetSeconds,
+      totalAttempts: count,
+    };
+  } catch (err) {
+    const isProd = process.env.NODE_ENV === 'production';
+    const shouldFailClosed = options?.failClosed ?? isProd;
+
+    if (shouldFailClosed) {
+      console.error(`[SECURITY ALERT] Rate limiter failing CLOSED for key ${key}:`, err);
+      return {
+        allowed: false,
+        remaining: 0,
+        resetSeconds: windowSeconds,
+        totalAttempts: maxAttempts + 1,
+        status: 503,
+        error: 'Authentication rate limiter service is temporarily unavailable. Request blocked for security.',
+      };
+    }
+
+    console.warn(`[RATE LIMITER] Low-risk route failing OPEN for key ${key}:`, err);
+    return {
+      allowed: true,
+      remaining: 1,
+      resetSeconds: windowSeconds,
+      totalAttempts: 1,
+    };
   }
-  const ttl = await redisCommand(['TTL', key]);
-  const resetSeconds = typeof ttl === 'number' && ttl > 0 ? ttl : windowSeconds;
-
-  const allowed = count <= maxAttempts;
-  const remaining = Math.max(0, maxAttempts - count);
-
-  return {
-    allowed,
-    remaining,
-    resetSeconds,
-    totalAttempts: count,
-  };
 }
 
 /**
  * Resets a rate limit counter (e.g. upon successful authentication).
  */
 export async function resetRateLimit(key: string): Promise<void> {
-  await redisCommand(['DEL', key]);
+  try {
+    await redisCommand(['DEL', key]);
+  } catch (err) {
+    console.warn(`Failed to reset rate limit key ${key}:`, err);
+  }
 }
 
 /**
  * Rate limit helpers for specific auth vectors:
  */
 
-// 1. OTP Request (Max 5 per hour per email and per IP)
+// 1. OTP Request (Max 5 per hour per email and per IP - strictly fails closed in production)
 export async function checkOtpRequestRateLimit(emailOrPhone: string, ip: string) {
   const cleanId = emailOrPhone.trim().toLowerCase();
-  const emailLimit = await checkRateLimit(`rl:otp_req:id:${cleanId}`, 5, 3600);
-  const ipLimit = await checkRateLimit(`rl:otp_req:ip:${ip}`, 5, 3600);
+  const emailLimit = await checkRateLimit(`rl:otp_req:id:${cleanId}`, 5, 3600, { failClosed: true });
+  const ipLimit = await checkRateLimit(`rl:otp_req:ip:${ip}`, 5, 3600, { failClosed: true });
 
   if (!emailLimit.allowed) {
     return {
       allowed: false,
-      error: `Too many verification requests for this account. Please wait ${Math.ceil(emailLimit.resetSeconds / 60)} minutes.`,
+      status: emailLimit.status || 429,
+      error:
+        emailLimit.error ||
+        `Too many verification requests for this account. Please wait ${Math.ceil(emailLimit.resetSeconds / 60)} minutes.`,
     };
   }
 
   if (!ipLimit.allowed) {
     return {
       allowed: false,
-      error: `Too many verification requests from your network. Please wait ${Math.ceil(ipLimit.resetSeconds / 60)} minutes.`,
+      status: ipLimit.status || 429,
+      error:
+        ipLimit.error ||
+        `Too many verification requests from your network. Please wait ${Math.ceil(ipLimit.resetSeconds / 60)} minutes.`,
     };
   }
 
   return { allowed: true };
 }
 
-// 2. OTP Verification Attempts (Max 5 attempts per code, then lockout)
+// 2. OTP Verification Attempts (Max 5 attempts per code, then lockout - strictly fails closed in production)
 export async function checkOtpVerifyAttempts(identifier: string) {
   const cleanId = identifier.trim().toLowerCase();
-  const attempt = await checkRateLimit(`rl:otp_verify:id:${cleanId}`, 5, 600); // 10 minutes window
+  const attempt = await checkRateLimit(`rl:otp_verify:id:${cleanId}`, 5, 600, { failClosed: true });
 
   if (!attempt.allowed) {
     return {
       allowed: false,
-      error: 'Too many incorrect verification attempts. This code is locked out. Please request a new code.',
+      status: attempt.status || 429,
+      error:
+        attempt.error ||
+        'Too many incorrect verification attempts. This code is locked out. Please request a new code.',
     };
   }
 
   return { allowed: true, remaining: attempt.remaining };
 }
 
-// 3. Login Password Rate Limit & Throttling
+// 3. Login Password Rate Limit & Throttling (strictly fails closed in production)
 // Security Architecture:
 // Hard lockout is keyed to (email + IP) compound key: rl:login:lockout:${cleanEmail}:${cleanIp}
 // This prevents an external attacker from locking out a victim by spamming their email address.
@@ -167,29 +243,43 @@ export async function checkLoginRateLimit(email: string, ip: string) {
   const cleanIp = (ip || '127.0.0.1').trim();
 
   // 1. Compound key lockout: max 5 failed attempts per (email, IP) per 15 minutes
-  const compoundLimit = await checkRateLimit(`rl:login:lockout:${cleanEmail}:${cleanIp}`, 5, 900);
-
-  // 2. Per-IP limit: max 10 attempts across all accounts per 15 minutes
-  const ipLimit = await checkRateLimit(`rl:login:ip:${cleanIp}`, 10, 900);
-
-  // 1. Fail-fast check on lockout and IP limits before any delay to avoid holding excessive connections
+  const compoundLimit = await checkRateLimit(`rl:login:lockout:${cleanEmail}:${cleanIp}`, 5, 900, {
+    failClosed: true,
+  });
   if (!compoundLimit.allowed) {
     return {
       allowed: false,
-      error: `Account temporarily locked due to multiple failed login attempts. Please wait ${Math.ceil(compoundLimit.resetSeconds / 60)} minutes.`,
+      status: compoundLimit.status || 429,
+      error:
+        compoundLimit.error ||
+        `Account temporarily locked due to multiple failed login attempts. Please wait ${Math.ceil(compoundLimit.resetSeconds / 60)} minutes.`,
     };
   }
 
+  // 2. Per-IP limit: max 10 attempts across all accounts per 15 minutes
+  const ipLimit = await checkRateLimit(`rl:login:ip:${cleanIp}`, 10, 900, { failClosed: true });
   if (!ipLimit.allowed) {
     return {
       allowed: false,
-      error: `Too many login attempts from your IP. Please try again after ${Math.ceil(ipLimit.resetSeconds / 60)} minutes.`,
+      status: ipLimit.status || 429,
+      error:
+        ipLimit.error ||
+        `Too many login attempts from your IP. Please try again after ${Math.ceil(ipLimit.resetSeconds / 60)} minutes.`,
     };
   }
 
   // 2. Global email counter: progressive artificial delay when target has multiple attempts,
   // capped strictly at 1000ms (1s) to prevent holding excessive concurrent connections.
-  const emailCounter = await checkRateLimit(`rl:login:email_attempts:${cleanEmail}`, 100, 900);
+  const emailCounter = await checkRateLimit(`rl:login:email_attempts:${cleanEmail}`, 100, 900, {
+    failClosed: true,
+  });
+  if (!emailCounter.allowed) {
+    return {
+      allowed: false,
+      status: emailCounter.status || 429,
+      error: emailCounter.error || 'Too many login attempts for this account.',
+    };
+  }
   if (emailCounter.totalAttempts > 3) {
     const delayMs = Math.min(1000, (emailCounter.totalAttempts - 3) * 100);
     await new Promise((resolve) => setTimeout(resolve, delayMs));
