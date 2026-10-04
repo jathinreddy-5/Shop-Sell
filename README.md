@@ -1,4 +1,6 @@
+<a id="shopsell"></a>
 
+<div align="center">
 
 # 🛍️ Shop:Sell
 ### Multi-Vendor E-Commerce & Marketplace Platform
@@ -7,7 +9,6 @@
 
 Customers, sellers, and administrators on one marketplace engine: Next.js storefront, NestJS API, Supabase Postgres, Typesense search, Razorpay payments, and Cloudflare edge protection.
 
-[![CI](https://github.com/jathinreddy-5/Shop-Sell/actions/workflows/ci.yml/badge.svg)](https://github.com/jathinreddy-5/Shop-Sell/actions)
 [![Next.js 15](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)](https://nextjs.org/)
 [![React 18](https://img.shields.io/badge/React-18.3-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
