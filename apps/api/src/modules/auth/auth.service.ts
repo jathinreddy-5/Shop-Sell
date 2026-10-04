@@ -11,7 +11,14 @@ import {
 import * as jwt from 'jsonwebtoken';
 import * as crypto from 'crypto';
 import Redis from 'ioredis';
-import { AuthUserPayload, Profile, UserRole, validateJwtSecret } from '@shop-sell/shared';
+import {
+  AuthUserPayload,
+  Profile,
+  UserRole,
+  validateJwtSecret,
+  hashIdentifier,
+  logSecurityAlert,
+} from '@shop-sell/shared';
 import { DatabaseService } from '../../database/database.service';
 import { createRedisClient } from '../../common/redis';
 
@@ -183,6 +190,12 @@ export class AuthService implements OnModuleDestroy {
           'scrypt:00000000000000000000000000000000:00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
         );
       }
+      logSecurityAlert({
+        eventType: 'FAILED_LOGIN',
+        emailHash: hashIdentifier(cleanEmail),
+        reason: 'User not found or deleted',
+        path: '/api/auth/login',
+      });
       throw new UnauthorizedException('Invalid email or password');
     }
 
@@ -193,6 +206,12 @@ export class AuthService implements OnModuleDestroy {
       if (user.encrypted_password) {
         const isValid = await this.verifyPassword(password, user.encrypted_password);
         if (!isValid) {
+          logSecurityAlert({
+            eventType: 'FAILED_LOGIN',
+            emailHash: hashIdentifier(cleanEmail),
+            reason: 'Password mismatch',
+            path: '/api/auth/login',
+          });
           throw new UnauthorizedException('Invalid email or password');
         }
       } else {

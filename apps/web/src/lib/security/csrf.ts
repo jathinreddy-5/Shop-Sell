@@ -1,4 +1,6 @@
 import type { NextRequest } from 'next/server';
+import { logSecurityAlert } from '@shop-sell/shared';
+import { getClientIp } from './turnstile.ts';
 
 /**
  * Validates Origin, Host, and Sec-Fetch-Site headers on state-changing requests to prevent CSRF attacks.
@@ -27,11 +29,25 @@ export function verifyOriginAndHost(request: NextRequest): { valid: boolean; rea
     try {
       const originHost = new URL(origin).host.toLowerCase();
       if (originHost !== host) {
-        return { valid: false, reason: `Origin header mismatch (${originHost} vs ${host})` };
+        const reason = `Origin header mismatch (${originHost} vs ${host})`;
+        logSecurityAlert({
+          eventType: 'CSRF_REJECTION',
+          ip: getClientIp(request),
+          path: request.nextUrl?.pathname || request.url,
+          reason,
+        });
+        return { valid: false, reason };
       }
       return { valid: true };
     } catch {
-      return { valid: false, reason: 'Malformed Origin header' };
+      const reason = 'Malformed Origin header';
+      logSecurityAlert({
+        eventType: 'CSRF_REJECTION',
+        ip: getClientIp(request),
+        path: request.nextUrl?.pathname || request.url,
+        reason,
+      });
+      return { valid: false, reason };
     }
   }
 
@@ -46,10 +62,20 @@ export function verifyOriginAndHost(request: NextRequest): { valid: boolean; rea
     return { valid: true };
   }
 
+  const reason =
+    origin === 'null'
+      ? 'State-changing request with null Origin is rejected unless same-origin Sec-Fetch-Site'
+      : 'State-changing request missing Origin header without verified same-origin Sec-Fetch-Site';
+
+  logSecurityAlert({
+    eventType: 'CSRF_REJECTION',
+    ip: getClientIp(request),
+    path: request.nextUrl?.pathname || request.url,
+    reason,
+  });
+
   return {
     valid: false,
-    reason: origin === 'null'
-      ? 'State-changing request with null Origin is rejected unless same-origin Sec-Fetch-Site'
-      : 'State-changing request missing Origin header without verified same-origin Sec-Fetch-Site',
+    reason,
   };
 }

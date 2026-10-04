@@ -1,4 +1,4 @@
-import { validateUpstashConfig } from '@shop-sell/shared';
+import { validateUpstashConfig, hashIdentifier, logSecurityAlert } from '@shop-sell/shared';
 
 /**
  * Shared Rate Limiter for Shop:Sell
@@ -191,6 +191,12 @@ export async function checkOtpRequestRateLimit(emailOrPhone: string, ip: string)
   const ipLimit = await checkRateLimit(`rl:otp_req:ip:${ip}`, 5, 3600, { failClosed: true });
 
   if (!emailLimit.allowed) {
+    logSecurityAlert({
+      eventType: 'ACCOUNT_LOCKOUT',
+      emailHash: hashIdentifier(cleanId),
+      ip,
+      reason: 'OTP request rate limit exceeded for identifier',
+    });
     return {
       allowed: false,
       status: emailLimit.status || 429,
@@ -201,6 +207,11 @@ export async function checkOtpRequestRateLimit(emailOrPhone: string, ip: string)
   }
 
   if (!ipLimit.allowed) {
+    logSecurityAlert({
+      eventType: 'ACCOUNT_LOCKOUT',
+      ip,
+      reason: 'OTP request rate limit exceeded for IP',
+    });
     return {
       allowed: false,
       status: ipLimit.status || 429,
@@ -219,6 +230,11 @@ export async function checkOtpVerifyAttempts(identifier: string) {
   const attempt = await checkRateLimit(`rl:otp_verify:id:${cleanId}`, 5, 600, { failClosed: true });
 
   if (!attempt.allowed) {
+    logSecurityAlert({
+      eventType: 'ACCOUNT_LOCKOUT',
+      emailHash: hashIdentifier(cleanId),
+      reason: 'OTP verification locked out after maximum incorrect attempts',
+    });
     return {
       allowed: false,
       status: attempt.status || 429,
@@ -247,6 +263,12 @@ export async function checkLoginRateLimit(email: string, ip: string) {
     failClosed: true,
   });
   if (!compoundLimit.allowed) {
+    logSecurityAlert({
+      eventType: 'ACCOUNT_LOCKOUT',
+      emailHash: hashIdentifier(cleanEmail),
+      ip: cleanIp,
+      reason: 'Account compound lockout triggered after multiple failed login attempts',
+    });
     return {
       allowed: false,
       status: compoundLimit.status || 429,
@@ -259,6 +281,12 @@ export async function checkLoginRateLimit(email: string, ip: string) {
   // 2. Per-IP limit: max 10 attempts across all accounts per 15 minutes
   const ipLimit = await checkRateLimit(`rl:login:ip:${cleanIp}`, 10, 900, { failClosed: true });
   if (!ipLimit.allowed) {
+    logSecurityAlert({
+      eventType: 'ACCOUNT_LOCKOUT',
+      emailHash: hashIdentifier(cleanEmail),
+      ip: cleanIp,
+      reason: 'IP login rate limit exceeded across accounts',
+    });
     return {
       allowed: false,
       status: ipLimit.status || 429,

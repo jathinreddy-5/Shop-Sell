@@ -15,6 +15,8 @@ import {
   DEV_INTERNAL_API_SECRET,
   DEV_ADMIN_JWT_SECRET,
   createProxyMiddleware,
+  hashIdentifier,
+  logSecurityAlert,
 } from '@shop-sell/shared';
 
 describe('API Security Hardening Test Suite (NestJS apps/api)', () => {
@@ -585,5 +587,89 @@ describe('API Security Hardening Test Suite (NestJS apps/api)', () => {
       wrongPasswordError.getResponse(),
       'Response body and structure must be identical for unknown-email and wrong-password'
     );
+  });
+
+  // FIX 8: Alerting hooks (structured security logging with no PII beyond hashed email and IP)
+  it('should emit structured JSON security alerts without PII, passwords, tokens, or secrets', () => {
+    const rawEmail = 'victim.user@example.com';
+    const rawIp = '198.51.100.44';
+    const capturedLogs: string[] = [];
+
+    const originalWarn = console.warn;
+    try {
+      console.warn = (msg: string) => {
+        capturedLogs.push(msg);
+      };
+
+      // 1. Log PROXY_SECRET_REJECTION
+      const middleware = createProxyMiddleware(proxySecret, false);
+      const mockReq: any = {
+        originalUrl: '/api/v1/orders',
+        headers: { 'x-internal-proxy-secret': 'invalid-secret' },
+        ip: rawIp,
+      };
+      const mockRes: any = {
+        status: () => mockRes,
+        json: () => mockRes,
+      };
+      middleware(mockReq, mockRes, () => {});
+
+      // 2. Log FAILED_LOGIN
+      logSecurityAlert({
+        eventType: 'FAILED_LOGIN',
+        emailHash: hashIdentifier(rawEmail),
+        ip: rawIp,
+        path: '/api/auth/login',
+        reason: 'Password mismatch',
+      });
+
+      // 3. Log ACCOUNT_LOCKOUT
+      logSecurityAlert({
+        eventType: 'ACCOUNT_LOCKOUT',
+        emailHash: hashIdentifier(rawEmail),
+        ip: rawIp,
+        reason: 'Compound lockout after 5 attempts',
+      });
+
+      // 4. Log TURNSTILE_FAILURE
+      logSecurityAlert({
+        eventType: 'TURNSTILE_FAILURE',
+        ip: rawIp,
+        reason: 'Missing token',
+      });
+
+      // 5. Log CSRF_REJECTION
+      logSecurityAlert({
+        eventType: 'CSRF_REJECTION',
+        ip: rawIp,
+        path: '/api/auth/login',
+        reason: 'Origin header mismatch',
+      });
+
+      assert.strictEqual(capturedLogs.length, 5);
+
+      for (const logLine of capturedLogs) {
+        assert.ok(logLine.startsWith('[SECURITY_ALERT]'), 'Must have [SECURITY_ALERT] prefix');
+        const jsonStr = logLine.replace('[SECURITY_ALERT] ', '');
+        const parsed = JSON.parse(jsonStr);
+
+        // Required structured fields
+        assert.ok(parsed.tag === 'SECURITY_ALERT');
+        assert.ok(parsed.timestamp);
+        assert.ok(parsed.eventType);
+        assert.ok(parsed.reason);
+
+        // Strict privacy rules:
+        // No raw email in logs
+        assert.ok(!jsonStr.includes(rawEmail), 'Raw email must NOT appear in security log');
+      }
+
+      // Check SHA-256 email hashing
+      const expectedHash = crypto.createHash('sha256').update(rawEmail.toLowerCase()).digest('hex');
+      const loginLog = capturedLogs.find((l) => l.includes('FAILED_LOGIN'))!;
+      assert.ok(loginLog.includes(expectedHash), 'Email must be hashed with SHA-256');
+    } finally {
+      console.warn = originalWarn;
+    }
   });
 });

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyOriginAndHost } from '@/lib/security/csrf';
 import { verifyTurnstileToken, getClientIp } from '@/lib/security/turnstile';
 import { checkLoginRateLimit, resetLoginRateLimit } from '@/lib/security/rate-limit';
-import { validateInternalApiSecret } from '@shop-sell/shared';
+import { validateInternalApiSecret, hashIdentifier, logSecurityAlert } from '@shop-sell/shared';
 
 export const runtime = 'nodejs';
 
@@ -67,6 +67,13 @@ export async function POST(request: NextRequest) {
 
     const data = await res.json();
     if (!res.ok) {
+      logSecurityAlert({
+        eventType: 'FAILED_LOGIN',
+        emailHash: hashIdentifier(email),
+        ip: clientIp,
+        path: '/api/auth/login',
+        reason: data.message || 'Invalid email or password',
+      });
       // Generic error response to prevent user enumeration
       return NextResponse.json(
         { success: false, error: 'Invalid email or password' },

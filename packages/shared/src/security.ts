@@ -208,6 +208,50 @@ export function verifyProxySecret(incomingHeader: unknown, expectedSecret: strin
 }
 
 /**
+ * Hashes an identifier (email, phone, user ID) using SHA-256 to ensure no PII is logged.
+ */
+export function hashIdentifier(identifier?: string): string | undefined {
+  if (!identifier || typeof identifier !== 'string') return undefined;
+  const clean = identifier.trim().toLowerCase();
+  return crypto.createHash('sha256').update(clean, 'utf8').digest('hex');
+}
+
+export type SecurityEventType =
+  | 'FAILED_LOGIN'
+  | 'ACCOUNT_LOCKOUT'
+  | 'TURNSTILE_FAILURE'
+  | 'CSRF_REJECTION'
+  | 'PROXY_SECRET_REJECTION';
+
+export interface SecurityAlertEvent {
+  eventType: SecurityEventType;
+  ip?: string;
+  emailHash?: string;
+  reason: string;
+  path?: string;
+  metadata?: Record<string, string | number | boolean>;
+}
+
+/**
+ * Emits a structured security alert event in JSON format for SIEM and alerting.
+ * Strict privacy invariant: Never logs secrets, tokens, OTPs, or plain text credentials.
+ */
+export function logSecurityAlert(event: SecurityAlertEvent): void {
+  const structuredPayload = {
+    tag: 'SECURITY_ALERT',
+    timestamp: new Date().toISOString(),
+    eventType: event.eventType,
+    ip: event.ip || 'unknown',
+    emailHash: event.emailHash,
+    reason: event.reason,
+    path: event.path,
+    metadata: event.metadata,
+  };
+
+  console.warn(`[SECURITY_ALERT] ${JSON.stringify(structuredPayload)}`);
+}
+
+/**
  * Express middleware for apps/api to reject direct calls that lack the internal proxy secret.
  * Enforces timingSafeEqual comparison and server-side-only test bypass.
  */
@@ -226,6 +270,15 @@ export function createProxyMiddleware(proxySecret: string, isTestEnv = false) {
 
     const incomingSecret = req.headers ? req.headers['x-internal-proxy-secret'] : undefined;
     if (!verifyProxySecret(incomingSecret, proxySecret)) {
+      logSecurityAlert({
+        eventType: 'PROXY_SECRET_REJECTION',
+        ip:
+          req.ip ||
+          (req.headers && (req.headers['cf-connecting-ip'] || req.headers['x-forwarded-for'])) ||
+          'unknown',
+        path: rawPath,
+        reason: incomingSecret ? 'Invalid internal proxy secret' : 'Missing internal proxy secret header',
+      });
       return res.status(403).json({
         statusCode: 403,
         error: 'Forbidden',

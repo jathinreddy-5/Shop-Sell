@@ -105,6 +105,8 @@ export function getClientIp(request: NextRequest): string {
   return socketIp;
 }
 
+import { logSecurityAlert } from '@shop-sell/shared';
+
 /**
  * Verifies a Cloudflare Turnstile token server-side against Cloudflare API.
  * Never trusts client-side success alone.
@@ -114,6 +116,11 @@ export async function verifyTurnstileToken(
   clientIp?: string
 ): Promise<{ success: boolean; error?: string }> {
   if (!token || typeof token !== 'string' || !token.trim()) {
+    logSecurityAlert({
+      eventType: 'TURNSTILE_FAILURE',
+      ip: clientIp || 'unknown',
+      reason: 'Cloudflare Turnstile verification token is missing or empty',
+    });
     return { success: false, error: 'Cloudflare Turnstile verification token is missing' };
   }
 
@@ -150,12 +157,22 @@ export async function verifyTurnstileToken(
 
     if (!data.success) {
       const errList = data['error-codes']?.join(', ') || 'Verification failed';
+      logSecurityAlert({
+        eventType: 'TURNSTILE_FAILURE',
+        ip: clientIp || 'unknown',
+        reason: `Turnstile verification failed: ${errList}`,
+      });
       return { success: false, error: `Turnstile verification failed: ${errList}` };
     }
 
     return { success: true };
   } catch (err: any) {
     console.error('Turnstile verification network error:', err);
+    logSecurityAlert({
+      eventType: 'TURNSTILE_FAILURE',
+      ip: clientIp || 'unknown',
+      reason: 'Could not contact Turnstile verification service',
+    });
     return { success: false, error: 'Could not contact Turnstile verification service' };
   }
 }
