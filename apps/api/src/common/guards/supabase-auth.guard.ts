@@ -33,17 +33,8 @@ export class SupabaseAuthGuard implements CanActivate {
     const jwtSecret = process.env.SUPABASE_JWT_SECRET || 'super-secret-jwt-token-with-minimum-32-characters-long';
 
     try {
-      // In production/staging, verify signature with SUPABASE_JWT_SECRET
-      let decoded: any;
-      try {
-        decoded = jwt.verify(token, jwtSecret);
-      } catch (err) {
-        // Fallback to decode if secret mismatch in dev/mock tokens
-        decoded = jwt.decode(token);
-        if (!decoded || typeof decoded === 'string') {
-          throw new UnauthorizedException('Invalid JWT token');
-        }
-      }
+      // Cryptographically verify token signature and expiration
+      const decoded: any = jwt.verify(token, jwtSecret, { algorithms: ['HS256'] });
 
       // Extract user claims and roles (roles only from app_metadata or server-side tables)
       const appMetadata = decoded.app_metadata || {};

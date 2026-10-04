@@ -4,35 +4,34 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion, useReducedMotion } from 'motion/react';
-import { ShieldCheck, ArrowLeft, Mail, Phone, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, ArrowLeft, Mail, Lock, Eye, EyeOff, KeyRound } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { OtpInput } from '@/components/auth/otp-input';
 import { LoadingThreeDotsJumping } from '@/components/loading';
-import { sendFirebasePhoneOtp, confirmFirebasePhoneOtp } from '@/lib/firebase/phone-auth';
+import { Turnstile } from '@marsidev/react-turnstile';
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get('redirect') || searchParams.get('returnUrl') || '/';
 
-  const { sendOtp, verifyOtp, loginAsDevRole } = useAuth();
+  const { login, sendOtp, verifyOtp, loginAsDevRole } = useAuth();
   const shouldReduceMotion = useReducedMotion();
 
-  // Mode: 'email' | 'phone'
-  const modeParam = searchParams.get('mode');
-  const [authMode, setAuthMode] = useState<'email' | 'phone'>(
-    modeParam === 'phone' ? 'phone' : 'email'
-  );
+  // Email authentication method: 'password' | 'otp'
+  const [authMethod, setAuthMethod] = useState<'password' | 'otp'>('password');
 
-  // Screen step: 'input' | 'verify'
+  // Screen step for OTP mode: 'input' | 'verify'
   const [step, setStep] = useState<'input' | 'verify'>('input');
 
   // Input states
   const [email, setEmail] = useState('');
-  const [phoneRaw, setPhoneRaw] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [activeIdentifier, setActiveIdentifier] = useState('');
   const [maskedTarget, setMaskedTarget] = useState('');
   const [otp, setOtp] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState('');
 
   // Status & feedback
   const [countdown, setCountdown] = useState(30);
@@ -41,7 +40,7 @@ function LoginForm() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
-  // Resend countdown timer
+  // Resend countdown timer for OTP
   useEffect(() => {
     if (step !== 'verify' || countdown <= 0) return;
     const interval = setInterval(() => {
@@ -50,25 +49,7 @@ function LoginForm() {
     return () => clearInterval(interval);
   }, [step, countdown]);
 
-  // Format phone display with Indian format (e.g. "98765 43210")
-  const formatPhone = (val: string) => {
-    let digits = val.replace(/\D/g, '');
-    if (digits.startsWith('91') && digits.length > 10) {
-      digits = digits.slice(2);
-    } else if (digits.startsWith('0') && digits.length > 10) {
-      digits = digits.slice(1);
-    }
-    digits = digits.slice(0, 10);
-    if (digits.length <= 5) return digits;
-    return `${digits.slice(0, 5)} ${digits.slice(5)}`;
-  };
-
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setErrorMessage(null);
-    setPhoneRaw(formatPhone(e.target.value));
-  };
-
-  // Helper to validate email
+  // Helper to validate email format
   const validateEmail = (val: string): { email?: string; error?: string } => {
     const clean = val.trim().toLowerCase();
     if (!clean) {
@@ -80,56 +61,56 @@ function LoginForm() {
     return { email: clean };
   };
 
-  // Helper to validate and normalize Indian mobile number
-  const validatePhone = (raw: string): { phone?: string; error?: string } => {
-    const digits = raw.replace(/\D/g, '');
-    if (!digits) {
-      return { error: 'Please enter your mobile number' };
+  // Handle Login with Email & Password
+  const handlePasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setInfoMessage(null);
+    setErrorMessage(null);
+
+    const check = validateEmail(email);
+    if (check.error) {
+      setErrorMessage(check.error);
+      return;
     }
-    if (!/^[6-9]\d{9}$/.test(digits)) {
-      return {
-        error: 'Please enter a valid 10-digit Indian mobile number (e.g. 98765 43210)',
-      };
+
+    if (!password) {
+      setErrorMessage('Please enter your password');
+      return;
     }
-    return { phone: `+91${digits}` };
+
+    setIsSubmitting(true);
+    const res = await login(check.email!, password, turnstileToken);
+    setIsSubmitting(false);
+
+    if (res.success) {
+      const target = redirectUrl.startsWith('/') && !redirectUrl.startsWith('//') ? redirectUrl : '/';
+      router.push(target);
+    } else {
+      setErrorMessage(res.error || 'Invalid email or password. Please try again.');
+    }
   };
 
-  // Handle Send OTP
-  const handleSendOtp = async (e?: React.FormEvent) => {
+  // Handle Send OTP to Email
+  const handleSendEmailOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setInfoMessage(null);
     setErrorMessage(null);
 
-    let identifierToSend = '';
-
-    if (authMode === 'email') {
-      const check = validateEmail(email);
-      if (check.error) {
-        setErrorMessage(check.error);
-        return;
-      }
-      identifierToSend = check.email!;
-    } else {
-      const check = validatePhone(phoneRaw);
-      if (check.error) {
-        setErrorMessage(check.error);
-        return;
-      }
-      identifierToSend = check.phone!;
-      // Optional Firebase phone delivery
-      sendFirebasePhoneOtp(check.phone!).catch(() => {});
+    const check = validateEmail(email);
+    if (check.error) {
+      setErrorMessage(check.error);
+      return;
     }
 
+    const emailToSend = check.email!;
+
     setIsSubmitting(true);
-    const res = await sendOtp(identifierToSend);
+    const res = await sendOtp(emailToSend, turnstileToken);
     setIsSubmitting(false);
 
     if (res.success) {
-      const masked = res.phone || (authMode === 'email'
-        ? identifierToSend.replace(/(.{1,2})(.*)(@.*)/, '$1***$3')
-        : `+91 ••••••${identifierToSend.slice(-4)}`);
-
-      setActiveIdentifier(identifierToSend);
+      const masked = res.phone || emailToSend.replace(/(.{1,2})(.*)(@.*)/, '$1***$3');
+      setActiveIdentifier(emailToSend);
       setMaskedTarget(masked);
       setCountdown(res.cooldownSeconds || 30);
       setOtp('');
@@ -151,20 +132,7 @@ function LoginForm() {
     }
 
     setIsSubmitting(true);
-
-    let isFirebaseVerified = false;
-    if (authMode === 'phone') {
-      try {
-        const fbRes = await confirmFirebasePhoneOtp(otp);
-        if (fbRes.success) {
-          isFirebaseVerified = true;
-        }
-      } catch (fbErr) {
-        console.info('Firebase verification check note:', fbErr);
-      }
-    }
-
-    const res = await verifyOtp(activeIdentifier, otp, isFirebaseVerified);
+    const res = await verifyOtp(activeIdentifier, otp, false);
     setIsSubmitting(false);
 
     if (res.success) {
@@ -175,24 +143,19 @@ function LoginForm() {
     }
   };
 
-  // Handle Resend OTP
+  // Handle Resend OTP to Email
   const handleResendOtp = async () => {
     if (countdown > 0 || isResending) return;
     setErrorMessage(null);
     setInfoMessage(null);
     setIsResending(true);
 
-    if (authMode === 'phone') {
-      sendFirebasePhoneOtp(activeIdentifier).catch(() => {});
-    }
     const res = await sendOtp(activeIdentifier);
     setIsResending(false);
 
     if (res.success) {
       setCountdown(res.cooldownSeconds || 30);
-      setInfoMessage(authMode === 'email'
-        ? 'A fresh verification code has been delivered to your email inbox.'
-        : 'A new verification code has been dispatched via SMS.');
+      setInfoMessage('A fresh verification code has been delivered to your email inbox.');
       setOtp('');
     } else {
       setErrorMessage(res.error || 'Failed to resend code. Please try again.');
@@ -206,13 +169,13 @@ function LoginForm() {
       const returnTarget = window.location.origin + redirectUrl;
       window.location.href = `${supabaseUrl}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(returnTarget)}`;
     } else {
-      setErrorMessage('Google OAuth is in configuration. Please sign in with your email or mobile number.');
+      setErrorMessage('Google OAuth is in configuration. Please sign in with your email address.');
     }
   };
 
   return (
     <motion.div
-      initial={false}
+      initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: 'easeOut' }}
       className="w-full rounded-3xl border border-[#E2E8F0] bg-white p-6 sm:p-10 shadow-xl shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none"
@@ -234,9 +197,7 @@ function LoginForm() {
               Welcome back
             </h1>
             <p className="mt-1.5 text-xs sm:text-sm text-[#64748B] dark:text-slate-400">
-              {authMode === 'email'
-                ? 'Sign in to Shop:Sell using your email address.'
-                : 'Sign in to Shop:Sell using your mobile number.'}
+              Sign in to Shop:Sell using your email address.
             </p>
           </>
         ) : (
@@ -245,12 +206,10 @@ function LoginForm() {
               <ShieldCheck className="h-5 w-5" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#111827] dark:text-white">
-              {authMode === 'email' ? 'Check your inbox' : 'Verify your number'}
+              Check your inbox
             </h1>
             <p className="mt-1 text-xs sm:text-sm text-[#64748B] dark:text-slate-400">
-              {authMode === 'email'
-                ? 'We sent a 6-digit verification code to your email:'
-                : 'We sent a 6-digit verification code to:'}
+              We sent a 6-digit verification code to your email:
             </p>
             <div className="mt-1 flex items-center justify-center gap-2">
               <span className="font-semibold text-sm text-[#111827] dark:text-white">
@@ -295,133 +254,218 @@ function LoginForm() {
         </div>
       )}
 
-      {/* Invisible reCAPTCHA container for Firebase Phone Auth - remains mounted across step transitions */}
-      <div id="recaptcha-container" />
-
-      {/* STEP 1: IDENTIFIER INPUT (EMAIL OR PHONE) */}
+      {/* STEP 1: EMAIL AUTHENTICATION (PASSWORD OR EMAIL OTP) */}
       {step === 'input' && (
-        <form onSubmit={handleSendOtp} className="space-y-4" noValidate>
-          {/* Auth Method Switcher Tabs */}
+        <div className="space-y-4">
+          {/* Email Authentication Mode Switcher */}
           <div className="flex rounded-2xl bg-slate-100 p-1 dark:bg-slate-800">
             <button
               type="button"
               onClick={() => {
-                setAuthMode('email');
+                setAuthMethod('password');
                 setErrorMessage(null);
               }}
               className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs sm:text-sm font-semibold transition ${
-                authMode === 'email'
+                authMethod === 'password'
                   ? 'bg-white text-[#111827] shadow-sm dark:bg-slate-700 dark:text-white'
                   : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
               }`}
             >
-              <Mail className="h-4 w-4" />
-              <span>Email</span>
+              <Lock className="h-4 w-4" />
+              <span>Password</span>
             </button>
             <button
               type="button"
               onClick={() => {
-                setAuthMode('phone');
+                setAuthMethod('otp');
                 setErrorMessage(null);
               }}
               className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs sm:text-sm font-semibold transition ${
-                authMode === 'phone'
+                authMethod === 'otp'
                   ? 'bg-white text-[#111827] shadow-sm dark:bg-slate-700 dark:text-white'
                   : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
               }`}
             >
-              <Phone className="h-4 w-4" />
-              <span>Mobile SMS</span>
+              <KeyRound className="h-4 w-4" />
+              <span>Email Code</span>
             </button>
           </div>
 
-          {authMode === 'email' ? (
-            <div>
-              <label
-                htmlFor="email-input"
-                className="block text-xs sm:text-sm font-semibold text-[#111827] dark:text-slate-200 mb-1.5"
-              >
-                Email address
-              </label>
-              <div
-                className={`relative flex items-center rounded-2xl border bg-white dark:bg-slate-800 transition-all duration-200 ${
-                  errorMessage
-                    ? 'border-red-300 ring-2 ring-red-100 dark:border-red-800 dark:ring-red-950'
-                    : 'border-[#E2E8F0] focus-within:border-[#6D3DF5] focus-within:ring-2 focus-within:ring-[#6D3DF5]/20 dark:border-slate-700'
-                }`}
-              >
-                <div className="pl-3.5 pr-2 text-[#64748B] dark:text-slate-400">
-                  <Mail className="h-5 w-5" />
+          {/* METHOD A: Email & Password Sign In */}
+          {authMethod === 'password' ? (
+            <form onSubmit={handlePasswordLogin} className="space-y-4" noValidate>
+              {/* Email Address */}
+              <div>
+                <label
+                  htmlFor="email-input"
+                  className="block text-xs sm:text-sm font-semibold text-[#111827] dark:text-slate-200 mb-1.5"
+                >
+                  Email address
+                </label>
+                <div
+                  className={`relative flex items-center rounded-2xl border bg-white dark:bg-slate-800 transition-all duration-200 ${
+                    errorMessage && !password
+                      ? 'border-red-300 ring-2 ring-red-100 dark:border-red-800 dark:ring-red-950'
+                      : 'border-[#E2E8F0] focus-within:border-[#6D3DF5] focus-within:ring-2 focus-within:ring-[#6D3DF5]/20 dark:border-slate-700'
+                  }`}
+                >
+                  <div className="pl-3.5 pr-2 text-[#64748B] dark:text-slate-400">
+                    <Mail className="h-5 w-5" />
+                  </div>
+                  <input
+                    id="email-input"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="name@example.com"
+                    value={email}
+                    onChange={(e) => {
+                      setErrorMessage(null);
+                      setEmail(e.target.value);
+                    }}
+                    aria-label="Email address"
+                    className="w-full bg-transparent px-2.5 py-3 text-base font-medium text-[#111827] placeholder-[#94A3B8] focus:outline-none dark:text-white dark:placeholder-slate-500"
+                  />
                 </div>
-                <input
-                  id="email-input"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="jathinreddy105@gmail.com"
-                  value={email}
-                  onChange={(e) => {
-                    setErrorMessage(null);
-                    setEmail(e.target.value);
-                  }}
-                  aria-label="Email address"
-                  className="w-full bg-transparent px-2.5 py-3 text-base font-medium text-[#111827] placeholder-[#64748B] focus:outline-none dark:text-white dark:placeholder-slate-500"
+              </div>
+
+              {/* Password */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label
+                    htmlFor="password-input"
+                    className="block text-xs sm:text-sm font-semibold text-[#111827] dark:text-slate-200"
+                  >
+                    Password
+                  </label>
+                  <Link
+                    href="/forgot-password"
+                    className="text-xs font-semibold text-[#6D3DF5] hover:underline dark:text-purple-400"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+                <div
+                  className={`relative flex items-center rounded-2xl border bg-white dark:bg-slate-800 transition-all duration-200 ${
+                    errorMessage && password
+                      ? 'border-red-300 ring-2 ring-red-100 dark:border-red-800 dark:ring-red-950'
+                      : 'border-[#E2E8F0] focus-within:border-[#6D3DF5] focus-within:ring-2 focus-within:ring-[#6D3DF5]/20 dark:border-slate-700'
+                  }`}
+                >
+                  <div className="pl-3.5 pr-2 text-[#64748B] dark:text-slate-400">
+                    <Lock className="h-5 w-5" />
+                  </div>
+                  <input
+                    id="password-input"
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => {
+                      setErrorMessage(null);
+                      setPassword(e.target.value);
+                    }}
+                    aria-label="Password"
+                    className="w-full bg-transparent px-2.5 py-3 text-base font-medium text-[#111827] placeholder-[#94A3B8] focus:outline-none dark:text-white dark:placeholder-slate-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    className="pr-3.5 text-[#64748B] hover:text-[#111827] dark:text-slate-400 dark:hover:text-white transition"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Cloudflare Turnstile */}
+              <div className="flex justify-center my-3">
+                <Turnstile
+                  siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
+                  onSuccess={(token) => setTurnstileToken(token)}
+                  onError={() => setTurnstileToken('')}
+                  onExpire={() => setTurnstileToken('')}
                 />
               </div>
-            </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                data-testid="login-submit-btn"
+                disabled={isSubmitting}
+                className="relative flex w-full items-center justify-center rounded-2xl bg-[#6D3DF5] py-3.5 text-sm font-bold text-white shadow-lg shadow-[#6D3DF5]/25 transition duration-200 hover:bg-[#5B2FE0] focus:outline-none focus:ring-2 focus:ring-[#6D3DF5] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <LoadingThreeDotsJumping color="#FFFFFF" size={24} />
+                ) : (
+                  <span>Sign In</span>
+                )}
+              </button>
+            </form>
           ) : (
-            <div>
-              <label
-                htmlFor="phone-input"
-                className="block text-xs sm:text-sm font-semibold text-[#111827] dark:text-slate-200 mb-1.5"
-              >
-                Mobile number
-              </label>
-              <div
-                className={`relative flex items-center rounded-2xl border bg-white dark:bg-slate-800 transition-all duration-200 ${
-                  errorMessage
-                    ? 'border-red-300 ring-2 ring-red-100 dark:border-red-800 dark:ring-red-950'
-                    : 'border-[#E2E8F0] focus-within:border-[#6D3DF5] focus-within:ring-2 focus-within:ring-[#6D3DF5]/20 dark:border-slate-700'
-                }`}
-              >
-                {/* Country Code Selector Pill */}
-                <div className="flex items-center gap-1.5 border-r border-[#E2E8F0] px-3.5 py-3 text-sm font-semibold text-[#111827] dark:border-slate-700 dark:text-white select-none">
-                  <span className="text-base" role="img" aria-label="India flag">
-                    🇮🇳
-                  </span>
-                  <span>+91</span>
+            /* METHOD B: Email Verification Code (OTP) */
+            <form onSubmit={handleSendEmailOtp} className="space-y-4" noValidate>
+              <div>
+                <label
+                  htmlFor="email-input"
+                  className="block text-xs sm:text-sm font-semibold text-[#111827] dark:text-slate-200 mb-1.5"
+                >
+                  Email address
+                </label>
+                <div
+                  className={`relative flex items-center rounded-2xl border bg-white dark:bg-slate-800 transition-all duration-200 ${
+                    errorMessage
+                      ? 'border-red-300 ring-2 ring-red-100 dark:border-red-800 dark:ring-red-950'
+                      : 'border-[#E2E8F0] focus-within:border-[#6D3DF5] focus-within:ring-2 focus-within:ring-[#6D3DF5]/20 dark:border-slate-700'
+                  }`}
+                >
+                  <div className="pl-3.5 pr-2 text-[#64748B] dark:text-slate-400">
+                    <Mail className="h-5 w-5" />
+                  </div>
+                  <input
+                    id="email-input"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="name@example.com"
+                    value={email}
+                    onChange={(e) => {
+                      setErrorMessage(null);
+                      setEmail(e.target.value);
+                    }}
+                    aria-label="Email address"
+                    className="w-full bg-transparent px-2.5 py-3 text-base font-medium text-[#111827] placeholder-[#94A3B8] focus:outline-none dark:text-white dark:placeholder-slate-500"
+                  />
                 </div>
+                <p className="mt-1.5 text-xs text-[#64748B] dark:text-slate-400">
+                  We&apos;ll send a 6-digit one-time verification code directly to this email.
+                </p>
+              </div>
 
-                {/* Number Input */}
-                <input
-                  id="phone-input"
-                  type="tel"
-                  inputMode="numeric"
-                  autoComplete="tel"
-                  placeholder="98765 43210"
-                  value={phoneRaw}
-                  onChange={handlePhoneChange}
-                  maxLength={11}
-                  aria-label="Mobile number"
-                  className="w-full bg-transparent px-3.5 py-3 text-base font-medium tracking-wide text-[#111827] placeholder-[#64748B] focus:outline-none dark:text-white dark:placeholder-slate-500"
+              {/* Cloudflare Turnstile */}
+              <div className="flex justify-center my-3">
+                <Turnstile
+                  siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
+                  onSuccess={(token) => setTurnstileToken(token)}
+                  onError={() => setTurnstileToken('')}
+                  onExpire={() => setTurnstileToken('')}
                 />
               </div>
-            </div>
-          )}
 
-          {/* Submit Button */}
-          <button
-            type="button"
-            data-testid="send-otp-btn"
-            onClick={() => handleSendOtp()}
-            disabled={isSubmitting}
-            className="relative flex w-full items-center justify-center rounded-2xl bg-[#6D3DF5] py-3.5 text-sm font-bold text-white shadow-lg shadow-[#6D3DF5]/25 transition duration-200 hover:bg-[#5B2FE0] focus:outline-none focus:ring-2 focus:ring-[#6D3DF5] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {isSubmitting ? (
-              <LoadingThreeDotsJumping color="#FFFFFF" size={24} />
-            ) : (
-              <span>{authMode === 'email' ? 'Send Verification Code' : 'Send OTP'}</span>
-            )}
-          </button>
+              {/* Submit Button */}
+              <button
+                type="submit"
+                data-testid="send-otp-btn"
+                disabled={isSubmitting}
+                className="relative flex w-full items-center justify-center rounded-2xl bg-[#6D3DF5] py-3.5 text-sm font-bold text-white shadow-lg shadow-[#6D3DF5]/25 transition duration-200 hover:bg-[#5B2FE0] focus:outline-none focus:ring-2 focus:ring-[#6D3DF5] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <LoadingThreeDotsJumping color="#FFFFFF" size={24} />
+                ) : (
+                  <span>Send Verification Code</span>
+                )}
+              </button>
+            </form>
+          )}
 
           {/* Terms Agreement */}
           <p className="pt-1 text-center text-xs leading-relaxed text-[#64748B] dark:text-slate-400">
@@ -436,7 +480,7 @@ function LoginForm() {
             .
           </p>
 
-          {/* Optional Google Divider */}
+          {/* Google Divider */}
           <div className="relative my-6 text-center">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-[#E2E8F0] dark:border-slate-800" />
@@ -448,7 +492,7 @@ function LoginForm() {
             </div>
           </div>
 
-          {/* Continue with Google (Secondary Option) */}
+          {/* Continue with Google */}
           <button
             type="button"
             onClick={handleGoogleLogin}
@@ -475,51 +519,62 @@ function LoginForm() {
             <span>Continue with Google</span>
           </button>
 
-          {/* Quick Demo Sign-In for testing & local development */}
-          <div className="mt-5 rounded-2xl border border-dashed border-[#6D3DF5]/30 bg-[#6D3DF5]/5 p-3.5 text-center dark:border-purple-800 dark:bg-purple-950/20">
-            <p className="text-xs font-semibold text-[#6D3DF5] dark:text-purple-300 mb-2">
-              ⚡ Quick Demo Sign-In (1-Click)
-            </p>
-            <div className="flex items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={async () => {
-                  await loginAsDevRole('customer');
-                  const target = redirectUrl.startsWith('/') && !redirectUrl.startsWith('//') ? redirectUrl : '/';
-                  router.push(target);
-                }}
-                className="rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-[#111827] shadow-sm border border-slate-200 hover:bg-slate-50 transition dark:bg-slate-800 dark:text-white dark:border-slate-700"
-              >
-                Customer
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  await loginAsDevRole('owner');
-                  const target = redirectUrl.startsWith('/') && !redirectUrl.startsWith('//') ? redirectUrl : '/seller';
-                  router.push(target);
-                }}
-                className="rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-amber-700 shadow-sm border border-amber-200 hover:bg-amber-50 transition dark:bg-slate-800 dark:text-amber-300 dark:border-amber-800"
-              >
-                Seller
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  await loginAsDevRole('admin');
-                  const target = redirectUrl.startsWith('/') && !redirectUrl.startsWith('//') ? redirectUrl : '/admin';
-                  router.push(target);
-                }}
-                className="rounded-xl bg-white px-3 py-1.5 text-xs font-bold text-purple-700 shadow-sm border border-purple-200 hover:bg-purple-50 transition dark:bg-slate-800 dark:text-purple-300 dark:border-purple-800"
-              >
-                Admin
-              </button>
+          {/* Quick Demo Sign-In strictly gated for development/testing */}
+          {process.env.NEXT_PUBLIC_ENABLE_DEMO_ACCOUNTS === 'true' && (
+            <div className="mt-5 rounded-2xl border border-dashed border-[#6D3DF5]/30 bg-[#6D3DF5]/5 p-3.5 text-center dark:border-purple-800 dark:bg-purple-950/20">
+              <p className="text-xs font-semibold text-[#6D3DF5] dark:text-purple-300 mb-2">
+                ⚡ Quick Demo Sign-In (Dev Only)
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await loginAsDevRole('owner', 'demo-seller@shopsell.test');
+                    router.push('/seller');
+                  }}
+                  className="rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition"
+                >
+                  🏬 Demo Seller
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await loginAsDevRole('customer');
+                    const target = redirectUrl.startsWith('/') && !redirectUrl.startsWith('//') ? redirectUrl : '/';
+                    router.push(target);
+                  }}
+                  className="rounded-xl bg-white px-3.5 py-1.5 text-xs font-bold text-[#111827] shadow-sm border border-slate-200 hover:bg-slate-50 transition dark:bg-slate-800 dark:text-white dark:border-slate-700"
+                >
+                  👤 Customer
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await loginAsDevRole('admin', 'demo-admin@shopsell.test');
+                    router.push('/admin');
+                  }}
+                  className="rounded-xl bg-purple-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-purple-700 transition"
+                >
+                  🛡️ Demo Admin
+                </button>
+              </div>
             </div>
+          )}
+
+          {/* Don't have an account? Sign up */}
+          <div className="pt-2 text-center text-xs text-[#64748B] dark:text-slate-400">
+            Don&apos;t have an account?{' '}
+            <Link
+              href={`/signup${redirectUrl && redirectUrl !== '/' ? `?redirect=${encodeURIComponent(redirectUrl)}` : ''}`}
+              className="font-bold text-[#6D3DF5] hover:text-[#5B2FE0] hover:underline"
+            >
+              Sign up
+            </Link>
           </div>
-        </form>
+        </div>
       )}
 
-      {/* STEP 2: 6-DIGIT OTP VERIFICATION */}
+      {/* STEP 2: 6-DIGIT EMAIL OTP VERIFICATION */}
       {step === 'verify' && (
         <form onSubmit={handleVerifyOtp} className="space-y-6" noValidate>
           <div className="py-2">
@@ -559,18 +614,16 @@ function LoginForm() {
                 disabled={isResending}
                 className="font-bold text-[#6D3DF5] hover:text-[#5B2FE0] hover:underline focus:outline-none disabled:opacity-50"
               >
-                {isResending ? 'Resending...' : authMode === 'email' ? 'Resend Code' : 'Resend OTP'}
+                {isResending ? 'Resending...' : 'Resend Code'}
               </button>
             )}
           </div>
 
-          {authMode === 'email' && (
-            <p className="text-center text-xs text-slate-400 dark:text-slate-500">
-              Tip: If you don&apos;t see the email in a few seconds, check your Spam or Junk folder.
-            </p>
-          )}
+          <p className="text-center text-xs text-slate-400 dark:text-slate-500">
+            Tip: If you don&apos;t see the email in a few seconds, check your Spam or Junk folder.
+          </p>
 
-          {/* Back to Input */}
+          {/* Back to Email Input */}
           <div className="pt-2 text-center">
             <button
               type="button"
@@ -582,9 +635,7 @@ function LoginForm() {
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#64748B] hover:text-[#111827] dark:text-slate-400 dark:hover:text-white"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              <span>
-                {authMode === 'email' ? 'Use a different email address' : 'Use a different mobile number'}
-              </span>
+              <span>Use a different email address</span>
             </button>
           </div>
         </form>

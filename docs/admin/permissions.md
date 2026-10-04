@@ -110,3 +110,36 @@ Separation of Duties is strictly enforced in code and at the database transactio
 
 - **Mandatory Passkeys:** Required on every session for `super_admin`, `finance_controller`, and any admin holding `payout:approve`, `pii:reveal`, or `seller:bank_detail_change`.
 - **Step-Up Verification:** Sensitive actions (approving payouts, changing seller bank coordinates, revealing PII, toggling kill switches) require a fresh passkey tap within the last 5 minutes.
+
+---
+
+## 6. Super Admin Wildcard Security Finding & Hardening (Phase 1b)
+
+### 6.1 Guard Wildcard Implementation
+In `apps/api/src/modules/admin-core/rbac/rbac.service.ts` (lines 126–135):
+```typescript
+async hasPermission(adminId: string, requiredPermission: string): Promise<boolean> {
+  const roles = await this.getAdminRoles(adminId);
+  const isSuperAdmin = roles.some((r) => r.slug === 'super_admin');
+  if (isSuperAdmin) {
+    return true; // <--- Wildcard bypass
+  }
+
+  const permissions = await this.getAdminPermissions(adminId);
+  return permissions.includes(requiredPermission);
+}
+```
+
+### 6.2 Architectural Conflict & Rule 9 Trigger
+1. **Unconditional Bypass**: Any admin user assigned `super_admin` bypasses all `@RequirePermission` decorators in `AdminAuthGuard`, rendering granular `role_permissions` table assignments inert for that role.
+2. **Least-Privilege Conflict**: Step B requires assigning permissions to roles by least privilege (e.g. `kill_switch:manage`, `elevation:break_glass`, `admin:create/offboard` strictly to Super Admin, while other actions are segregated). The wildcard bypass circumvents this matrix in application logic.
+3. **Contrast with Legacy RolesGuard**:
+   - `RolesGuard` contains a legacy bypass for `'admin'` (`if (userRoles.includes('admin')) return true;`), explicitly preserved per Phase 1b Rule 3.
+   - `AdminAuthGuard` / `RbacService` governs zero-trust administrative operations and triggers **Rule 9** (*"STOP and report if any test fails, if you would need to edit an old test, or if the Super Admin role is a wildcard in the guard"*).
+
+### 6.3 Remediation Specification
+To transition Super Admin to an explicit permission model:
+1. In `RbacService.hasPermission()`, remove `if (isSuperAdmin) return true;`.
+2. Seed the complete set of required permissions for `super_admin` directly into `public.role_permissions` via `supabase/migrations/00009_admin_hardening_phase1b.sql`.
+3. Four-eyes policies (`assertSeparationOfDuties()`) and incident kill switches will continue to govern Super Admin execution without unconstrained permission wildcards.
+

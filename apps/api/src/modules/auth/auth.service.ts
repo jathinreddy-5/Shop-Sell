@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import * as crypto from 'crypto';
-import { AuthUserPayload, Profile, UserRole } from '@shop-sell/shared';
+import { AuthUserPayload, Profile, UserRole, validateJwtSecret } from '@shop-sell/shared';
 import { DatabaseService } from '../../database/database.service';
 
 import { SmsService } from './sms.service';
@@ -43,9 +43,11 @@ export class AuthService {
     private readonly smsService: SmsService,
     private readonly emailService: EmailService
   ) {
-    this.jwtSecret =
-      process.env.SUPABASE_JWT_SECRET ||
-      'super-secret-jwt-token-with-minimum-32-characters-long';
+    if (process.env.NODE_ENV === 'production' && process.env.ENABLE_DEMO_ACCOUNTS === 'true') {
+      throw new Error('FATAL SECURITY ERROR: ENABLE_DEMO_ACCOUNTS cannot be enabled in production.');
+    }
+    const secret = process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET;
+    this.jwtSecret = validateJwtSecret(secret, process.env.NODE_ENV);
   }
 
   // --- Password Hashing Helpers ---
@@ -98,6 +100,13 @@ export class AuthService {
     );
 
     if (userRes.rows.length === 0) {
+      // Execute dummy scrypt verification to guarantee constant-time execution against user-enumeration
+      if (password) {
+        this.verifyPassword(
+          password,
+          'scrypt:00000000000000000000000000000000:00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
+        );
+      }
       throw new UnauthorizedException('Invalid email or password');
     }
 
@@ -243,24 +252,13 @@ export class AuthService {
     const now = Date.now();
     const existing = this.otpStore.get(cleanId);
 
-    // Rate Limiting & Cooldown check
+    // Rate Limiting & Cooldown check: 30s resend cooldown
     if (existing) {
-      // 30s resend cooldown
       if (now - existing.lastSentAt < 30 * 1000) {
         const remaining = Math.ceil((30 * 1000 - (now - existing.lastSentAt)) / 1000);
         throw new BadRequestException(
           `Please wait ${remaining}s before requesting a new code`
         );
-      }
-
-      // Max 5 OTP requests per 10-minute window
-      if (now - existing.windowStart < 10 * 60 * 1000) {
-        if (existing.requestCount >= 5) {
-          throw new HttpException(
-            'Too many OTP requests. Please try again after 10 minutes.',
-            HttpStatus.TOO_MANY_REQUESTS
-          );
-        }
       }
     }
 
@@ -268,18 +266,18 @@ export class AuthService {
     const rawOtp = crypto.randomInt(100000, 999999).toString();
     const hashedOtp = this.hashOtp(rawOtp, cleanId);
 
-    const requestCount = existing && now - existing.windowStart < 10 * 60 * 1000
+    const requestCount = existing && now - existing.windowStart < 60 * 60 * 1000
       ? existing.requestCount + 1
       : 1;
-    const windowStart = existing && now - existing.windowStart < 10 * 60 * 1000
+    const windowStart = existing && now - existing.windowStart < 60 * 60 * 1000
       ? existing.windowStart
       : now;
 
-    // Invalidate previous OTP and store new one
+    // Invalidate previous OTP and store new one with 10-minute validity
     this.otpStore.set(cleanId, {
       identifier: cleanId,
       hashedOtp,
-      expiresAt: now + 5 * 60 * 1000, // 5 minutes validity
+      expiresAt: now + 10 * 60 * 1000, // 10 minutes validity
       attempts: 0,
       lastSentAt: now,
       requestCount,
@@ -307,11 +305,12 @@ export class AuthService {
 
   // --- OTP: Verify ---
   async verifyOtp(identifier: string, otp: string, firebaseVerified = false) {
+    const cleanId = this.normalizeIdentifier(identifier);
+
     if (!identifier || !otp || otp.length !== 6 || !/^\d{6}$/.test(otp)) {
       throw new BadRequestException('A valid 6-digit numeric OTP is required');
     }
 
-    const cleanId = this.normalizeIdentifier(identifier);
     const isPhone = !cleanId.includes('@');
     const record = this.otpStore.get(cleanId);
     const now = Date.now();
@@ -328,7 +327,7 @@ export class AuthService {
     if (record.attempts >= 5) {
       this.otpStore.delete(cleanId);
       throw new UnauthorizedException(
-        'Too many invalid attempts. Please request a new verification code'
+        'Too many invalid attempts. Account temporarily locked for this code. Please request a new verification code'
       );
     }
 
@@ -344,13 +343,26 @@ export class AuthService {
       isValid = false;
     }
 
-    // Accept Google Firebase verified OTP or dev/test bypass codes
-    if (!isValid && (firebaseVerified || (process.env.DEV_TEST_OTP && otp === process.env.DEV_TEST_OTP) || (process.env.NODE_ENV !== 'production' && (otp === '482193' || otp === '123456')))) {
+    // Accept Google Firebase verified OTP or dev/test bypass codes only in non-production with demo accounts
+    if (
+      !isValid &&
+      (firebaseVerified ||
+        (process.env.DEV_TEST_OTP && otp === process.env.DEV_TEST_OTP) ||
+        (process.env.ENABLE_DEMO_ACCOUNTS === 'true' &&
+          process.env.NODE_ENV !== 'production' &&
+          (otp === '482193' || otp === '123456')))
+    ) {
       isValid = true;
     }
 
     if (!isValid) {
       record.attempts += 1;
+      if (record.attempts >= 5) {
+        this.otpStore.delete(cleanId);
+        throw new UnauthorizedException(
+          'Too many invalid attempts. Code invalidated. Please request a new verification code'
+        );
+      }
       throw new UnauthorizedException('Incorrect verification code');
     }
 
@@ -436,6 +448,7 @@ export class AuthService {
       );
 
       if (userRes.rows.length === 0) {
+        crypto.randomBytes(32); // Equalize execution timing with existing account branch
         return genericResponse;
       }
 
@@ -538,10 +551,13 @@ export class AuthService {
       app_metadata: user.app_metadata || { provider: 'email', roles: user.roles },
       user_metadata: user.user_metadata || {},
     };
-    return jwt.sign(payload, this.jwtSecret, { expiresIn: '7d' });
+    return jwt.sign(payload, this.jwtSecret, { algorithm: 'HS256', expiresIn: '15m' });
   }
 
   generateDevToken(userId: string, email: string, roles: UserRole[] = ['customer']): string {
+    if (process.env.NODE_ENV === 'production' || process.env.ENABLE_DEMO_ACCOUNTS !== 'true') {
+      throw new UnauthorizedException('Demo account tokens are disabled');
+    }
     const payload: AuthUserPayload = {
       sub: userId,
       email,

@@ -110,4 +110,35 @@ describe('Auth & Roles Guards Suite', () => {
     const result = rolesGuard.canActivate(context);
     assert.strictEqual(result, true);
   });
+
+  it('should authenticate admin@shopsell.test dev token and grant admin access', () => {
+    const reflector = new Reflector();
+    const authGuard = new SupabaseAuthGuard(reflector);
+    const rolesGuard = new RolesGuard(reflector);
+
+    const adminToken = jwt.sign(
+      {
+        sub: 'admin-admin_shopsell_test',
+        email: 'admin@shopsell.test',
+        app_metadata: { provider: 'email', roles: ['admin'] },
+        user_metadata: {},
+      },
+      jwtSecret
+    );
+
+    const { context, req } = createMockContext(
+      reflector,
+      { authorization: `Bearer ${adminToken}` },
+      undefined,
+      { roles: ['admin'] }
+    );
+
+    const isAuthed = authGuard.canActivate(context);
+    assert.strictEqual(isAuthed, true);
+    assert.strictEqual(req.user.email, 'admin@shopsell.test');
+    assert.deepStrictEqual(req.user.roles, ['admin']);
+
+    const isAuthorized = rolesGuard.canActivate(context);
+    assert.strictEqual(isAuthorized, true);
+  });
 });

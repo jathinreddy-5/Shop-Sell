@@ -440,7 +440,7 @@ export function LiquidNav({
 
                   {/* Desktop label if space permits in horizontal nav */}
                   {variant === 'top' && (
-                    <span className="mt-0.5 text-[10px] font-medium tracking-tight text-[#64748B] group-hover:text-[#1E293B] transition-colors">
+                    <span className="mt-0.5 text-[10px] font-medium tracking-tight text-[#64748B] group-hover:text-[#1E293B] transition-colors whitespace-nowrap">
                       {item.label}
                     </span>
                   )}

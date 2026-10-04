@@ -1,78 +1,27 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/auth-context';
 import {
   Shield,
   Mail,
   User as UserIcon,
-  MapPin,
   Download,
   Trash2,
   CheckCircle2,
   AlertCircle,
   Tag,
   Shirt,
-  Plus,
+  Store,
+  ArrowRight,
+  LogOut,
 } from 'lucide-react';
 import { LoadingThreeDotsJumping } from '@/components/loading';
 
-interface Address {
-  id: string;
-  label: string;
-  type: 'shipping' | 'billing';
-  recipient_name: string;
-  phone_e164: string;
-  line1: string;
-  line2?: string | null;
-  landmark?: string | null;
-  city: string;
-  state: string;
-  pincode: string;
-  country_code: string;
-  is_default: boolean;
-}
-
-const INDIAN_STATES = [
-  'Andhra Pradesh',
-  'Arunachal Pradesh',
-  'Assam',
-  'Bihar',
-  'Chhattisgarh',
-  'Goa',
-  'Gujarat',
-  'Haryana',
-  'Himachal Pradesh',
-  'Jharkhand',
-  'Karnataka',
-  'Kerala',
-  'Madhya Pradesh',
-  'Maharashtra',
-  'Manipur',
-  'Meghalaya',
-  'Mizoram',
-  'Nagaland',
-  'Odisha',
-  'Punjab',
-  'Rajasthan',
-  'Sikkim',
-  'Tamil Nadu',
-  'Telangana',
-  'Tripura',
-  'Uttar Pradesh',
-  'Uttarakhand',
-  'West Bengal',
-  'Andaman and Nicobar Islands',
-  'Chandigarh',
-  'Dadra and Nagar Haveli and Daman and Diu',
-  'Delhi',
-  'Jammu and Kashmir',
-  'Ladakh',
-  'Lakshadweep',
-  'Puducherry',
-];
-
 export default function AccountProfilePage() {
+  const router = useRouter();
   const { user, token, logout, isLoading: isAuthLoading } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [availableInterests, setAvailableInterests] = useState<any[]>([]);
@@ -90,51 +39,23 @@ export default function AccountProfilePage() {
   const [sizeProfile, setSizeProfile] = useState<{ topSize?: string; shoeSize?: string }>({});
   const [marketingConsent, setMarketingConsent] = useState(false);
 
-  // Address Section States
-  const [addresses, setAddresses] = useState<Address[]>([]);
-  const [showAddressForm, setShowAddressForm] = useState(false);
-  const [isSavingAddress, setIsSavingAddress] = useState(false);
-  const [addressSuccessMessage, setAddressSuccessMessage] = useState<string | null>(null);
-  const [addressErrorMessage, setAddressErrorMessage] = useState<string | null>(null);
 
-  // Address Form Input Fields
-  const [addrFullName, setAddrFullName] = useState('');
-  const [addrPhone, setAddrPhone] = useState('');
-  const [addrPincode, setAddrPincode] = useState('');
-  const [addrLine1, setAddrLine1] = useState('');
-  const [addrLine2, setAddrLine2] = useState('');
-  const [addrLandmark, setAddrLandmark] = useState('');
-  const [addrCity, setAddrCity] = useState('');
-  const [addrState, setAddrState] = useState('');
-  const [addrCountry, setAddrCountry] = useState('India');
-  const [addrType, setAddrType] = useState<'Home' | 'Work' | 'Other'>('Home');
-  const [addrSaveFuture, setAddrSaveFuture] = useState(true);
-
-  // Load Addresses Helper
-  const loadAddresses = async () => {
-    if (!token) return;
-    try {
-      const res = await fetch('/api/addresses', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setAddresses(data);
-      }
-    } catch {}
-  };
 
   // Load Profile & Interests & Addresses
   useEffect(() => {
-    if (!token) return;
+    if (isAuthLoading) return;
+
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
 
     async function loadData() {
       setIsLoading(true);
       try {
-        const [profRes, intRes, addrRes] = await Promise.all([
+        const [profRes, intRes] = await Promise.all([
           fetch('/api/profile/me', { headers: { Authorization: `Bearer ${token}` } }),
           fetch('/api/profile/interests'),
-          fetch('/api/addresses', { headers: { Authorization: `Bearer ${token}` } }),
         ]);
 
         if (profRes.ok) {
@@ -147,24 +68,11 @@ export default function AccountProfilePage() {
           setSelectedInterestIds(profData.interest_ids || []);
           setSizeProfile(profData.size_profile || {});
           setMarketingConsent(Boolean(profData.marketing_consent));
-
-          // Pre-populate address form defaults if empty
-          setAddrFullName((prev) => prev || profData.full_name || '');
-          if (profData.phone_e164 || profData.phone) {
-            const rawPhone = (profData.phone_e164 || profData.phone).replace('+91', '').replace(/\D/g, '');
-            setAddrPhone((prev) => prev || rawPhone);
-          }
-          setAddrPincode((prev) => prev || profData.default_pincode || '');
         }
 
         if (intRes.ok) {
           const intData = await intRes.json();
           setAvailableInterests(intData);
-        }
-
-        if (addrRes.ok) {
-          const addrData = await addrRes.json();
-          setAddresses(addrData);
         }
       } catch (err: any) {
         setErrorMessage('Failed to load profile details');
@@ -174,129 +82,9 @@ export default function AccountProfilePage() {
     }
 
     loadData();
-  }, [token]);
+  }, [token, isAuthLoading]);
 
-  // Handle Pincode Auto-Fill for City/State
-  const handlePincodeChange = async (val: string) => {
-    const clean = val.replace(/\D/g, '').slice(0, 6);
-    setAddrPincode(clean);
-    if (clean.length === 6) {
-      try {
-        const res = await fetch(`/api/pincode/${clean}/serviceability`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.city) setAddrCity((prev) => prev || data.city);
-          if (data.state) setAddrState((prev) => prev || data.state);
-        }
-      } catch {}
-    }
-  };
 
-  const resetAddressForm = () => {
-    setAddrFullName(profile?.full_name || '');
-    const rawPhone = (profile?.phone_e164 || profile?.phone || '').replace('+91', '').replace(/\D/g, '');
-    setAddrPhone(rawPhone);
-    setAddrPincode(profile?.default_pincode || '');
-    setAddrLine1('');
-    setAddrLine2('');
-    setAddrLandmark('');
-    setAddrCity('');
-    setAddrState('');
-    setAddrCountry('India');
-    setAddrType('Home');
-    setAddrSaveFuture(true);
-  };
-
-  const handleSaveAddress = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!token) return;
-    setAddressErrorMessage(null);
-    setAddressSuccessMessage(null);
-
-    const cleanPhone = addrPhone.startsWith('+') ? addrPhone : `+91${addrPhone.replace(/\D/g, '')}`;
-    if (cleanPhone.length < 12) {
-      setAddressErrorMessage('Please enter a valid 10-digit mobile number');
-      return;
-    }
-
-    if (addrPincode.replace(/\D/g, '').length !== 6) {
-      setAddressErrorMessage('Please enter a valid 6-digit Indian PIN code');
-      return;
-    }
-
-    if (!addrState) {
-      setAddressErrorMessage('Please select a State');
-      return;
-    }
-
-    setIsSavingAddress(true);
-    try {
-      const res = await fetch('/api/addresses', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          label: addrType,
-          type: 'shipping',
-          recipient_name: addrFullName.trim(),
-          phone_e164: cleanPhone,
-          line1: addrLine1.trim(),
-          line2: addrLine2.trim() || undefined,
-          landmark: addrLandmark.trim() || undefined,
-          city: addrCity.trim(),
-          state: addrState.trim(),
-          pincode: addrPincode.trim(),
-          country_code: 'IN',
-          is_default: addrSaveFuture,
-        }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || 'Failed to save address');
-      }
-
-      setAddressSuccessMessage('Address saved successfully!');
-      resetAddressForm();
-      setShowAddressForm(false);
-      await loadAddresses();
-    } catch (err: any) {
-      setAddressErrorMessage(err.message || 'Error saving address');
-    } finally {
-      setIsSavingAddress(false);
-    }
-  };
-
-  const handleDeleteAddress = async (id: string) => {
-    if (!window.confirm('Delete this address?')) return;
-    try {
-      const res = await fetch(`/api/addresses/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        loadAddresses();
-      }
-    } catch {}
-  };
-
-  const handleSetDefaultAddress = async (id: string) => {
-    try {
-      const res = await fetch(`/api/addresses/${id}/default`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ type: 'shipping' }),
-      });
-      if (res.ok) {
-        loadAddresses();
-      }
-    } catch {}
-  };
 
   // Handle Save Profile
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -394,11 +182,17 @@ export default function AccountProfilePage() {
       });
       if (res.ok) {
         logout();
-        window.location.href = '/';
+        window.location.href = '/login';
       }
     } catch {
       setErrorMessage('Failed to erase account');
     }
+  };
+
+  // Direct Logout from Profile Session
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
   };
 
   if (isAuthLoading || isLoading) {
@@ -589,356 +383,33 @@ export default function AccountProfilePage() {
         </div>
       </form>
 
-      {/* Delivery Addresses Section */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 dark:border-slate-800 dark:bg-slate-900 shadow-sm space-y-6">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
-          <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-[#6D3DF5]" />
-              <span>Saved Addresses</span>
-            </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Manage shipping and delivery addresses for quick 1-click checkout.
-            </p>
+      {/* Become a Seller Section */}
+      <div className="rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50/70 via-purple-50/40 to-white p-6 sm:p-8 dark:border-indigo-950 dark:bg-slate-900/60 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
+              <Store className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                Become a Seller on Shop:Sell
+              </h2>
+              <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                Merchant Registration
+              </span>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              resetAddressForm();
-              setAddressErrorMessage(null);
-              setAddressSuccessMessage(null);
-              setShowAddressForm((prev) => !prev);
-            }}
-            className="inline-flex items-center gap-1.5 rounded-2xl bg-[#6D3DF5] px-4 py-2 text-xs font-bold text-white shadow-md shadow-[#6D3DF5]/20 hover:bg-[#5B2FE0] transition"
-          >
-            <Plus className="h-4 w-4" />
-            <span>+ New address</span>
-          </button>
+          <p className="text-xs text-slate-600 dark:text-slate-400 max-w-lg leading-relaxed pt-1">
+            Sell to millions of customers across India. Submit your business entity, PAN, GSTIN, and bank verification for automated daily settlements.
+          </p>
         </div>
-
-        {/* Address Status Messages */}
-        {addressSuccessMessage && (
-          <div className="flex items-center gap-2 rounded-2xl bg-emerald-50 p-3.5 text-xs font-semibold text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200">
-            <CheckCircle2 className="h-4 w-4 shrink-0" />
-            <span>{addressSuccessMessage}</span>
-          </div>
-        )}
-
-        {addressErrorMessage && (
-          <div className="flex items-center gap-2 rounded-2xl bg-red-50 p-3.5 text-xs font-semibold text-red-800 dark:bg-red-950/40 dark:text-red-300 border border-red-200">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            <span>{addressErrorMessage}</span>
-          </div>
-        )}
-
-        {/* Saved Addresses Cards Grid */}
-        {addresses.length > 0 && !showAddressForm && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {addresses.map((addr) => (
-              <div
-                key={addr.id}
-                className="relative rounded-2xl border border-slate-200 p-5 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 transition bg-slate-50/50 dark:bg-slate-800/30 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="rounded-full bg-slate-200 dark:bg-slate-700 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                        {addr.label || 'Home'}
-                      </span>
-                      {addr.is_default && (
-                        <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-[10px] font-bold text-[#6D3DF5] dark:bg-purple-950 dark:text-purple-300">
-                          Default Address
-                        </span>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteAddress(addr.id)}
-                      className="text-slate-400 hover:text-red-600 transition"
-                      aria-label="Delete address"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  <p className="text-sm font-bold text-slate-900 dark:text-white">
-                    {addr.recipient_name}
-                  </p>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
-                    {addr.line1}
-                    {addr.line2 ? `, ${addr.line2}` : ''}
-                    {addr.landmark ? `, Near ${addr.landmark}` : ''}
-                  </p>
-                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 mt-1">
-                    {addr.city}, {addr.state} - {addr.pincode}
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Phone: {addr.phone_e164}
-                  </p>
-                </div>
-
-                {!addr.is_default && (
-                  <div className="pt-3 mt-3 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-end">
-                    <button
-                      type="button"
-                      onClick={() => handleSetDefaultAddress(addr.id)}
-                      className="text-xs font-semibold text-[#6D3DF5] hover:underline"
-                    >
-                      Make Default
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Empty State when no addresses exist and form is closed */}
-        {addresses.length === 0 && !showAddressForm && (
-          <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center dark:border-slate-800">
-            <MapPin className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-600 mb-2" />
-            <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-              No delivery addresses saved yet
-            </p>
-            <p className="text-xs text-slate-400 mt-1 mb-4">
-              Add your delivery address for fast 1-click checkout.
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                resetAddressForm();
-                setShowAddressForm(true);
-              }}
-              className="inline-flex items-center gap-1.5 rounded-2xl bg-[#6D3DF5] px-4 py-2 text-xs font-bold text-white shadow-md shadow-[#6D3DF5]/20 hover:bg-[#5B2FE0] transition"
-            >
-              <Plus className="h-4 w-4" />
-              <span>+ New address</span>
-            </button>
-          </div>
-        )}
-
-        {/* The Exact Address Form */}
-        {showAddressForm && (
-          <form onSubmit={handleSaveAddress} className="space-y-4 pt-2">
-            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                Add Address Details
-              </h3>
-              {addresses.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowAddressForm(false)}
-                  className="text-xs font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400"
-                >
-                  Cancel
-                </button>
-              )}
-            </div>
-
-            {/* Full Name * */}
-            <div>
-              <label className="block text-xs font-bold text-slate-900 dark:text-slate-200 mb-1">
-                Full Name <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={addrFullName}
-                onChange={(e) => setAddrFullName(e.target.value)}
-                placeholder="Enter recipient full name"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              />
-            </div>
-
-            {/* Mobile Number * */}
-            <div>
-              <label className="block text-xs font-bold text-slate-900 dark:text-slate-200 mb-1">
-                Mobile Number <span className="text-red-500">*</span>
-              </label>
-              <div className="relative flex items-center">
-                <span className="absolute left-3.5 text-sm font-semibold text-slate-500 select-none">
-                  +91
-                </span>
-                <input
-                  type="tel"
-                  required
-                  maxLength={10}
-                  value={addrPhone}
-                  onChange={(e) => setAddrPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                  placeholder="9876543210"
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 pl-14 pr-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                />
-              </div>
-            </div>
-
-            {/* PIN Code * */}
-            <div>
-              <label className="block text-xs font-bold text-slate-900 dark:text-slate-200 mb-1">
-                PIN Code <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                maxLength={6}
-                value={addrPincode}
-                onChange={(e) => handlePincodeChange(e.target.value)}
-                placeholder="6-digit PIN code (e.g. 560001)"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              />
-            </div>
-
-            {/* House / Flat / Building No. * */}
-            <div>
-              <label className="block text-xs font-bold text-slate-900 dark:text-slate-200 mb-1">
-                House / Flat / Building No. <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={addrLine1}
-                onChange={(e) => setAddrLine1(e.target.value)}
-                placeholder="Flat / House no., Floor, Building name"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              />
-            </div>
-
-            {/* Street / Area / Locality * */}
-            <div>
-              <label className="block text-xs font-bold text-slate-900 dark:text-slate-200 mb-1">
-                Street / Area / Locality <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                required
-                value={addrLine2}
-                onChange={(e) => setAddrLine2(e.target.value)}
-                placeholder="Street name, Area, Locality"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              />
-            </div>
-
-            {/* Landmark */}
-            <div>
-              <label className="block text-xs font-bold text-slate-900 dark:text-slate-200 mb-1">
-                Landmark
-              </label>
-              <input
-                type="text"
-                value={addrLandmark}
-                onChange={(e) => setAddrLandmark(e.target.value)}
-                placeholder="e.g. Near City Park or Behind Hospital (Optional)"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              />
-            </div>
-
-            {/* City * and State * */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-900 dark:text-slate-200 mb-1">
-                  City <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={addrCity}
-                  onChange={(e) => setAddrCity(e.target.value)}
-                  placeholder="City / Town"
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-900 dark:text-slate-200 mb-1">
-                  State <span className="text-red-500">*</span>
-                </label>
-                <select
-                  required
-                  value={addrState}
-                  onChange={(e) => setAddrState(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                >
-                  <option value="">Select State ▼</option>
-                  {INDIAN_STATES.map((st) => (
-                    <option key={st} value={st}>
-                      {st}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Country */}
-            <div>
-              <label className="block text-xs font-bold text-slate-900 dark:text-slate-200 mb-1">
-                Country
-              </label>
-              <select
-                value={addrCountry}
-                onChange={(e) => setAddrCountry(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              >
-                <option value="India">India ▼</option>
-              </select>
-            </div>
-
-            {/* Address Type: ○ Home   ○ Work   ○ Other */}
-            <div>
-              <label className="block text-xs font-bold text-slate-900 dark:text-slate-200 mb-2">
-                Address Type
-              </label>
-              <div className="flex items-center gap-6">
-                {(['Home', 'Work', 'Other'] as const).map((t) => (
-                  <label key={t} className="inline-flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-800 dark:text-slate-200">
-                    <input
-                      type="radio"
-                      name="addressType"
-                      value={t}
-                      checked={addrType === t}
-                      onChange={() => setAddrType(t)}
-                      className="h-4 w-4 text-[#6D3DF5] focus:ring-[#6D3DF5] border-slate-300"
-                    />
-                    <span>{t}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* [✓] Save this address for future orders */}
-            <div className="pt-1">
-              <label className="flex items-center gap-2.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={addrSaveFuture}
-                  onChange={(e) => setAddrSaveFuture(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-[#6D3DF5] focus:ring-[#6D3DF5]"
-                />
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                  Save this address for future orders
-                </span>
-              </label>
-            </div>
-
-            {/* Action Buttons: [Save Address] */}
-            <div className="pt-3 flex items-center justify-end gap-3">
-              {addresses.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowAddressForm(false)}
-                  className="rounded-2xl border border-slate-200 px-5 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300"
-                >
-                  Cancel
-                </button>
-              )}
-              <button
-                type="submit"
-                disabled={isSavingAddress}
-                className="rounded-2xl bg-[#6D3DF5] px-7 py-2.5 text-xs font-bold text-white shadow-md shadow-[#6D3DF5]/30 hover:bg-[#5B2FE0] transition disabled:opacity-50"
-              >
-                {isSavingAddress ? 'Saving Address...' : 'Save Address'}
-              </button>
-            </div>
-          </form>
-        )}
+        <Link
+          href="/become-a-seller"
+          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#6D3DF5] px-6 py-3 text-xs font-bold text-white shadow-md shadow-[#6D3DF5]/25 hover:bg-[#5B2FE0] transition shrink-0"
+        >
+          <span>Apply to Sell</span>
+          <ArrowRight className="h-4 w-4" />
+        </Link>
       </div>
 
       {/* Data Privacy & Compliance (DPDP Act & GDPR) */}
@@ -968,6 +439,70 @@ export default function AccountProfilePage() {
             <Trash2 className="h-4 w-4 text-red-600" />
             <span>Delete Account & Data</span>
           </button>
+        </div>
+      </div>
+
+      {/* Profile Session & Security */}
+      <div
+        data-testid="profile-session-card"
+        className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 dark:border-slate-800 dark:bg-slate-900 shadow-sm space-y-4"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-100 pb-4 dark:border-slate-800">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                Profile Session &amp; Security
+              </h2>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Active authenticated session for{' '}
+              <strong className="text-slate-800 dark:text-slate-200">
+                {user?.email || profile?.email || 'Current User'}
+              </strong>
+              . Logging out will clear your session and return directly to the authentication page.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            data-testid="profile-session-logout-btn"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-red-500/20 hover:bg-red-700 transition shrink-0 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+          >
+            <LogOut className="h-4 w-4" />
+            <span>Log Out</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-xs">
+          <div className="rounded-2xl bg-slate-50 p-3.5 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-medium">
+              Authenticated Account
+            </span>
+            <span className="font-semibold text-slate-800 dark:text-slate-200 truncate block mt-0.5">
+              {user?.email || profile?.email || 'Customer'}
+            </span>
+          </div>
+          <div className="rounded-2xl bg-slate-50 p-3.5 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-medium">
+              Session Status
+            </span>
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400 block mt-0.5">
+              Active &amp; Verified
+            </span>
+          </div>
+          <div className="rounded-2xl bg-slate-50 p-3.5 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-medium">
+              Account Role
+            </span>
+            <span className="font-semibold text-indigo-600 dark:text-indigo-400 capitalize block mt-0.5">
+              {user?.roles?.join(', ') || 'Customer'}
+            </span>
+          </div>
         </div>
       </div>
     </div>

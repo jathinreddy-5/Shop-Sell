@@ -17,7 +17,7 @@ function VerifyOtpContent() {
   const initialIdentifier = rawParam;
   const redirectUrl = searchParams.get('redirect') || searchParams.get('returnUrl') || '/';
 
-  const { verifyOtp, sendOtp } = useAuth();
+  const { verifyOtp, sendOtp, loginAsDevRole } = useAuth();
   const shouldReduceMotion = useReducedMotion();
 
   const [identifier, setIdentifier] = useState(initialIdentifier);

@@ -6,13 +6,35 @@ export const PayoutDetailsSchema = z.object({
   ifsc_code: z.string().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'Valid Indian IFSC code required (e.g., HDFC0001234)'),
   bank_name: z.string().min(2, 'Bank name is required'),
   upi_id: z.string().optional(),
+  cancelled_cheque_file: z.string().optional().nullable(),
+  penny_drop_verified: z.boolean().optional(),
+  beneficiary_name: z.string().optional().nullable(),
 });
 
 export const OwnerApplicationSchema = z.object({
   business_name: z.string().min(2, 'Business name must be at least 2 characters'),
-  business_type: z.enum(['individual', 'sole_proprietorship', 'llp', 'pvt_ltd', 'partnership']),
+  business_type: z.enum(['individual', 'sole_proprietorship', 'llp', 'pvt_ltd', 'partnership', 'company']),
   tax_id: z.string().optional().nullable(),
   payout_details: PayoutDetailsSchema,
+  pan_number: z.string().optional().nullable(),
+  pan_name: z.string().optional().nullable(),
+  pan_verified: z.boolean().optional(),
+  gstin: z.string().optional().nullable(),
+  gst_exempt: z.boolean().optional(),
+  gstin_verified: z.boolean().optional(),
+  government_id_type: z.string().optional().nullable(),
+  government_id_number: z.string().optional().nullable(),
+  government_id_file: z.string().optional().nullable(),
+  registered_address: z.record(z.any()).optional().nullable(),
+  address_proof_type: z.string().optional().nullable(),
+  address_proof_file: z.string().optional().nullable(),
+  phone_verified: z.boolean().optional(),
+  email_verified: z.boolean().optional(),
+  pickup_address: z.record(z.any()).optional().nullable(),
+  return_address: z.record(z.any()).optional().nullable(),
+  agreement_accepted: z.boolean().optional(),
+  commission_accepted: z.boolean().optional(),
+  dpdp_consent_accepted: z.boolean().optional(),
 });
 
 export const ReviewApplicationSchema = z.object({
