@@ -17,6 +17,7 @@ import {
   FileText,
   Sparkles,
 } from 'lucide-react';
+import { getProductGallery } from '@/lib/products/product-images';
 
 export interface ProductSpecifications {
   brandName?: string;
@@ -390,11 +391,7 @@ export default function ProductDetailPage() {
       soldCount: '450+ sold',
       storeName: 'Shop:Sell Verified Store',
       storeSlug: 'verified-store',
-      images: [
-        'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80',
-        'https://images.unsplash.com/photo-1545454675-3531b543be5d?w=800&q=80',
-        'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800&q=80',
-      ],
+      images: getProductGallery({ name: title, slug }),
       variants: ['Standard Edition', 'Artisan Finish'],
       description: `Authentic ${title}. Handcrafted with precision and verified by Shop:Sell quality assurance before insured express transit across India.`,
       longDescription: `Experience uncompromising quality with ${title}. Meticulously designed for longevity and performance, verified under rigorous quality control standards, and packaged in eco-friendly protective materials for insured doorstep dispatch across India.`,

@@ -179,6 +179,49 @@ sql += `\n-- 3. Insert 200 Sample Products (10 per category)\n`;
 let productCount = 0;
 const productInserts: string[] = [];
 
+const categoryImages: string[][] = [
+  // 0: Electronics & Gadgets
+  ['https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&q=80', 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=800&q=80'],
+  // 1: Laptops & Computers
+  ['https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=800&q=80', 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&q=80'],
+  // 2: Smartphones & Accessories
+  ['https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=800&q=80', 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?w=800&q=80'],
+  // 3: Audio & Headphones
+  ['https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=800&q=80', 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800&q=80'],
+  // 4: Cameras & Photography
+  ['https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&q=80', 'https://images.unsplash.com/photo-1512790182412-b19e6d62bc39?w=800&q=80'],
+  // 5: Men's Fashion
+  ['https://images.unsplash.com/photo-1598033129183-c4f50c736f10?w=800&q=80', 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=800&q=80'],
+  // 6: Women's Fashion
+  ['https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=800&q=80', 'https://images.unsplash.com/photo-1551163943-3f6a855d1153?w=800&q=80'],
+  // 7: Footwear & Shoes
+  ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=800&q=80', 'https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?w=800&q=80'],
+  // 8: Watches & Wearables
+  ['https://images.unsplash.com/photo-1533139502658-0198f920d8e8?w=800&q=80', 'https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=800&q=80'],
+  // 9: Home & Kitchen
+  ['https://images.unsplash.com/photo-1585515320310-259814833e62?w=800&q=80', 'https://images.unsplash.com/photo-1593618998160-e34014e67546?w=800&q=80'],
+  // 10: Furniture & Living
+  ['https://images.unsplash.com/photo-1594980596870-8aa52a78d8cd?w=800&q=80', 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?w=800&q=80'],
+  // 11: Home Decor & Lighting
+  ['https://images.unsplash.com/photo-1582582621959-48d27397dc69?w=800&q=80', 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&q=80'],
+  // 12: Beauty & Skincare
+  ['https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=800&q=80', 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=800&q=80'],
+  // 13: Haircare & Wellness
+  ['https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=800&q=80', 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&q=80'],
+  // 14: Sports & Fitness
+  ['https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=800&q=80', 'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=800&q=80'],
+  // 15: Books & Stationery
+  ['https://images.unsplash.com/photo-1585776245991-cf89dd7fc73a?w=800&q=80', 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&q=80'],
+  // 16: Organic Foods & Gourmet
+  ['https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=800&q=80', 'https://images.unsplash.com/photo-1508061253366-f7da158b6d46?w=800&q=80'],
+  // 17: Coffee & Artisan Teas
+  ['https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=800&q=80', 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=800&q=80'],
+  // 18: Toys & Board Games
+  ['https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=800&q=80', 'https://images.unsplash.com/photo-1529699211952-734e80c4d42b?w=800&q=80'],
+  // 19: Handmade Crafts & Pottery
+  ['https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=800&q=80', 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?w=800&q=80'],
+];
+
 for (let catIndex = 0; catIndex < 20; catIndex++) {
   const category = categories[catIndex];
   // Assign store based on category
@@ -206,7 +249,11 @@ for (let catIndex = 0; catIndex < 20; catIndex++) {
     const ratingAvg = Number((4.1 + ((productCount % 9) * 0.1)).toFixed(2));
     const ratingCount = 10 + ((productCount * 11) % 180);
     const desc = `Experience peak performance with the all-new ${name}. Designed with meticulous attention to detail, premium materials, and unparalleled craftsmanship. Perfect for modern Indian consumers seeking uncompromised quality.`;
-    const images = `ARRAY['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80', 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80']::text[]`;
+
+    const catImgs = categoryImages[catIndex] || categoryImages[0];
+    const primaryImg = catImgs[itemIndex % catImgs.length];
+    const secondaryImg = catImgs[(itemIndex + 1) % catImgs.length];
+    const images = `ARRAY['${primaryImg}', '${secondaryImg}']::text[]`;
     const attrs = JSON.stringify({
       category: category.name,
       origin: 'India',
