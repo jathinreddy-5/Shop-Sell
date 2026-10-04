@@ -116,24 +116,34 @@ export class AuthService implements OnModuleDestroy {
     this.fallbackOtpStore.delete(cleanId);
   }
 
-  // --- Password Hashing Helpers ---
-  private hashPassword(password: string): string {
+  // --- Password Hashing Helpers (Async scrypt to prevent event loop blocking) ---
+  private async hashPassword(password: string): Promise<string> {
     const salt = crypto.randomBytes(16).toString('hex');
-    const hash = crypto.scryptSync(password, salt, 64).toString('hex');
-    return `scrypt:${salt}:${hash}`;
+    const derived = await new Promise<Buffer>((resolve, reject) => {
+      crypto.scrypt(password, salt, 64, (err, derivedKey) => {
+        if (err) reject(err);
+        else resolve(derivedKey as Buffer);
+      });
+    });
+    return `scrypt:${salt}:${derived.toString('hex')}`;
   }
 
-  private verifyPassword(password: string, storedHash: string): boolean {
+  private async verifyPassword(password: string, storedHash: string): Promise<boolean> {
     if (!storedHash) return false;
     const parts = storedHash.split(':');
     if (parts.length === 3 && parts[0] === 'scrypt') {
       const salt = parts[1];
       const hash = parts[2];
-      const derived = crypto.scryptSync(password, salt, 64).toString('hex');
       try {
+        const derived = await new Promise<Buffer>((resolve, reject) => {
+          crypto.scrypt(password, salt, 64, (err, derivedKey) => {
+            if (err) reject(err);
+            else resolve(derivedKey as Buffer);
+          });
+        });
         return crypto.timingSafeEqual(
           Buffer.from(hash, 'hex'),
-          Buffer.from(derived, 'hex')
+          Buffer.from(derived.toString('hex'), 'hex')
         );
       } catch {
         return false;
@@ -166,9 +176,9 @@ export class AuthService implements OnModuleDestroy {
     );
 
     if (userRes.rows.length === 0) {
-      // Execute dummy scrypt verification to guarantee constant-time execution against user-enumeration
+      // Execute dummy async scrypt verification to guarantee constant-time execution against user-enumeration
       if (password) {
-        this.verifyPassword(
+        await this.verifyPassword(
           password,
           'scrypt:00000000000000000000000000000000:00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000'
         );
@@ -181,13 +191,13 @@ export class AuthService implements OnModuleDestroy {
     // Verify password if provided
     if (password) {
       if (user.encrypted_password) {
-        const isValid = this.verifyPassword(password, user.encrypted_password);
+        const isValid = await this.verifyPassword(password, user.encrypted_password);
         if (!isValid) {
           throw new UnauthorizedException('Invalid email or password');
         }
       } else {
         // Seeded account or first password set
-        const newHash = this.hashPassword(password);
+        const newHash = await this.hashPassword(password);
         await this.db.query(
           `UPDATE auth.users SET encrypted_password = $1, updated_at = NOW() WHERE id = $2`,
           [newHash, user.id]
@@ -269,7 +279,7 @@ export class AuthService implements OnModuleDestroy {
     }
 
     const userId = crypto.randomUUID();
-    const encryptedPassword = this.hashPassword(password);
+    const encryptedPassword = await this.hashPassword(password);
     const metaData = JSON.stringify({ full_name: fullName.trim() });
 
     // Insert user into auth.users
@@ -562,7 +572,7 @@ export class AuthService implements OnModuleDestroy {
       );
     }
 
-    const newHash = this.hashPassword(newPassword);
+    const newHash = await this.hashPassword(newPassword);
     await this.db.query(
       `UPDATE auth.users SET encrypted_password = $1, updated_at = NOW() WHERE id = $2`,
       [newHash, record.userId]

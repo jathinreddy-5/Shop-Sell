@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import * as assert from 'node:assert';
 import * as jwt from 'jsonwebtoken';
+import * as crypto from 'crypto';
 import { Reflector } from '@nestjs/core';
 import { UnauthorizedException } from '@nestjs/common';
 import { SupabaseAuthGuard } from '../common/guards/supabase-auth.guard';
@@ -517,5 +518,72 @@ describe('API Security Hardening Test Suite (NestJS apps/api)', () => {
     // 5th wrong attempt triggers deletion on shared store
     await sharedRedis.del(`auth:otp:${id}`);
     assert.strictEqual(await sharedRedis.get(`auth:otp:${id}`), null, '5th attempt must delete from shared store');
+  });
+
+  // FIX 5: Non-blocking async scrypt login - unknown email and wrong password return identical status and body
+  it('should return identical status and body for unknown-email and wrong-password', async () => {
+    // Generate valid scrypt hash
+    const salt = 'aabbccddeeff00112233445566778899';
+    const realPassword = 'RealSecurePassword123!';
+    const derived = await new Promise<Buffer>((resolve, reject) => {
+      crypto.scrypt(realPassword, salt, 64, (err, key) => (err ? reject(err) : resolve(key as Buffer)));
+    });
+    const storedHash = `scrypt:${salt}:${derived.toString('hex')}`;
+
+    // Mock database service
+    const mockDb: any = {
+      async query(sql: string, params: any[]) {
+        const email = params[0];
+        if (email === 'registered@shopsell.com') {
+          return {
+            rows: [
+              {
+                id: 'user-uuid-1234',
+                email: 'registered@shopsell.com',
+                encrypted_password: storedHash,
+                raw_user_meta_data: { full_name: 'Registered User' },
+              },
+            ],
+          };
+        }
+        return { rows: [] };
+      },
+    };
+
+    const mockSms: any = { normalizeIndianPhone: (p: string) => p };
+    const mockEmail: any = {};
+    const { AuthService } = await import('../modules/auth/auth.service');
+    const authService = new AuthService(mockDb, mockSms, mockEmail);
+
+    // 1. Unknown email
+    let unknownEmailError: any;
+    try {
+      await authService.login('unknown@shopsell.com', 'SomePassword123!');
+    } catch (err: any) {
+      unknownEmailError = err;
+    }
+
+    // 2. Registered email with wrong password
+    let wrongPasswordError: any;
+    try {
+      await authService.login('registered@shopsell.com', 'WrongPassword123!');
+    } catch (err: any) {
+      wrongPasswordError = err;
+    }
+
+    assert.ok(unknownEmailError instanceof UnauthorizedException, 'Unknown email must throw UnauthorizedException');
+    assert.ok(wrongPasswordError instanceof UnauthorizedException, 'Wrong password must throw UnauthorizedException');
+
+    assert.strictEqual(unknownEmailError.getStatus(), 401);
+    assert.strictEqual(wrongPasswordError.getStatus(), 401);
+
+    assert.strictEqual(unknownEmailError.message, 'Invalid email or password');
+    assert.strictEqual(wrongPasswordError.message, 'Invalid email or password');
+
+    assert.deepStrictEqual(
+      unknownEmailError.getResponse(),
+      wrongPasswordError.getResponse(),
+      'Response body and structure must be identical for unknown-email and wrong-password'
+    );
   });
 });

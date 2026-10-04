@@ -172,14 +172,7 @@ export async function checkLoginRateLimit(email: string, ip: string) {
   // 2. Per-IP limit: max 10 attempts across all accounts per 15 minutes
   const ipLimit = await checkRateLimit(`rl:login:ip:${cleanIp}`, 10, 900);
 
-  // 3. Global email counter: progressive artificial delay when target has multiple attempts,
-  // slowing down distributed attacks without denying service to the real account owner.
-  const emailCounter = await checkRateLimit(`rl:login:email_attempts:${cleanEmail}`, 100, 900);
-  if (emailCounter.totalAttempts > 3) {
-    const delayMs = Math.min(1000, (emailCounter.totalAttempts - 3) * 100);
-    await new Promise((resolve) => setTimeout(resolve, delayMs));
-  }
-
+  // 1. Fail-fast check on lockout and IP limits before any delay to avoid holding excessive connections
   if (!compoundLimit.allowed) {
     return {
       allowed: false,
@@ -192,6 +185,14 @@ export async function checkLoginRateLimit(email: string, ip: string) {
       allowed: false,
       error: `Too many login attempts from your IP. Please try again after ${Math.ceil(ipLimit.resetSeconds / 60)} minutes.`,
     };
+  }
+
+  // 2. Global email counter: progressive artificial delay when target has multiple attempts,
+  // capped strictly at 1000ms (1s) to prevent holding excessive concurrent connections.
+  const emailCounter = await checkRateLimit(`rl:login:email_attempts:${cleanEmail}`, 100, 900);
+  if (emailCounter.totalAttempts > 3) {
+    const delayMs = Math.min(1000, (emailCounter.totalAttempts - 3) * 100);
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
   }
 
   return { allowed: true };
