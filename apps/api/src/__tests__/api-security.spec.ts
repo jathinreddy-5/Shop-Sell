@@ -132,6 +132,42 @@ describe('API Security Hardening Test Suite (NestJS apps/api)', () => {
     assert.strictEqual(prodValid, proxySecret);
   });
 
+  // FIX 2: Test-runner bypass cannot be triggered by request headers or in production
+  it('should prove a request cannot trigger test-runner bypass via request headers', () => {
+    // Production middleware: even if an attacker passes x-test-direct-check or any other header,
+    // and even if someone set isTestEnv = true, in production the bypass is strictly impossible.
+    const originalEnv = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = 'production';
+      const prodMiddleware = createProxyMiddleware(proxySecret, true);
+
+      let statusSet: number | null = null;
+      const req: any = {
+        path: '/api/sellers/sensitive',
+        headers: {
+          'x-test-direct-check': 'true',
+          'x-test-bypass': 'true',
+          'x-env': 'test',
+        },
+      };
+      const res: any = {
+        status: (code: number) => {
+          statusSet = code;
+          return { json: () => {} };
+        },
+      };
+      let nextCalled = false;
+      prodMiddleware(req, res, () => {
+        nextCalled = true;
+      });
+
+      assert.strictEqual(statusSet, 403, 'Must reject with 403 even if client sends test bypass headers');
+      assert.strictEqual(nextCalled, false, 'Next must not be called in production via headers');
+    } finally {
+      process.env.NODE_ENV = originalEnv;
+    }
+  });
+
 
   // 2. Expired token and wrong-signature token -> rejected in SupabaseAuthGuard
   it('should reject expired tokens in SupabaseAuthGuard with UnauthorizedException', () => {
