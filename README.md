@@ -1,1239 +1,460 @@
 # Shop:Sell
 
-### A Scalable Multi-Vendor Marketplace
+<div align="center">
 
-<p align="center">
-  <strong>Discover. Shop. Sell. Manage.</strong>
-</p>
+# 🛍️ Shop:Sell
+### Enterprise-Grade Multi-Vendor E-Commerce & Marketplace Platform
 
-<p align="center">
-  A full-stack multi-vendor marketplace connecting customers, sellers, and administrators through a unified shopping platform.
-</p>
+**Discover. Shop. Sell. Govern.**
 
-<p align="center">
-
-![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
-![React](https://img.shields.io/badge/React-18%2B-61DAFB?style=for-the-badge&logo=react)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript)
-![NestJS](https://img.shields.io/badge/NestJS-Backend-E0234E?style=for-the-badge&logo=nestjs)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-4169E1?style=for-the-badge&logo=postgresql)
-![Redis](https://img.shields.io/badge/Redis-Upstash-DC382D?style=for-the-badge&logo=redis)
-![Razorpay](https://img.shields.io/badge/Payments-Razorpay-3395FF?style=for-the-badge)
-![Vercel](https://img.shields.io/badge/Deploy-Vercel-000000?style=for-the-badge&logo=vercel)
-
-</p>
+A full-stack, cloud-native multi-vendor marketplace connecting customers, sellers, and administrators through a unified, high-performance shopping engine.
 
 ---
 
-## Table of Contents
+[![Tests](https://img.shields.io/badge/Tests-138%20Passing-brightgreen?style=for-the-badge&logo=node.js)](file:///Users/jathinreddy/Desktop/Shop:Sell#-interactive-testing-suite)
+[![Security Hardening](https://img.shields.io/badge/Security-Hardened%20(Edge%20%2B%20RBAC)-blueviolet?style=for-the-badge&logo=shield)](file:///Users/jathinreddy/Desktop/Shop:Sell#-cloudflare-security-turnstile--origin-protection)
+[![Next.js 15](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![React 18](https://img.shields.io/badge/React-18.3-61DAFB?style=for-the-badge&logo=react)](https://react.dev/)
+[![TypeScript 5](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![NestJS](https://img.shields.io/badge/NestJS-Backend-E0234E?style=for-the-badge&logo=nestjs)](https://nestjs.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-4169E1?style=for-the-badge&logo=postgresql)](https://supabase.com/)
+[![pgvector](https://img.shields.io/badge/Vector-pgvector%20384--dim-00C49F?style=for-the-badge&logo=vectorlogolib)](https://github.com/pgvector/pgvector)
+[![Typesense](https://img.shields.io/badge/Search-Typesense-FF5722?style=for-the-badge&logo=typesense)](https://typesense.org/)
+[![Redis](https://img.shields.io/badge/Redis-Upstash%20RateLimit-DC382D?style=for-the-badge&logo=redis)](https://upstash.com/)
+[![Razorpay](https://img.shields.io/badge/Payments-Razorpay-3395FF?style=for-the-badge)](https://razorpay.com/)
+[![Cloudflare](https://img.shields.io/badge/Edge-Cloudflare%20Turnstile-F38020?style=for-the-badge&logo=cloudflare)](https://www.cloudflare.com/)
 
-- [Overview](#overview)
-- [Technology Stack](#technology-stack)
-- [How Shop:Sell Works](#how-shopsell-works)
-- [Customer Experience](#customer-experience)
-- [Seller Experience](#seller-experience)
-- [Admin Experience](#admin-experience)
-- [Smart Search](#smart-search)
-- [Personalized Recommendations](#personalized-recommendations)
-- [Cart and Checkout](#cart-and-checkout)
-- [Order and Inventory Flow](#order-and-inventory-flow)
-- [System Architecture](#system-architecture)
-- [Role Architecture](#role-architecture)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-- [Testing](#testing)
-- [Deployment](#deployment)
-- [Scalability](#scalability)
-- [Cloudflare Security](#cloudflare-security)
-- [Key Features](#key-features)
-- [Project Vision](#project-vision)
+<br />
+
+#### ⚡ Quick Jump Navigation
+
+[**🚀 Quick Start**](#-quick-start) • [**👥 Demo Accounts**](#-interactive-demo-accounts--role-sandbox) • [**🛡️ Edge Security**](#-cloudflare-security-turnstile--origin-protection) • [**📐 Architecture Drawers**](#-interactive-architecture-drawers) • [**🛒 Experiences**](#-interactive-experience-tours) • [**🧪 Tests**](#-interactive-testing-suite) • [**📚 Docs Hub**](#-documentation-hub)
+
+</div>
 
 ---
 
-# Overview
+## ⚡ Interactive Demo Accounts & Role Sandbox
 
-**Shop:Sell** is a multi-vendor e-commerce marketplace where multiple independent sellers can list and sell their products while customers can discover, purchase, and manage orders from a single platform.
+> [!TIP]
+> In local development mode (`ENABLE_DEMO_ACCOUNTS=true`), passwordless OTP login is streamlined: enter any seeded email address, and use the development OTP **`123456`**.
 
-The platform is designed around three major experiences:
+<details open>
+<summary><b>👉 Click to expand / collapse Test Credentials & Direct Dashboard URLs</b></summary>
 
-```mermaid
-mindmap
-  root((Shop:Sell))
-    Customer
-      Discover Products
-      Search
-      Recommendations
-      Cart
-      Checkout
-      Payments
-      Orders
-    Seller
-      Store
-      Products
-      Inventory
-      Orders
-      Sales
-      Payouts
-    Admin
-      Sellers
-      Products
-      Categories
-      Disputes
-      Analytics
-      Moderation
-```
+<br />
 
-### The Marketplace in One View
+| Role | Test Email | Authentication | Permissions & Scope | Direct Route |
+|---|---|---|---|---|
+| **🛡️ Admin** | `admin@shop-sell.internal` | Passwordless Email OTP (`123456`) | Platform Governance, Emergency Kill Switches, Dual-Admin Approvals, WORM Audit Logs | [`/admin`](http://localhost:3000/admin) |
+| **🏪 Seller (Malabar Spices)** | `seller@malabar-spices.in` | Passwordless Email OTP (`123456`) | Store Catalogue, Real-Time Inventory, Order Fulfilment, Bank Details & Payouts | [`/seller/dashboard`](http://localhost:3000/seller/dashboard) |
+| **🏪 Seller (Coorg Crafts)** | `seller@coorg-crafts.in` | Passwordless Email OTP (`123456`) | Artisan Product Management, Low-Stock Tracking, Shipment Scheduling | [`/seller/dashboard`](http://localhost:3000/seller/dashboard) |
+| **🛒 Customer (Arun)** | `arun.nair@kerala-tech.in` | Passwordless Email OTP (`123456`) | Product Discovery, Typo-Tolerant Search, Cart & Multi-Vendor Checkout, Orders | [`/account`](http://localhost:3000/account) |
+| **🛒 Customer (Priya)** | `priya.sharma@bangalore-retail.in` | Passwordless Email OTP (`123456`) | Personalized Recommendations, Address Book, Order History & Invoices | [`/account`](http://localhost:3000/account) |
 
-```mermaid
-flowchart LR
-    C[Customer] --> D[Discover Products]
-    D --> S[Search & Explore]
-    S --> P[Product Details]
-    P --> Cart[Shopping Cart]
-    Cart --> CO[Checkout]
-    CO --> Pay[Razorpay Payment]
-    Pay --> O[Order Created]
+#### 🧭 Quick URL Guide
+- 🌐 **Marketplace Storefront**: [http://localhost:3000](http://localhost:3000)
+- 🔐 **Passwordless Login**: [http://localhost:3000/login](http://localhost:3000/login)
+- 🏪 **Seller Onboarding Application**: [http://localhost:3000/become-a-seller](http://localhost:3000/become-a-seller)
+- 🏪 **Seller Store Products**: [http://localhost:3000/seller/products](http://localhost:3000/seller/products)
+- 🛡️ **Admin Governance & Review**: [http://localhost:3000/admin/governance](http://localhost:3000/admin/governance)
+- 🛑 **Admin Kill Switches**: [http://localhost:3000/admin/kill-switches](http://localhost:3000/admin/kill-switches)
+- ✍️ **Admin Two-Man Approvals**: [http://localhost:3000/admin/approvals](http://localhost:3000/admin/approvals)
+- 📜 **Admin Immutable Audit Trail**: [http://localhost:3000/admin/audit](http://localhost:3000/admin/audit)
 
-    O --> Seller[Seller]
-    Seller --> Inv[Inventory]
-    Seller --> Fulfill[Order Fulfilment]
-
-    Admin[Admin] --> Manage[Marketplace Management]
-    Manage --> Seller
-    Manage --> Products[Products]
-    Manage --> Dispute[Disputes]
-```
+</details>
 
 ---
 
-# Technology Stack
+## 🚀 Quick Start
 
-Shop:Sell uses a cloud-native architecture designed to keep the frontend, backend, database, search, payments, storage, and background processing independently scalable.
+Follow this interactive 4-step checklist to run Shop:Sell locally in under 3 minutes:
 
-## Technology Map
-
-```mermaid
-mindmap
-  root((Shop:Sell))
-    Frontend
-      Next.js 15
-      React
-      TypeScript
-      Tailwind CSS
-      shadcn/ui
-      Motion
-    Backend
-      NestJS
-      Node.js
-      REST API
-      GraphQL Foundation
-      Zod
-    Database
-      PostgreSQL
-      Supabase
-      pgvector
-      JSONB
-      RLS
-    Search
-      Typesense
-      Autocomplete
-      Typo Tolerance
-      Faceted Search
-    Performance
-      Upstash Redis
-      BullMQ
-      Rate Limiting
-      Caching
-    Payments
-      Razorpay
-      HMAC Verification
-      Webhooks
-    Storage
-      Cloudflare R2
-      CDN
-    Deployment
-      Vercel
-      Railway
-      Render
-      GitHub Actions
-```
-
-## Stack Breakdown
-
-| Layer | Technology | Purpose |
-|---|---|---|
-| Frontend | Next.js 15 | Marketplace web application |
-| UI | React + TypeScript | Interactive and type-safe UI |
-| Styling | Tailwind CSS | Responsive styling |
-| Components | shadcn/ui | Reusable UI system |
-| Animation | Motion | UI transitions and interactions |
-| Backend | NestJS | Modular API |
-| Runtime | Node.js | Backend execution |
-| Database | PostgreSQL | Core marketplace data |
-| Database Platform | Supabase | Hosted PostgreSQL and authentication |
-| Vector Search | pgvector | Product similarity |
-| Search | Typesense | Fast product search |
-| Cache | Upstash Redis | Caching and rate limiting |
-| Queue | BullMQ | Background jobs |
-| Payments | Razorpay | Online payments |
-| Storage | Cloudflare R2 | Product media |
-| Frontend Hosting | Vercel | Web deployment |
-| API Hosting | Railway / Render | Backend deployment |
-| CI | GitHub Actions | Automated checks |
-
-> **Docker is not required** for the application architecture.
-
----
-
-# How Shop:Sell Works
-
-The marketplace connects the complete shopping lifecycle.
-
-```mermaid
-flowchart TD
-    Start([Customer Visits Shop:Sell])
-
-    Start --> Home[Marketplace Homepage]
-
-    Home --> Browse[Browse Categories]
-    Home --> Search[Search Products]
-    Home --> Recommend[Personalized Recommendations]
-
-    Browse --> Product[Product Page]
-    Search --> Product
-    Recommend --> Product
-
-    Product --> Cart[Add to Cart]
-
-    Cart --> Checkout[Checkout]
-
-    Checkout --> Payment[Razorpay Payment]
-
-    Payment --> Verify{Payment Verified?}
-
-    Verify -->|No| Failed[Payment Failed]
-    Verify -->|Yes| Order[Create Order]
-
-    Order --> Inventory[Update Inventory]
-    Inventory --> Seller[Seller Order Management]
-
-    Seller --> Fulfilment[Order Fulfilment]
-
-    Order --> CustomerOrder[Customer Order History]
-
-    Admin[Admin] --> Manage[Marketplace Management]
-    Manage --> Seller
-    Manage --> Product
-```
-
----
-
-# Customer Experience
-
-The customer side of Shop:Sell is focused on product discovery, shopping, payment, and order management.
-
-```mermaid
-mindmap
-  root((Customer))
-    Discover
-      Homepage
-      Categories
-      Trending Products
-      Featured Products
-    Search
-      Autocomplete
-      Typo Tolerance
-      Filters
-      Seller Search
-    Product
-      Images
-      Price
-      Description
-      Specifications
-      Seller
-      Stock
-    Shopping
-      Cart
-      Quantity
-      Availability
-    Checkout
-      Address
-      Order Summary
-      Payment
-    Orders
-      Order History
-      Order Details
-      Payment Status
-      Order Status
-    Recommendations
-      Similar Products
-      User Activity
-      Recent Interactions
-```
-
-## Homepage
-
-The homepage acts as the main product discovery interface.
-
-Customers can explore:
-
-- Featured products
-- Trending products
-- Recommended products
-- Popular categories
-- Products from different sellers
-- Recently viewed products
-
----
-
-## Product Discovery
-
-Customers can discover products through multiple paths:
-
-```text
-                 Product Discovery
-                        |
-        +---------------+---------------+
-        |               |               |
-        v               v               v
-    Categories        Search       Recommendations
-        |               |               |
-        +---------------+---------------+
-                        |
-                        v
-                 Product Details
-```
-
----
-
-# Smart Search
-
-Shop:Sell uses **Typesense** to provide fast and typo-tolerant product discovery.
-
-```mermaid
-flowchart LR
-    User[Customer] --> Input[Search Query]
-
-    Input --> Typesense[Typesense Search]
-
-    Typesense --> Typo[Typo Tolerance]
-    Typesense --> Auto[Autocomplete]
-    Typesense --> Prefix[Prefix Matching]
-    Typesense --> Filter[Filters & Facets]
-
-    Typo --> Results[Relevant Products]
-    Auto --> Results
-    Prefix --> Results
-    Filter --> Results
-
-    Results --> User
-```
-
-### Example
-
-```text
-Customer enters:
-
-"iphon 15 pro"
-
-        ↓
-
-Search understands the query
-
-        ↓
-
-iPhone 15 Pro
-iPhone 15 Pro Max
-iPhone 15
-...
-```
-
-Search supports:
-
-- Autocomplete
-- Typo tolerance
-- Prefix matching
-- Category filters
-- Seller filters
-- Product filters
-- Faceted search
-
----
-
-# Personalized Recommendations
-
-Shop:Sell includes a product recommendation system designed to improve product discovery.
-
-```mermaid
-flowchart TD
-    User[Customer Activity]
-
-    User --> Viewed[Viewed Products]
-    User --> Interactions[Product Interactions]
-    User --> Recent[Recent Activity]
-
-    Viewed --> Signals[Recommendation Signals]
-    Interactions --> Signals
-    Recent --> Signals
-
-    Products[Product Embeddings] --> Similarity[Vector Similarity]
-    Signals --> Scoring[Recommendation Scoring]
-    Similarity --> Scoring
-
-    Scoring --> Diversity[Diversity Control]
-    Diversity --> Recommendations[Recommended Products]
-
-    Recommendations --> User
-```
-
-The recommendation system can consider:
-
-- Previous product interactions
-- Recently viewed products
-- Product similarity
-- Product embeddings
-- Recency of activity
-
-The architecture uses **pgvector** for vector-based product similarity.
-
-A time-decay component can also reduce the influence of older interactions.
-
----
-
-# Seller Experience
-
-Sellers operate their own stores within the marketplace.
-
-```mermaid
-mindmap
-  root((Seller))
-    Store
-      Store Profile
-      Product Catalogue
-      Store Identity
-    Products
-      Add Product
-      Edit Product
-      Product Images
-      Categories
-      Pricing
-    Inventory
-      Stock Levels
-      Availability
-      Low Stock
-      Stock Updates
-    Orders
-      New Orders
-      Order Items
-      Order Status
-      Fulfilment
-    Business
-      Sales
-      Payouts
-      Store Activity
-```
-
----
-
-# Seller Dashboard
-
-The seller dashboard provides a centralized view of store activity.
-
-Example:
-
-```text
-+------------------------------------------------+
-|              SELLER DASHBOARD                  |
-+------------------------------------------------+
-|                                                |
-|   Products       Orders        Sales           |
-|      128           342        ₹2,45,000        |
-|                                                |
-+------------------------------------------------+
-|                                                |
-|   Low Stock Products: 7                        |
-|   Pending Orders: 18                           |
-|                                                |
-+------------------------------------------------+
-```
-
-Seller functionality includes:
-
-- Product management
-- Inventory management
-- Order management
-- Store management
-- Sales information
-- Payout calculations
-- Low-stock monitoring
-
----
-
-# Product Management
-
-Sellers can manage their own product catalogue.
-
-```mermaid
-flowchart LR
-    Seller[Seller] --> Add[Add Product]
-    Seller --> Edit[Edit Product]
-    Seller --> Media[Upload Media]
-    Seller --> Category[Assign Category]
-    Seller --> Price[Update Price]
-    Seller --> Stock[Update Stock]
-
-    Add --> Catalogue[Seller Catalogue]
-    Edit --> Catalogue
-    Media --> Catalogue
-    Category --> Catalogue
-    Price --> Catalogue
-    Stock --> Catalogue
-```
-
----
-
-# Inventory Management
-
-Inventory consistency is important in a multi-vendor marketplace.
-
-```mermaid
-flowchart TD
-    Customer[Customer Checkout]
-    Customer --> Check[Check Product Stock]
-
-    Check --> Available{Stock Available?}
-
-    Available -->|No| Unavailable[Product Unavailable]
-
-    Available -->|Yes| Transaction[Database Transaction]
-
-    Transaction --> Update[Update Inventory]
-    Update --> Create[Create Order]
-    Create --> Commit[Commit Transaction]
-
-    Commit --> Success[Order Confirmed]
-```
-
-The transactional approach helps reduce overselling during concurrent purchases.
-
----
-
-# Cart and Checkout
-
-The customer purchase flow is:
-
-```mermaid
-flowchart LR
-    Product[Product] --> Cart[Cart]
-    Cart --> Review[Review Cart]
-    Review --> Address[Delivery Information]
-    Address --> Summary[Order Summary]
-    Summary --> Payment[Razorpay]
-    Payment --> Verify[Server Verification]
-    Verify --> Confirm[Order Confirmation]
-```
-
-The cart can contain products from multiple sellers.
-
-Customers can:
-
-- Add products
-- Remove products
-- Change quantities
-- Review prices
-- Check availability
-- View seller information
-- Proceed to checkout
-
----
-
-# Payment Architecture
-
-Payments are processed through Razorpay.
-
-```mermaid
-sequenceDiagram
-    participant C as Customer
-    participant W as Next.js
-    participant A as NestJS API
-    participant R as Razorpay
-    participant DB as PostgreSQL
-
-    C->>W: Start Checkout
-    W->>A: Create Payment Order
-    A->>R: Create Razorpay Order
-    R-->>A: Payment Order
-    A-->>W: Payment Details
-
-    C->>R: Complete Payment
-    R-->>W: Payment Response
-
-    W->>A: Payment Verification
-    A->>A: HMAC SHA256 Verification
-
-    A->>DB: Create / Confirm Order
-    DB-->>A: Order Created
-
-    A-->>W: Payment Confirmed
-```
-
-Payment security includes:
-
-- Server-side payment verification
-- HMAC SHA256 signature verification
-- Razorpay webhook processing
-- Server-side secret management
-
----
-
-# Order and Inventory Flow
-
-```mermaid
-flowchart TD
-    Checkout[Customer Checkout]
-
-    Checkout --> Payment[Payment]
-    Payment --> Verification[Payment Verification]
-
-    Verification --> Transaction[Database Transaction]
-
-    Transaction --> Validate[Validate Inventory]
-    Validate --> Reduce[Update Stock]
-    Reduce --> Order[Create Order]
-    Order --> Items[Create Order Items]
-
-    Items --> SellerQueue[Seller Order Queue]
-    Items --> CustomerHistory[Customer Order History]
-
-    SellerQueue --> Fulfilment[Seller Fulfilment]
-```
-
-This ensures that payment, order creation, and inventory operations are handled as a coordinated workflow.
-
----
-
-# Admin Experience
-
-Administrators manage the overall marketplace.
-
-```mermaid
-mindmap
-  root((Admin))
-    Seller Management
-      Seller Applications
-      Seller Accounts
-      Seller Activity
-    Product Management
-      Product Moderation
-      Product Availability
-    Categories
-      Create
-      Update
-      Organize
-    Marketplace
-      Analytics
-      Activity
-      Orders
-    Disputes
-      Customer Issues
-      Seller Issues
-      Resolution
-```
-
-Admin capabilities include:
-
-- Seller management
-- Product moderation
-- Category management
-- Marketplace analytics
-- Dispute management
-- Platform-level controls
-
----
-
-# Role Architecture
-
-Shop:Sell uses role-based access control.
-
-```mermaid
-flowchart TD
-    User((User))
-
-    User --> Customer[Customer]
-    User --> Seller[Seller]
-    User --> Admin[Admin]
-
-    Customer --> C1[Browse]
-    Customer --> C2[Cart]
-    Customer --> C3[Checkout]
-    Customer --> C4[Orders]
-
-    Seller --> S1[Store]
-    Seller --> S2[Products]
-    Seller --> S3[Inventory]
-    Seller --> S4[Seller Orders]
-
-    Admin --> A1[Sellers]
-    Admin --> A2[Products]
-    Admin --> A3[Categories]
-    Admin --> A4[Disputes]
-    Admin --> A5[Analytics]
-```
-
-Authorization is enforced through backend guards and database security policies.
-
----
-
-# System Architecture
-
-```mermaid
-flowchart TB
-
-    Customer[Customer]
-    Seller[Seller]
-    Admin[Admin]
-
-    Customer --> Web
-    Seller --> Web
-    Admin --> Web
-
-    Web[Next.js 15 Web Application]
-
-    Web --> API[NestJS API]
-
-    API --> Auth[Supabase Auth]
-    API --> DB[(PostgreSQL / Supabase)]
-    API --> Redis[(Upstash Redis)]
-    API --> Search[Typesense]
-    API --> Razorpay[Razorpay]
-    API --> R2[Cloudflare R2]
-
-    DB --> Vector[pgvector]
-
-    Redis --> Queue[BullMQ]
-    Queue --> Worker[Background Worker]
-
-    Worker --> DB
-    Worker --> Search
-```
-
----
-
-# Infrastructure Architecture
-
-```mermaid
-mindmap
-  root((Shop:Sell Infrastructure))
-    Vercel
-      Next.js
-      Customer Web
-      Seller Web
-      Admin Web
-    Supabase
-      PostgreSQL
-      Authentication
-      pgvector
-      RLS
-    Upstash
-      Redis
-      Cache
-      Rate Limiting
-      Queue
-    Typesense
-      Search
-      Autocomplete
-      Typo Tolerance
-      Facets
-    Razorpay
-      Payments
-      Verification
-      Webhooks
-    Cloudflare
-      R2
-      Product Media
-      CDN
-    Railway / Render
-      NestJS API
-      BullMQ Worker
-```
-
----
-
-# Background Processing
-
-Shop:Sell uses **Redis + BullMQ** for asynchronous processing.
-
-```mermaid
-flowchart LR
-    API[NestJS API] --> Redis[(Upstash Redis)]
-    Redis --> Queue[BullMQ Queue]
-    Queue --> Worker[Worker Service]
-
-    Worker --> Search[Typesense]
-    Worker --> DB[(PostgreSQL)]
-    Worker --> Events[Marketplace Events]
-```
-
-This allows operations that do not need to block the customer-facing request to run asynchronously.
-
----
-
-# Security
-
-Shop:Sell includes multiple security layers.
-
-```mermaid
-flowchart TD
-    Request[Incoming Request]
-
-    Request --> Auth[Authentication]
-    Auth --> JWT[JWT Validation]
-    JWT --> Role[Role Authorization]
-    Role --> Rate[Rate Limiting]
-    Rate --> API[API Logic]
-    API --> RLS[Database RLS]
-    RLS --> DB[(PostgreSQL)]
-```
-
-Security mechanisms include:
-
-- Supabase authentication
-- JWT validation
-- Role-based authorization
-- Row Level Security
-- API rate limiting
-- Server-side payment verification
-- Razorpay webhook verification
-- Environment-based secret management
-- Transactional database operations
-- Seller data isolation
-
----
-
-# Project Structure
-
-```text
-Shop:Sell/
-│
-├── apps/
-│   │
-│   ├── web/
-│   │   ├── src/
-│   │   │   ├── app/
-│   │   │   │   ├── (customer)/
-│   │   │   │   ├── (seller)/
-│   │   │   │   └── admin/
-│   │   │   │
-│   │   │   └── middleware.ts
-│   │   │
-│   │   └── package.json
-│   │
-│   └── api/
-│       ├── src/
-│       │   ├── common/
-│       │   ├── database/
-│       │   ├── modules/
-│       │   │   ├── auth/
-│       │   │   ├── products/
-│       │   │   ├── sellers/
-│       │   │   ├── search/
-│       │   │   ├── cart/
-│       │   │   ├── orders/
-│       │   │   ├── payments/
-│       │   │   ├── events/
-│       │   │   ├── recommendations/
-│       │   │   ├── admin/
-│       │   │   └── payouts/
-│       │   │
-│       │   └── worker.ts
-│       │
-│       └── package.json
-│
-├── packages/
-│   └── shared/
-│
-├── scripts/
-│   ├── seed.ts
-│   └── reindex.ts
-│
-├── supabase/
-│   ├── migrations/
-│   └── seeds/
-│
-├── test/
-│   └── k6/
-│       └── load-test.js
-│
-├── docs/
-│   └── architecture.md
-│
-├── .github/
-│   └── workflows/
-│       └── ci.yml
-│
-├── .env.example
-├── package.json
-└── README.md
-```
-
----
-
-# Getting Started
-
-## Prerequisites
-
-Make sure the following are installed:
-
-- Node.js
-- npm
-- Git
-
-No Docker installation is required.
-
----
-
-## Clone the Repository
+<details open>
+<summary><b>1. Clone & Install Dependencies</b></summary>
 
 ```bash
+# Clone the repository
 git clone https://github.com/jathinreddy-5/Shop-Sell.git
-
 cd Shop-Sell
 
+# Install dependencies across all monorepo workspaces (apps/web, apps/api, packages/shared)
 npm install
 ```
+</details>
 
----
-
-## Environment Configuration
-
-Create your environment file:
+<details open>
+<summary><b>2. Configure Environment Variables</b></summary>
 
 ```bash
+# Copy the environment template
 cp .env.example .env
 ```
 
-Configure the required services:
+<details>
+<summary><b>🔍 View Key Environment Variables Matrix (Click to expand)</b></summary>
 
-```text
-Supabase
-PostgreSQL
-Upstash Redis
-Typesense
-Razorpay
-Cloudflare R2
-```
+| Variable | Default (Dev) | Description |
+|---|---|---|
+| `NODE_ENV` | `development` | Set to `production` in live deployments |
+| `JWT_SECRET` | `dev-jwt-secret-min-32-chars-long!` | Shared symmetric key for HS256 JWT signing & verification |
+| `SUPABASE_JWT_SECRET` | `dev-jwt-secret-min-32-chars-long!` | Supabase token signature secret (must match JWT_SECRET in dev) |
+| `INTERNAL_API_SECRET` | `dev-internal-api-secret-min-32-chars!` | Shared secret for trusted web-to-API proxy endpoints |
+| `LOG_HASH_KEY` | `dev-log-hash-key-min-32-chars-long!` | HMAC-SHA256 salt for GDPR-compliant PII log redaction |
+| `ENABLE_DEMO_ACCOUNTS` | `true` | Enables deterministic OTP bypass (`123456`) in dev mode |
+| `UPSTASH_REDIS_REST_URL` | *(Optional in dev)* | Upstash Redis URL for distributed rate limiting & token blacklist |
+| `UPSTASH_REDIS_REST_TOKEN` | *(Optional in dev)* | Upstash REST authentication token |
+| `CLOUDFLARE_TURNSTILE_SECRET_KEY` | *(Optional in dev)* | Cloudflare Turnstile CAPTCHA secret |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | *(Optional in dev)* | Public site key rendered in client-side auth forms |
 
-Keep all secret keys inside `.env`.
+</details>
+</details>
 
-Do not commit `.env` to GitHub.
-
----
-
-# Database Setup
-
-Shop:Sell uses hosted PostgreSQL through Supabase.
-
-The database includes:
-
-- Marketplace tables
-- Product data
-- Seller data
-- Orders
-- Inventory
-- Authentication-related data
-- Row Level Security
-- Database indexes
-- pgvector
-- Transactional operations
-
-Run the seed process:
+<details open>
+<summary><b>3. Seed Database & Synchronize Search Engine</b></summary>
 
 ```bash
+# Seed PostgreSQL tables, sample sellers, categories, and pgvector embeddings
 npm run seed
-```
 
-The seed process can populate sample marketplace data including:
-
-- Categories
-- Sellers
-- Stores
-- Products
-- Product embeddings
-
----
-
-# Search Index Setup
-
-Synchronize products with Typesense:
-
-```bash
+# Synchronize product catalogue into Typesense search engine
 npm run reindex
 ```
+</details>
 
-This creates the searchable product catalogue used by the marketplace search interface.
-
----
-
-# Run the Application
-
-Start the frontend and backend together:
+<details open>
+<summary><b>4. Launch Development Servers</b></summary>
 
 ```bash
+# Start frontend (Next.js 15) and backend (NestJS) concurrently
 npm run dev
 ```
 
-The development environment runs:
+- 🌐 **Web Front**: [http://localhost:3000](http://localhost:3000)
+- 🔌 **API Engine**: [http://localhost:4000](http://localhost:4000)
 
-```text
-Frontend
-http://localhost:3000
+</details>
 
-Backend
-http://localhost:4000
-```
-
-Run individual services:
-
-```bash
-npm run dev:web
-```
-
-```bash
-npm run dev:api
-```
-
-```bash
-npm run worker
-```
+<p align="right"><a href="#shopsell">⬆ Back to Top</a></p>
 
 ---
 
-# Testing
+## 🛡️ Cloudflare Security, Turnstile & Origin Protection
 
-Run the complete test suite:
-
-```bash
-npm run test
-```
-
-The test suite covers areas such as:
-
-- Authentication
-- Role authorization
-- Database migrations
-- Product validation
-- Search filters
-- Order placement
-- Inventory management
-- Payment verification
-- Recommendation scoring
-- Seller payouts
-- Rate limiting
-- Middleware routing
-
----
-
-# Load Testing
-
-Shop:Sell includes a k6 load-testing configuration.
-
-Run:
-
-```bash
-k6 run test/k6/load-test.js
-```
-
-The load test covers scenarios such as:
-
-- Homepage requests
-- Product discovery
-- Search autocomplete
-- Product pages
-- Checkout requests
-
----
-
-# Deployment
-
-## Frontend
-
-Deploy the Next.js application using Vercel.
-
-```text
-Platform: Vercel
-Application: Next.js
-Root Directory: apps/web
-```
-
----
-
-## Backend
-
-Deploy the NestJS API using Railway or Render.
-
-```text
-Platform: Railway / Render
-Application: NestJS
-Runtime: Node.js
-```
-
-Build:
-
-```bash
-npm run build
-```
-
-Start:
-
-```bash
-npm run start:prod
-```
-
----
-
-## Background Worker
-
-Deploy the BullMQ worker as a separate Node.js service.
-
-```bash
-npm run start:worker
-```
-
-The worker shares the same:
-
-- Redis
-- PostgreSQL
-- Typesense
-
-infrastructure as the backend.
-
----
-
-# Scalability
-
-The architecture is designed so individual components can scale independently.
+Shop:Sell is engineered with defense-in-depth edge protection to prevent credential stuffing, bot scraping, and unauthorized origin traffic:
 
 ```mermaid
-flowchart LR
-    Traffic[Growing Traffic]
+flowchart TD
+    Traffic[Client Traffic] --> CF[Cloudflare Edge CDN / WAF]
+    CF --> Turnstile{Turnstile Challenge}
+    Turnstile -->|Bot / Malicious| Block[403 / Managed Challenge]
+    Turnstile -->|Verified Human| Proxy[Authenticated Origin Pull]
+    Proxy --> MW[Next.js Edge Middleware]
     
-    Traffic --> CDN[CDN / Edge]
-    Traffic --> API[Horizontal API Scaling]
+    subgraph "Next.js Security Boundary"
+        MW --> RL{Upstash Redis RateLimiter}
+        RL -->|Exceeded / Lockout| Throttle[429 Too Many Requests]
+        RL -->|Allowed| CSRF{Same-Origin CSRF Check}
+        CSRF -->|Cross-Origin POST| Reject[403 CSRF Detected]
+        CSRF -->|Verified| Auth[Token Signature & Role Check]
+    end
 
-    API --> Pool[Connection Pooling]
-    Pool --> DB[(PostgreSQL)]
-
-    API --> Cache[Redis Cache]
-    API --> Search[Typesense]
-
-    Queue[BullMQ] --> Workers[Multiple Workers]
-
-    DB --> Replica[Read Replicas]
+    Auth --> API[NestJS API Core]
+    API --> RLS[PostgreSQL Row-Level Security]
 ```
 
-Future scaling strategies can include:
+<details>
+<summary><b>🔒 Interactive Edge Security Breakdown (Click to expand)</b></summary>
 
-- PostgreSQL connection pooling
-- Read replicas
-- CDN caching
-- Redis caching
-- Horizontal API scaling
-- Multiple background workers
-- Search infrastructure scaling
-- Database partitioning
-- Catalogue sharding
-
-Refer to [`docs/architecture.md`](docs/architecture.md) for details on PgBouncer pooling, read replica distribution, CDN caching, Redis cluster topology, and partitioning/sharding strategies.
-
----
-
-# Cloudflare Security
-
-## 🔒 Cloudflare Security, Turnstile & Origin Protection
-
-Shop:Sell incorporates a defense-in-depth edge security posture via Cloudflare:
 - **Cloudflare Turnstile**: Managed challenge protection on login (`/login`), OTP generation (`/api/auth/request-otp`), and seller applications (`/become-a-seller`).
 - **Cryptographic Token Verification**: Edge middleware verifies short-lived (15 min) JWT access tokens via `jose` (HS256) using `JWT_SECRET`. Client-submitted `shopsell_roles` cookies are never trusted for authorization.
 - **Shared-Store Rate Limiting**: Per-email and per-IP login throttling, 5 OTPs/hour limit, and lockout after 5 failed verification attempts via Upstash Redis.
 - **Origin Protection & Authenticated Origin Pulls**: Ensure origin web traffic is strictly restricted to official Cloudflare IP ranges and verified via client TLS certificates.
 - **Detailed Checklist**: Refer to [`docs/cloudflare-setup.md`](docs/cloudflare-setup.md) for step-by-step dashboard instructions.
 
----
+</details>
 
-# Key Features
-
-| Feature | Description |
-|---|---|
-| Multi-Vendor Marketplace | Multiple independent sellers can sell through one platform |
-| Customer Marketplace | Browse and purchase products from multiple sellers |
-| Smart Search | Typo-tolerant search with autocomplete |
-| Personalized Recommendations | Product discovery based on user activity and similarity |
-| Product Categories | Structured product discovery |
-| Product Pages | Detailed product and seller information |
-| Shopping Cart | Manage products before checkout |
-| Secure Payments | Razorpay-powered payments |
-| Payment Verification | Server-side signature verification |
-| Customer Orders | Order history and order details |
-| Seller Stores | Individual stores within the marketplace |
-| Seller Dashboard | Store-level business overview |
-| Product Management | Seller-controlled product catalogue |
-| Inventory Management | Stock tracking and low-stock monitoring |
-| Transactional Orders | Reliable order and inventory processing |
-| Seller Orders | Seller-specific order management |
-| Seller Payouts | Seller-specific payout calculations |
-| Admin Panel | Marketplace administration |
-| Seller Management | Seller application and account management |
-| Product Moderation | Marketplace product management |
-| Category Management | Marketplace catalogue organization |
-| Dispute Management | Marketplace dispute handling |
-| Role-Based Access | Customer, seller, and admin permissions |
-| Product Media | Cloud-based media storage |
-| Background Processing | Asynchronous marketplace operations |
-| Rate Limiting | Redis-based API protection |
-| Vector Similarity | pgvector-powered product similarity |
+<p align="right"><a href="#shopsell">⬆ Back to Top</a></p>
 
 ---
 
-# Project Vision
+## 📐 Interactive Architecture Drawers
 
-Shop:Sell brings the complete marketplace lifecycle into one platform.
+Explore the architecture and system flows through interactive collapsible diagrams:
+
+<details>
+<summary><b>1. 🛒 Customer Discovery & Shopping Lifecycle (Click to expand)</b></summary>
+
+```mermaid
+flowchart TD
+    Start([Customer Visits Shop:Sell]) --> Home[Marketplace Homepage]
+
+    Home --> Browse[Browse Categories]
+    Home --> Search[Typesense Smart Search]
+    Home --> Recommend[pgvector Recommendations]
+
+    Browse --> Product[Product Detail Page]
+    Search --> Product
+    Recommend --> Product
+
+    Product --> Cart[Add to Multi-Vendor Cart]
+    Cart --> Checkout[Checkout & Shipping Address]
+    Checkout --> Payment[Razorpay Payment Gateway]
+
+    Payment --> Verify{HMAC Signature Verified?}
+    Verify -->|Failed| Failed[Payment Failed / Retry]
+    Verify -->|Valid| Order[Transactional Order Creation]
+
+    Order --> Inventory[Atomic Stock Decrement]
+    Inventory --> Seller[Seller Order Queues]
+    Seller --> Fulfilment[Dispatch & Delivery]
+    Order --> CustomerOrder[Customer Order History]
+```
+
+</details>
+
+<details>
+<summary><b>2. 🏪 Seller Store, Inventory & Payout Lifecycle (Click to expand)</b></summary>
 
 ```mermaid
 flowchart LR
-    Discover[Discover] --> Search[Search]
-    Search --> Explore[Explore]
-    Explore --> Cart[Add to Cart]
-    Cart --> Checkout[Checkout]
-    Checkout --> Pay[Pay]
-    Pay --> Order[Order]
-    Order --> Fulfil[Seller Fulfilment]
-    Fulfil --> Manage[Marketplace Management]
-    Manage --> Discover
+    Seller[Verified Seller] --> Dashboard[Seller Dashboard]
+    
+    Dashboard --> Catalog[Manage Catalogue]
+    Catalog --> Add[Create Product & Upload Images]
+    Catalog --> Specs[Technical Specifications & JSONB Attributes]
+    Catalog --> Pricing[Dynamic Pricing & SKU Tracking]
+    
+    Dashboard --> Inv[Inventory Monitoring]
+    Inv --> LowStock[Low Stock Alerts & Reorder Thresholds]
+    
+    Dashboard --> Orders[Orders Queue]
+    Orders --> Pack[Pack & Mark Shipped]
+    
+    Dashboard --> Payouts[Automated Payout Engine]
+    Payouts --> Escrow[Escrow Settlement Post-Return Window]
 ```
 
-### The goal
+</details>
+
+<details>
+<summary><b>3. 🛡️ Admin Governance, Kill Switches & WORM Audit Trail (Click to expand)</b></summary>
+
+```mermaid
+flowchart TD
+    Admin[Marketplace Administrator] --> Guard[Admin Auth Guard & RBAC]
+    
+    Guard --> PermCheck{Has Required Permission?}
+    PermCheck -->|No| 403[403 Forbidden]
+    PermCheck -->|Yes| Action[Execute Administrative Action]
+    
+    subgraph "Critical Action Protocol"
+        Action --> DualRule{Requires 2-Man Approval?}
+        DualRule -->|Yes| Approvals[Dual-Authorization Queue]
+        Approvals --> Pending[Await 2nd Admin Sign-Off]
+        DualRule -->|No / Approved| Apply[Apply Change]
+    end
+    
+    subgraph "Emergency Safeguards"
+        Apply --> KillSwitches[Platform Kill Switches]
+        KillSwitches --> FreezePayouts[Freeze Payouts]
+        KillSwitches --> DisableSeller[Quarantine Malicious Seller]
+        KillSwitches --> Maintenance[Global Maintenance Mode]
+    end
+    
+    subgraph "Compliance & Redaction"
+        Apply --> Redactor[HMAC-SHA256 PII Redactor]
+        Redactor --> WORM[Immutable WORM Audit Sink]
+        WORM --> LocalSink[Append-Only Audit Ledger]
+        WORM --> S3Lock[AWS S3 Object Lock / Cloudflare R2]
+    end
+```
+
+</details>
+
+<details>
+<summary><b>4. 💳 Transactional Order & Razorpay Payment State Machine (Click to expand)</b></summary>
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as Customer
+    participant W as Next.js 15 Web
+    participant A as NestJS API
+    participant R as Razorpay Gateway
+    participant DB as PostgreSQL (Supabase)
+
+    C->>W: Initiate Checkout
+    W->>A: POST /api/payments/create-order
+    A->>R: Create Razorpay Order (INR, Receipt ID)
+    R-->>A: Order Created (order_id, amount)
+    A-->>W: Client Order Payload
+
+    C->>R: Authorize Payment via UPI / Card / NetBanking
+    R-->>W: Payment Response (payment_id, order_id, signature)
+
+    W->>A: POST /api/payments/verify
+    Note over A: Verify HMAC-SHA256(order_id + "|" + payment_id, KEY_SECRET)
+    
+    critical Atomic Database Transaction
+        A->>DB: Lock inventory rows FOR UPDATE
+        A->>DB: Decrement product stock
+        A->>DB: Insert master order & split seller order items
+        A->>DB: Record payment transaction
+    end
+
+    A-->>W: Order Confirmation
+    W-->>C: Display Success & Order Tracking Details
+```
+
+</details>
+
+<details>
+<summary><b>5. 🧠 pgvector & Typesense Search / Recommendation Pipeline (Click to expand)</b></summary>
+
+```mermaid
+flowchart LR
+    subgraph "Instant Search (Typesense)"
+        Query[Search Input: 'iphon 15 pro'] --> Typo[Typo Tolerance Engine]
+        Typo --> Facets[Facet & Category Filters]
+        Facets --> Instant[Sub-15ms Autocomplete Results]
+    end
+
+    subgraph "Vector Similarity (pgvector)"
+        Item[Product Interactions & Purchases] --> Embed[384-dimensional Embeddings]
+        Embed --> Cosine[Cosine Distance Operator <=>]
+        Cosine --> Decay[Exponential Time-Decay Scoring]
+        Decay --> Recs[Personalized 'You May Also Like' Grid]
+    end
+```
+
+</details>
+
+<p align="right"><a href="#shopsell">⬆ Back to Top</a></p>
+
+---
+
+## 🛒 Interactive Experience Tours
+
+<details>
+<summary><b>🛍️ Customer Experience Showcase (Click to expand)</b></summary>
+
+- **Instant Autocomplete & Typo Tolerance**: Fast search matching across names, descriptions, categories, and sellers.
+- **Dynamic Category Explorers**: Filter by price brackets, tags, ratings, and instant availability.
+- **Interactive Product Dossier**: Tabbed specifications, detailed dimensions, high-resolution imagery, and verified seller trust cards.
+- **Multi-Vendor Shared Cart**: Buy items from multiple independent sellers in a single checkout session.
+- **Progressive Onboarding**: Seamless post-login profiling for address management and shipping preferences.
+
+</details>
+
+<details>
+<summary><b>🏪 Seller Experience Showcase (Click to expand)</b></summary>
+
+- **Merchant Portal**: Dedicated dashboard tracking revenue, order fulfillment status, low-stock warnings, and metrics.
+- **Product & Inventory Engine**: Complete CRUD over listings, multi-image upload support, category tagging, and JSONB custom specifications.
+- **Automated Payout Engine**: Transparent ledger detailing gross sales, marketplace commission deductions, and net pending payouts.
+- **Order Dispatch Workflow**: One-click status updates from `PENDING` → `CONFIRMED` → `SHIPPED` → `DELIVERED`.
+
+</details>
+
+<details>
+<summary><b>🛡️ Administrator Experience Showcase (Click to expand)</b></summary>
+
+- **Enterprise RBAC**: Fine-grained permissions (`USERS_READ`, `SELLERS_APPROVE`, `FINANCE_PAYOUT`, `SYSTEM_CONFIG`).
+- **Emergency Kill Switches**: Instant platform-wide kill switches to freeze payouts, disable new user registrations, or halt order placements.
+- **Two-Man Rule Dual Approvals**: High-risk operations (e.g. manual balance adjustments, seller bans) require sign-off by a secondary admin.
+- **WORM Audit Trail**: Write-Once-Read-Many tamper-proof logging with cryptographic SHA-256 chain verification.
+
+</details>
+
+<p align="right"><a href="#shopsell">⬆ Back to Top</a></p>
+
+---
+
+## 🧪 Interactive Testing Suite
+
+The repository contains **138 automated unit, integration, and security tests** across all monorepo workspaces:
 
 ```text
-                 SHOP:SELL
-
-        ┌───────────────────────────┐
-        │                           │
-        │       DISCOVER            │
-        │           ↓               │
-        │        SEARCH             │
-        │           ↓               │
-        │        EXPLORE            │
-        │           ↓               │
-        │       PURCHASE            │
-        │           ↓               │
-        │         ORDER             │
-        │           ↓               │
-        │       FULFILMENT          │
-        │           ↓               │
-        │       MANAGEMENT          │
-        │                           │
-        └───────────────────────────┘
+┌───────────────────────────────────────────────────────────┐
+│              MONOREPO TEST SUITE SUMMARY                  │
+├──────────────────────────────┬──────────────┬─────────────┤
+│ Workspace                    │ Test Count   │ Status      │
+├──────────────────────────────┼──────────────┼─────────────┤
+│ apps/web (Next.js 15)        │ 32 Tests     │ ✅ PASSING  │
+│ apps/api (NestJS)            │ 95 Tests     │ ✅ PASSING  │
+│ packages/shared (Types/RLS)  │ 11 Tests     │ ✅ PASSING  │
+├──────────────────────────────┼──────────────┼─────────────┤
+│ Total Monorepo Test Coverage │ 138 Tests    │ ✅ ALL PASS │
+└──────────────────────────────┴──────────────┴─────────────┘
 ```
 
-Shop:Sell combines **customer shopping, seller management, marketplace administration, intelligent search, recommendations, secure payments, inventory management, and scalable cloud infrastructure** into a unified multi-vendor marketplace.
+<details open>
+<summary><b>👉 Click to run and inspect test commands</b></summary>
+
+```bash
+# Run all tests across the entire monorepo
+npm run test
+
+# Run Next.js security hardening and auth tests
+npm --prefix apps/web test
+
+# Run NestJS API and Admin Governance tests
+npm --prefix apps/api test
+
+# Run Shared Package & Database Migration tests
+npm --prefix packages/shared test
+
+# Run k6 load testing against local API
+k6 run test/k6/load-test.js
+```
+
+</details>
+
+<p align="right"><a href="#shopsell">⬆ Back to Top</a></p>
+
+---
+
+## 🧩 Interactive Feature Matrix
+
+| Feature | Scope | Status | Technology |
+|---|---|---|---|
+| **Multi-Vendor Storefront** | Customer | `✅ Production` | Next.js 15, React 18, Tailwind CSS |
+| **Passwordless Email Auth** | Security | `✅ Production` | OTP Verification, TimingSafeEqual, Redis Lockout |
+| **Typo-Tolerant Search** | Core | `✅ Production` | Typesense, Prefixes, Faceted Filtering |
+| **Vector Similarity Engine** | Core | `✅ Production` | PostgreSQL, pgvector (384-dim), Time-Decay |
+| **Multi-Seller Cart & Orders** | Customer | `✅ Production` | Atomic DB Transactions, Inventory Mutex |
+| **Razorpay Checkout** | Payments | `✅ Production` | Server-Side HMAC-SHA256 Signature Verification |
+| **Seller Portal & Analytics** | Seller | `✅ Production` | Next.js Dashboard, Stock Tracking, Payout Ledger |
+| **Admin RBAC & Governance** | Admin | `✅ Production` | NestJS Guards, Elevation Tokens, Dual-Approvals |
+| **WORM Compliance Logging** | Admin | `✅ Production` | Immutable S3 / Local Object Lock Sink |
+| **Cloudflare Edge Defense** | Security | `✅ Production` | Turnstile, Authenticated Origin Pulls, Upstash Rate Limiter |
+
+<p align="right"><a href="#shopsell">⬆ Back to Top</a></p>
+
+---
+
+## 📚 Documentation Hub
+
+Explore in-depth design specifications and implementation guides:
+
+| Document | Purpose |
+|---|---|
+| [`docs/cloudflare-setup.md`](docs/cloudflare-setup.md) | Step-by-step Cloudflare Turnstile, WAF rules & Authenticated Origin Pulls guide |
+| [`docs/security-fixes.md`](docs/security-fixes.md) | Exhaustive documentation of all Phase 1 & 2 security hardening implementations |
+| [`docs/admin-management-and-governance.md`](docs/admin-management-and-governance.md) | Full architectural specification for Admin RBAC, elevation & kill-switches |
+| [`docs/architecture.md`](docs/architecture.md) | Scaling topology: PgBouncer, Read Replicas, Redis Clusters & CDN Caching |
+| [`docs/user-onboarding-specification.md`](docs/user-onboarding-specification.md) | Progressive profiling flow and onboarding modal specification |
+| [`docs/admin/permissions.md`](docs/admin/permissions.md) | Comprehensive admin roles and permission code matrix |
+| [`docs/admin/audit.md`](docs/admin/audit.md) | Cryptographic audit trail, redaction format, and sink interfaces |
+
+---
+
+<div align="center">
+
+**Built with pride for high-scale multi-vendor commerce.**  
+*Shop:Sell — Discover. Shop. Sell. Govern.*
+
+[⬆ Back to Top](#shopsell)
+
+</div>
