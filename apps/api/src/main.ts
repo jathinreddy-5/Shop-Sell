@@ -28,6 +28,8 @@ import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import {
   validateJwtSecret,
+  validateAdminJwtSecret,
+  validateSupabaseJwtSecret,
   validateDemoAccountsConfig,
   validateInternalApiSecret,
   createProxyMiddleware,
@@ -38,6 +40,10 @@ async function bootstrap() {
   // Validate secrets at startup (fail fast if missing, < 32 bytes, or placeholder in production)
   const jwtSecret = process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET;
   validateJwtSecret(jwtSecret, process.env.NODE_ENV);
+  if (process.env.SUPABASE_JWT_SECRET) {
+    validateSupabaseJwtSecret(process.env.SUPABASE_JWT_SECRET, process.env.NODE_ENV);
+  }
+  validateAdminJwtSecret(process.env.ADMIN_JWT_SECRET, jwtSecret, process.env.NODE_ENV);
   validateDemoAccountsConfig(process.env.ENABLE_DEMO_ACCOUNTS, process.env.NODE_ENV);
   const proxySecret = validateInternalApiSecret(process.env.INTERNAL_API_SECRET, process.env.NODE_ENV);
 

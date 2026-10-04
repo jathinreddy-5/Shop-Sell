@@ -6,10 +6,13 @@ import { UnauthorizedException } from '@nestjs/common';
 import { SupabaseAuthGuard } from '../common/guards/supabase-auth.guard';
 import {
   validateJwtSecret,
+  validateAdminJwtSecret,
+  validateSupabaseJwtSecret,
   validateDemoAccountsConfig,
   validateInternalApiSecret,
   verifyProxySecret,
   DEV_INTERNAL_API_SECRET,
+  DEV_ADMIN_JWT_SECRET,
   createProxyMiddleware,
 } from '@shop-sell/shared';
 
@@ -255,6 +258,111 @@ describe('API Security Hardening Test Suite (NestJS apps/api)', () => {
 
     assert.doesNotThrow(() => validateDemoAccountsConfig('false', 'production'));
     assert.doesNotThrow(() => validateDemoAccountsConfig('true', 'development'));
+  });
+
+  // FIX 3: Startup validation for ADMIN_JWT_SECRET and SUPABASE_JWT_SECRET
+  it('should fail fast if ADMIN_JWT_SECRET is missing or equals JWT_SECRET in production', () => {
+    const customerSecret = 'customer-jwt-secret-string-at-least-32-chars-long';
+    const distinctAdminSecret = 'admin-jwt-dedicated-secret-string-min-32-bytes-long';
+
+    // Missing in production
+    assert.throws(
+      () => validateAdminJwtSecret(undefined, customerSecret, 'production'),
+      /FATAL SECURITY ERROR: ADMIN_JWT_SECRET is missing/
+    );
+
+    // Too short in production
+    assert.throws(
+      () => validateAdminJwtSecret('short-admin-secret', customerSecret, 'production'),
+      /FATAL SECURITY ERROR: ADMIN_JWT_SECRET is too short/
+    );
+
+    // Placeholder in production
+    assert.throws(
+      () => validateAdminJwtSecret('your-admin-jwt-secret-here-min-32-chars', customerSecret, 'production'),
+      /FATAL SECURITY ERROR: ADMIN_JWT_SECRET cannot use an insecure example or placeholder secret in production/
+    );
+
+    // Equals JWT_SECRET in production -> forbidden!
+    assert.throws(
+      () => validateAdminJwtSecret(customerSecret, customerSecret, 'production'),
+      /FATAL SECURITY ERROR: ADMIN_JWT_SECRET must be strictly different from JWT_SECRET in production/
+    );
+
+    // In development: fallback to DEV_ADMIN_JWT_SECRET
+    const devFallback = validateAdminJwtSecret(undefined, customerSecret, 'development');
+    assert.strictEqual(devFallback, DEV_ADMIN_JWT_SECRET);
+
+    // In production: valid distinct secret passes
+    const prodValid = validateAdminJwtSecret(distinctAdminSecret, customerSecret, 'production');
+    assert.strictEqual(prodValid, distinctAdminSecret);
+
+    // SUPABASE_JWT_SECRET validation
+    assert.throws(
+      () => validateSupabaseJwtSecret('short-supabase', 'production'),
+      /FATAL SECURITY ERROR: SUPABASE_JWT_SECRET is too short/
+    );
+    assert.throws(
+      () => validateSupabaseJwtSecret('your-supabase-jwt-secret-here-min-32-chars', 'production'),
+      /FATAL SECURITY ERROR: SUPABASE_JWT_SECRET cannot use an insecure example or placeholder secret in production/
+    );
+    assert.strictEqual(
+      validateSupabaseJwtSecret('valid-supabase-jwt-secret-string-at-least-32-bytes', 'production'),
+      'valid-supabase-jwt-secret-string-at-least-32-bytes'
+    );
+  });
+
+  // FIX 3: Cross-acceptance test: admin token not accepted as normal user token and vice versa
+  it('should reject admin token as normal user token and normal user token as admin token', () => {
+    const customerSecret = 'customer-jwt-secret-string-at-least-32-chars-long';
+    const adminSecret = 'admin-jwt-dedicated-secret-string-min-32-bytes-long';
+
+    // 1. Sign an admin token with ADMIN_JWT_SECRET
+    const adminToken = jwt.sign(
+      { sub: 'admin-1', email: 'admin@shopsell.com', roles: ['admin', 'super_admin'], session_id: 'sess-1' },
+      adminSecret
+    );
+
+    // 2. Sign a normal user token with JWT_SECRET
+    const userToken = jwt.sign(
+      { sub: 'user-1', email: 'user@shopsell.com', app_metadata: { roles: ['customer'] } },
+      customerSecret
+    );
+
+    // SupabaseAuthGuard verifies with JWT_SECRET (customerSecret)
+    process.env.JWT_SECRET = customerSecret;
+    delete process.env.SUPABASE_JWT_SECRET;
+    const reflector = new Reflector();
+    const customerGuard = new SupabaseAuthGuard(reflector);
+    reflector.getAllAndOverride = (() => false) as any;
+
+    // Normal user token passes customer guard
+    const userReq: any = { headers: { authorization: `Bearer ${userToken}` } };
+    const userContext: any = {
+      switchToHttp: () => ({ getRequest: () => userReq }),
+      getHandler: () => () => {},
+      getClass: () => class {},
+    };
+    assert.strictEqual(customerGuard.canActivate(userContext), true);
+
+    // Admin token presented to customer guard -> REJECTED (signature mismatch)
+    const adminReqOnCustomerGuard: any = { headers: { authorization: `Bearer ${adminToken}` } };
+    const adminContextOnCustomerGuard: any = {
+      switchToHttp: () => ({ getRequest: () => adminReqOnCustomerGuard }),
+      getHandler: () => () => {},
+      getClass: () => class {},
+    };
+    assert.throws(
+      () => customerGuard.canActivate(adminContextOnCustomerGuard),
+      (err: any) => err instanceof UnauthorizedException
+    );
+
+    // AdminAuthService verifies with ADMIN_JWT_SECRET (adminSecret)
+    // Verifying user token on admin secret throws signature mismatch
+    assert.throws(
+      () => jwt.verify(userToken, adminSecret),
+      (err: any) => err.name === 'JsonWebTokenError' && err.message === 'invalid signature'
+    );
   });
 
   // 5. OTP: 5 wrong codes -> invalidated and 401; OTP is single-use and expires at 10 minutes

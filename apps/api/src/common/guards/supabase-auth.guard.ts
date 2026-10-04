@@ -30,7 +30,10 @@ export class SupabaseAuthGuard implements CanActivate {
     }
 
     const token = authHeader.split(' ')[1];
-    const jwtSecret = process.env.SUPABASE_JWT_SECRET || 'super-secret-jwt-token-with-minimum-32-characters-long';
+    const jwtSecret =
+      process.env.JWT_SECRET ||
+      process.env.SUPABASE_JWT_SECRET ||
+      'super-secret-jwt-token-with-minimum-32-characters-long';
 
     try {
       // Cryptographically verify token signature and expiration

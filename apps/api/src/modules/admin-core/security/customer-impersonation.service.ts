@@ -80,9 +80,9 @@ export class CustomerImpersonationService {
     const expiresAt = new Date(exp * 1000).toISOString();
 
     const secret =
+      process.env.JWT_SECRET ||
       process.env.SUPABASE_JWT_SECRET ||
-      process.env.ADMIN_JWT_SECRET ||
-      'dev-admin-secret-shopsell-ultra-secure-key-2026';
+      'super-secret-jwt-token-with-minimum-32-characters-long';
 
     const impersonationToken = jwt.sign(
       {

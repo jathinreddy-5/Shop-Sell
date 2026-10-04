@@ -3,7 +3,7 @@ import * as crypto from 'crypto';
 import * as jwt from 'jsonwebtoken';
 import { DatabaseService } from '../../../database/database.service';
 import { AdminRedisService } from '../redis/admin-redis.service';
-import { AdminUser, AdminSession } from '@shop-sell/shared';
+import { AdminUser, AdminSession, validateAdminJwtSecret } from '@shop-sell/shared';
 import { AdminAuditService } from '../audit/admin-audit.service';
 import { RbacService } from '../rbac/rbac.service';
 
@@ -36,10 +36,9 @@ export class AdminAuthService {
     private readonly auditService: AdminAuditService,
     private readonly rbacService: RbacService,
   ) {
-    this.jwtSecret =
-      process.env.ADMIN_JWT_SECRET ||
-      process.env.SUPABASE_JWT_SECRET ||
-      'dev-admin-secret-shopsell-ultra-secure-key-2026';
+    const adminSecret = process.env.ADMIN_JWT_SECRET;
+    const jwtSecret = process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET;
+    this.jwtSecret = validateAdminJwtSecret(adminSecret, jwtSecret, process.env.NODE_ENV);
   }
 
   /**

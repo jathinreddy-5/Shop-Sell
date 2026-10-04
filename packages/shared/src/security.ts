@@ -7,16 +7,102 @@ import * as crypto from 'crypto';
 const KNOWN_PLACEHOLDERS = [
   'super-secret-jwt-token-with-minimum-32-characters-long',
   'your-supabase-jwt-secret-here',
+  'your-supabase-jwt-secret-here-min-32-chars',
   'your_jwt_secret_here',
   'changeme',
   'secret',
   'shopsell-internal-proxy-secret-shared-key',
   'your-internal-api-secret-here-min-32-chars',
   'shopsell-dev-only-internal-proxy-secret-never-use-in-production-min32b',
+  'your-admin-jwt-secret-here-min-32-chars',
+  'dev-admin-secret-shopsell-ultra-secure-key-2026',
+  'dev-admin-secret-shopsell-ultra-secure-key-2026-min32b',
 ];
 
 export const DEV_INTERNAL_API_SECRET =
   'shopsell-dev-only-internal-proxy-secret-never-use-in-production-min32b';
+
+export const DEV_ADMIN_JWT_SECRET =
+  'dev-admin-secret-shopsell-ultra-secure-key-2026-min32b';
+
+/**
+ * Validates that ADMIN_JWT_SECRET is present, at least 32 bytes (256 bits),
+ * not set to a default placeholder in production, and strictly different
+ * from JWT_SECRET in production (no fallback to JWT_SECRET in production).
+ * In non-production, falls back to a clearly labeled dev admin secret.
+ */
+export function validateAdminJwtSecret(adminSecret?: string, jwtSecret?: string, nodeEnv?: string): string {
+  const env = nodeEnv || process.env.NODE_ENV || 'development';
+  const isProd = env === 'production';
+
+  if (!adminSecret || typeof adminSecret !== 'string' || adminSecret.trim() === '') {
+    if (isProd) {
+      throw new Error(
+        'FATAL SECURITY ERROR: ADMIN_JWT_SECRET is missing. A dedicated administrative secret (min 32 bytes) is required in production and cannot fall back to JWT_SECRET.'
+      );
+    }
+    return DEV_ADMIN_JWT_SECRET;
+  }
+
+  const trimmed = adminSecret.trim();
+  const byteLength = Buffer.byteLength(trimmed, 'utf8');
+
+  if (byteLength < 32) {
+    if (isProd) {
+      throw new Error(
+        `FATAL SECURITY ERROR: ADMIN_JWT_SECRET is too short (${byteLength} bytes). It must be at least 32 bytes in production.`
+      );
+    }
+    return trimmed;
+  }
+
+  if (isProd && KNOWN_PLACEHOLDERS.includes(trimmed)) {
+    throw new Error(
+      'FATAL SECURITY ERROR: ADMIN_JWT_SECRET cannot use an insecure example or placeholder secret in production.'
+    );
+  }
+
+  if (isProd && jwtSecret && trimmed === jwtSecret.trim()) {
+    throw new Error(
+      'FATAL SECURITY ERROR: ADMIN_JWT_SECRET must be strictly different from JWT_SECRET in production to prevent privilege cross-acceptance.'
+    );
+  }
+
+  return trimmed;
+}
+
+/**
+ * Validates SUPABASE_JWT_SECRET if provided for signing or verifying.
+ * Requires minimum 32 bytes and rejects known placeholders in production.
+ */
+export function validateSupabaseJwtSecret(secret?: string, nodeEnv?: string): string | undefined {
+  const env = nodeEnv || process.env.NODE_ENV || 'development';
+  const isProd = env === 'production';
+
+  if (!secret || typeof secret !== 'string' || secret.trim() === '') {
+    return undefined;
+  }
+
+  const trimmed = secret.trim();
+  const byteLength = Buffer.byteLength(trimmed, 'utf8');
+
+  if (byteLength < 32) {
+    if (isProd) {
+      throw new Error(
+        `FATAL SECURITY ERROR: SUPABASE_JWT_SECRET is too short (${byteLength} bytes). It must be at least 32 bytes in production.`
+      );
+    }
+    return trimmed;
+  }
+
+  if (isProd && KNOWN_PLACEHOLDERS.includes(trimmed)) {
+    throw new Error(
+      'FATAL SECURITY ERROR: SUPABASE_JWT_SECRET cannot use an insecure example or placeholder secret in production.'
+    );
+  }
+
+  return trimmed;
+}
 
 /**
  * Validates that JWT_SECRET is present, at least 32 bytes (256 bits),
