@@ -1,42 +1,4 @@
-# Shop:Sell
 
-<div align="center">
-
-# 🛍️ Shop:Sell
-### Enterprise-Grade Multi-Vendor E-Commerce & Marketplace Platform
-
-**Discover. Shop. Sell. Govern.**
-
-A full-stack, cloud-native multi-vendor marketplace connecting customers, sellers, and administrators through a unified, high-performance shopping engine.
-
----
-
-[![Tests](https://img.shields.io/badge/Tests-138%20Passing-brightgreen?style=for-the-badge&logo=node.js)](file:///Users/jathinreddy/Desktop/Shop:Sell#-interactive-testing-suite)
-[![Security Hardening](https://img.shields.io/badge/Security-Hardened%20(Edge%20%2B%20RBAC)-blueviolet?style=for-the-badge&logo=shield)](file:///Users/jathinreddy/Desktop/Shop:Sell#-cloudflare-security-turnstile--origin-protection)
-[![Next.js 15](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![React 18](https://img.shields.io/badge/React-18.3-61DAFB?style=for-the-badge&logo=react)](https://react.dev/)
-[![TypeScript 5](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-[![NestJS](https://img.shields.io/badge/NestJS-Backend-E0234E?style=for-the-badge&logo=nestjs)](https://nestjs.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-4169E1?style=for-the-badge&logo=postgresql)](https://supabase.com/)
-[![pgvector](https://img.shields.io/badge/Vector-pgvector%20384--dim-00C49F?style=for-the-badge&logo=vectorlogolib)](https://github.com/pgvector/pgvector)
-[![Typesense](https://img.shields.io/badge/Search-Typesense-FF5722?style=for-the-badge&logo=typesense)](https://typesense.org/)
-[![Redis](https://img.shields.io/badge/Redis-Upstash%20RateLimit-DC382D?style=for-the-badge&logo=redis)](https://upstash.com/)
-[![Razorpay](https://img.shields.io/badge/Payments-Razorpay-3395FF?style=for-the-badge)](https://razorpay.com/)
-[![Cloudflare](https://img.shields.io/badge/Edge-Cloudflare%20Turnstile-F38020?style=for-the-badge&logo=cloudflare)](https://www.cloudflare.com/)
-
-<br />
-
-#### ⚡ Quick Jump Navigation
-
-[**🚀 Quick Start**](#-quick-start) • [**🛡️ Edge Security**](#-cloudflare-security-turnstile--origin-protection) • [**📐 Architecture Drawers**](#-interactive-architecture-drawers) • [**🛒 Experiences**](#-interactive-experience-tours) • [**🧪 Tests**](#-interactive-testing-suite) • [**📚 Docs Hub**](#-documentation-hub)
-
-</div>
-
----
-
-<a id="shopsell"></a>
-
-<div align="center">
 
 # 🛍️ Shop:Sell
 ### Multi-Vendor E-Commerce & Marketplace Platform
