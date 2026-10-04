@@ -28,41 +28,9 @@ A full-stack, cloud-native multi-vendor marketplace connecting customers, seller
 
 #### ⚡ Quick Jump Navigation
 
-[**🚀 Quick Start**](#-quick-start) • [**👥 Demo Accounts**](#-interactive-demo-accounts--role-sandbox) • [**🛡️ Edge Security**](#-cloudflare-security-turnstile--origin-protection) • [**📐 Architecture Drawers**](#-interactive-architecture-drawers) • [**🛒 Experiences**](#-interactive-experience-tours) • [**🧪 Tests**](#-interactive-testing-suite) • [**📚 Docs Hub**](#-documentation-hub)
+[**🚀 Quick Start**](#-quick-start) • [**🛡️ Edge Security**](#-cloudflare-security-turnstile--origin-protection) • [**📐 Architecture Drawers**](#-interactive-architecture-drawers) • [**🛒 Experiences**](#-interactive-experience-tours) • [**🧪 Tests**](#-interactive-testing-suite) • [**📚 Docs Hub**](#-documentation-hub)
 
 </div>
-
----
-
-## ⚡ Interactive Demo Accounts & Role Sandbox
-
-> [!TIP]
-> In local development mode (`ENABLE_DEMO_ACCOUNTS=true`), passwordless OTP login is streamlined: enter any seeded email address, and use the development OTP **`123456`**.
-
-<details open>
-<summary><b>👉 Click to expand / collapse Test Credentials & Direct Dashboard URLs</b></summary>
-
-<br />
-
-| Role | Test Email | Authentication | Permissions & Scope | Direct Route |
-|---|---|---|---|---|
-| **🛡️ Admin** | `admin@shop-sell.internal` | Passwordless Email OTP (`123456`) | Platform Governance, Emergency Kill Switches, Dual-Admin Approvals, WORM Audit Logs | [`/admin`](http://localhost:3000/admin) |
-| **🏪 Seller (Malabar Spices)** | `seller@malabar-spices.in` | Passwordless Email OTP (`123456`) | Store Catalogue, Real-Time Inventory, Order Fulfilment, Bank Details & Payouts | [`/seller/dashboard`](http://localhost:3000/seller/dashboard) |
-| **🏪 Seller (Coorg Crafts)** | `seller@coorg-crafts.in` | Passwordless Email OTP (`123456`) | Artisan Product Management, Low-Stock Tracking, Shipment Scheduling | [`/seller/dashboard`](http://localhost:3000/seller/dashboard) |
-| **🛒 Customer (Arun)** | `arun.nair@kerala-tech.in` | Passwordless Email OTP (`123456`) | Product Discovery, Typo-Tolerant Search, Cart & Multi-Vendor Checkout, Orders | [`/account`](http://localhost:3000/account) |
-| **🛒 Customer (Priya)** | `priya.sharma@bangalore-retail.in` | Passwordless Email OTP (`123456`) | Personalized Recommendations, Address Book, Order History & Invoices | [`/account`](http://localhost:3000/account) |
-
-#### 🧭 Quick URL Guide
-- 🌐 **Marketplace Storefront**: [http://localhost:3000](http://localhost:3000)
-- 🔐 **Passwordless Login**: [http://localhost:3000/login](http://localhost:3000/login)
-- 🏪 **Seller Onboarding Application**: [http://localhost:3000/become-a-seller](http://localhost:3000/become-a-seller)
-- 🏪 **Seller Store Products**: [http://localhost:3000/seller/products](http://localhost:3000/seller/products)
-- 🛡️ **Admin Governance & Review**: [http://localhost:3000/admin/governance](http://localhost:3000/admin/governance)
-- 🛑 **Admin Kill Switches**: [http://localhost:3000/admin/kill-switches](http://localhost:3000/admin/kill-switches)
-- ✍️ **Admin Two-Man Approvals**: [http://localhost:3000/admin/approvals](http://localhost:3000/admin/approvals)
-- 📜 **Admin Immutable Audit Trail**: [http://localhost:3000/admin/audit](http://localhost:3000/admin/audit)
-
-</details>
 
 ---
 
