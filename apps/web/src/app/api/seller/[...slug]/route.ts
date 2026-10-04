@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySellerAuth } from '@/lib/auth/server-auth';
 import { verifyOriginAndHost } from '@/lib/security/csrf';
+import { validateInternalApiSecret } from '@shop-sell/shared';
 
 export const runtime = 'nodejs';
 
@@ -46,7 +47,7 @@ async function handleSellerProxy(request: NextRequest, { params }: { params: Pro
 
   headers.set(
     'x-internal-proxy-secret',
-    process.env.INTERNAL_API_SECRET || 'shopsell-internal-proxy-secret-shared-key'
+    validateInternalApiSecret(process.env.INTERNAL_API_SECRET, process.env.NODE_ENV)
   );
 
   try {

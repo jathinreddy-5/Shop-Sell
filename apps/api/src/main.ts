@@ -26,14 +26,20 @@ for (const envFile of ['.env', '../../.env', '../.env']) {
 
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { validateJwtSecret, validateDemoAccountsConfig } from '@shop-sell/shared';
+import {
+  validateJwtSecret,
+  validateDemoAccountsConfig,
+  validateInternalApiSecret,
+  createProxyMiddleware,
+} from '@shop-sell/shared';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  // Validate JWT_SECRET at startup (fail fast if missing, < 32 bytes, or placeholder in production)
+  // Validate secrets at startup (fail fast if missing, < 32 bytes, or placeholder in production)
   const jwtSecret = process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET;
   validateJwtSecret(jwtSecret, process.env.NODE_ENV);
   validateDemoAccountsConfig(process.env.ENABLE_DEMO_ACCOUNTS, process.env.NODE_ENV);
+  const proxySecret = validateInternalApiSecret(process.env.INTERNAL_API_SECRET, process.env.NODE_ENV);
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
@@ -43,30 +49,8 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   // Reject direct calls that do not originate from the apps/web proxy
-  app.use((req: any, res: any, next: any) => {
-    const rawPath = req.originalUrl || req.path || '';
-    if (rawPath === '/api/health' || rawPath === '/health' || rawPath.endsWith('/favicon.ico')) {
-      return next();
-    }
-
-    const proxySecret = process.env.INTERNAL_API_SECRET || 'shopsell-internal-proxy-secret-shared-key';
-    const incomingSecret = req.headers['x-internal-proxy-secret'];
-
-    // In unit test runner environment, allow direct requests unless explicitly testing proxy credential enforcement
-    if (process.env.NODE_ENV === 'test' && !req.headers['x-test-direct-check']) {
-      return next();
-    }
-
-    if (incomingSecret !== proxySecret) {
-      return res.status(403).json({
-        statusCode: 403,
-        error: 'Forbidden',
-        message: 'Access denied: direct access to API without web proxy credential is prohibited',
-      });
-    }
-
-    next();
-  });
+  const isTest = process.env.NODE_ENV === 'test';
+  app.use(createProxyMiddleware(proxySecret, isTest));
 
   // Structured JSON logging for cloud observability (Railway / Render / CloudWatch)
   app.use((req: any, res: any, next: any) => {

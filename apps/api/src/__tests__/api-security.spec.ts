@@ -4,34 +4,22 @@ import * as jwt from 'jsonwebtoken';
 import { Reflector } from '@nestjs/core';
 import { UnauthorizedException } from '@nestjs/common';
 import { SupabaseAuthGuard } from '../common/guards/supabase-auth.guard';
-import { validateJwtSecret, validateDemoAccountsConfig } from '@shop-sell/shared';
+import {
+  validateJwtSecret,
+  validateDemoAccountsConfig,
+  validateInternalApiSecret,
+  verifyProxySecret,
+  DEV_INTERNAL_API_SECRET,
+  createProxyMiddleware,
+} from '@shop-sell/shared';
 
 describe('API Security Hardening Test Suite (NestJS apps/api)', () => {
   const validSecret = 'valid-super-secure-jwt-secret-string-at-least-32-chars-long';
-  const proxySecret = 'shopsell-internal-proxy-secret-shared-key';
+  const proxySecret = 'valid-super-secure-proxy-secret-string-min-32-chars-ok';
 
-  // 1. Direct call to apps/api without the proxy credential -> rejected
+  // FIX 1: Direct call to apps/api without the proxy credential -> rejected
   it('should reject direct requests to apps/api without the internal proxy secret', () => {
-    const createProxyMiddleware = (secret: string) => {
-      return (req: any, res: any, next: any) => {
-        const rawPath = req.originalUrl || req.path || '';
-        if (rawPath === '/api/health' || rawPath === '/health') {
-          return next();
-        }
-
-        const incoming = req.headers['x-internal-proxy-secret'];
-        if (incoming !== secret) {
-          return res.status(403).json({
-            statusCode: 403,
-            error: 'Forbidden',
-            message: 'Access denied: direct access to API without web proxy credential is prohibited',
-          });
-        }
-        next();
-      };
-    };
-
-    const middleware = createProxyMiddleware(proxySecret);
+    const middleware = createProxyMiddleware(proxySecret, false);
 
     // Call without header -> 403
     let statusSet: number | null = null;
@@ -73,6 +61,19 @@ describe('API Security Hardening Test Suite (NestJS apps/api)', () => {
     assert.strictEqual(statusSet, 403);
     assert.strictEqual(nextCalled, false);
 
+    // Call with wrong-length secret header -> 403 (does not throw)
+    statusSet = null;
+    jsonBody = null;
+    const reqWithShortSecret: any = {
+      path: '/api/auth/login',
+      headers: { 'x-internal-proxy-secret': 'short' },
+    };
+    middleware(reqWithShortSecret, resWithoutSecret, () => {
+      nextCalled = true;
+    });
+    assert.strictEqual(statusSet, 403);
+    assert.strictEqual(nextCalled, false);
+
     // Call with valid secret -> allowed (calls next)
     nextCalled = false;
     const reqWithGoodSecret: any = {
@@ -95,6 +96,42 @@ describe('API Security Hardening Test Suite (NestJS apps/api)', () => {
     });
     assert.strictEqual(nextCalled, true);
   });
+
+  // FIX 1: Startup validation for INTERNAL_API_SECRET
+  it('should fail fast if INTERNAL_API_SECRET is missing, shorter than 32 bytes, or placeholder in production', () => {
+    // Missing in production
+    assert.throws(
+      () => validateInternalApiSecret(undefined, 'production'),
+      /FATAL SECURITY ERROR: INTERNAL_API_SECRET is missing/
+    );
+
+    // Shorter than 32 bytes in production
+    assert.throws(
+      () => validateInternalApiSecret('short-secret', 'production'),
+      /FATAL SECURITY ERROR: INTERNAL_API_SECRET is too short/
+    );
+
+    // Default / placeholder in production
+    assert.throws(
+      () => validateInternalApiSecret('shopsell-internal-proxy-secret-shared-key', 'production'),
+      /FATAL SECURITY ERROR: INTERNAL_API_SECRET cannot use an insecure example or placeholder secret in production/
+    );
+
+    // Dev secret placeholder rejected in production
+    assert.throws(
+      () => validateInternalApiSecret(DEV_INTERNAL_API_SECRET, 'production'),
+      /FATAL SECURITY ERROR: INTERNAL_API_SECRET cannot use an insecure example or placeholder secret in production/
+    );
+
+    // In development: fallback to DEV_INTERNAL_API_SECRET if missing
+    const devFallback = validateInternalApiSecret(undefined, 'development');
+    assert.strictEqual(devFallback, DEV_INTERNAL_API_SECRET);
+
+    // In production: valid 32+ byte secret succeeds
+    const prodValid = validateInternalApiSecret(proxySecret, 'production');
+    assert.strictEqual(prodValid, proxySecret);
+  });
+
 
   // 2. Expired token and wrong-signature token -> rejected in SupabaseAuthGuard
   it('should reject expired tokens in SupabaseAuthGuard with UnauthorizedException', () => {

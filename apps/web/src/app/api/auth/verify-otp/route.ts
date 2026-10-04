@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyOriginAndHost } from '@/lib/security/csrf';
 import { getClientIp } from '@/lib/security/turnstile';
+import { validateInternalApiSecret } from '@shop-sell/shared';
 
 export const runtime = 'nodejs';
 
@@ -35,8 +36,10 @@ export async function POST(request: NextRequest) {
           'Content-Type': 'application/json',
           'cf-connecting-ip': clientIp,
           'x-forwarded-for': clientIp,
-          'x-internal-proxy-secret':
-            process.env.INTERNAL_API_SECRET || 'shopsell-internal-proxy-secret-shared-key',
+          'x-internal-proxy-secret': validateInternalApiSecret(
+            process.env.INTERNAL_API_SECRET,
+            process.env.NODE_ENV
+          ),
         },
         body: JSON.stringify({ identifier: target, phone: target, otp, firebaseVerified }),
       });

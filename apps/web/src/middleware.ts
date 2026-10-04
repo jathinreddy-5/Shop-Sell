@@ -1,6 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server.js';
 import { jwtVerify } from 'jose';
-import { validateJwtSecret, validateDemoAccountsConfig } from '@shop-sell/shared';
+import {
+  validateJwtSecret,
+  validateDemoAccountsConfig,
+  validateInternalApiSecret,
+} from '@shop-sell/shared';
 import { verifyOriginAndHost } from './lib/security/csrf.ts';
 
 // Routes requiring authentication for customers
@@ -14,6 +18,10 @@ function getJwtSecretKey(): Uint8Array {
     process.env.NODE_ENV
   );
   return new TextEncoder().encode(validated);
+}
+
+function getInternalApiSecret(): string {
+  return validateInternalApiSecret(process.env.INTERNAL_API_SECRET, process.env.NODE_ENV);
 }
 
 /**
@@ -152,10 +160,7 @@ export async function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
   requestHeaders.set('content-security-policy', cspHeader);
-  requestHeaders.set(
-    'x-internal-proxy-secret',
-    process.env.INTERNAL_API_SECRET || 'shopsell-internal-proxy-secret-shared-key'
-  );
+  requestHeaders.set('x-internal-proxy-secret', getInternalApiSecret());
 
   const response = NextResponse.next({
     request: {
