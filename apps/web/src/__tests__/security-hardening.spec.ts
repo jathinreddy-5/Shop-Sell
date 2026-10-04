@@ -4,7 +4,12 @@ import { SignJWT } from 'jose';
 import { NextRequest } from 'next/server.js';
 import { middleware } from '../middleware.ts';
 import { verifyOriginAndHost } from '../lib/security/csrf.ts';
-import { verifyTurnstileToken } from '../lib/security/turnstile.ts';
+import {
+  verifyTurnstileToken,
+  getClientIp,
+  isCloudflareRequest,
+  isCloudflareIp,
+} from '../lib/security/turnstile.ts';
 import { checkLoginRateLimit, resetLoginRateLimit } from '../lib/security/rate-limit.ts';
 import { verifySellerAuth } from '../lib/auth/server-auth.ts';
 import { validateJwtSecret, validateDemoAccountsConfig } from '@shop-sell/shared';
@@ -375,4 +380,65 @@ describe('Security Hardening Test Suite (Next.js apps/web)', () => {
       'HSTS header must be present'
     );
   });
+
+  // 11. FIX 6: Client IP trust & Cloudflare check
+  it('should ignore spoofed CF-Connecting-IP in production unless request passes Cloudflare check', () => {
+    const prevNodeEnv = process.env.NODE_ENV;
+    const prevOriginSecret = process.env.CLOUDFLARE_ORIGIN_SECRET;
+
+    try {
+      process.env.NODE_ENV = 'production';
+      process.env.CLOUDFLARE_ORIGIN_SECRET = 'cf-test-origin-shared-secret-1234';
+
+      // 1. Direct unverified connection attempting to spoof CF-Connecting-IP
+      const unverifiedReq = new NextRequest('http://localhost:3000/api/auth/login', {
+        headers: {
+          'cf-connecting-ip': '203.0.113.1', // Victim IP being spoofed
+          'x-real-ip': '198.51.100.50',     // Attacker's socket IP
+        },
+      });
+
+      // Must NOT trust cf-connecting-ip -> must return socket IP (198.51.100.50)
+      const unverifiedClientIp = getClientIp(unverifiedReq);
+      assert.strictEqual(unverifiedClientIp, '198.51.100.50');
+      assert.notStrictEqual(unverifiedClientIp, '203.0.113.1');
+
+      // 2. Verified request via Cloudflare edge IP range (e.g. 173.245.48.15 in 173.245.48.0/20)
+      const cfIpReq = new NextRequest('http://localhost:3000/api/auth/login', {
+        headers: {
+          'cf-connecting-ip': '203.0.113.1',
+          'x-real-ip': '173.245.48.15',
+        },
+      });
+      assert.strictEqual(isCloudflareIp('173.245.48.15'), true);
+      assert.strictEqual(isCloudflareRequest(cfIpReq), true);
+      assert.strictEqual(getClientIp(cfIpReq), '203.0.113.1');
+
+      // 3. Verified request via Cloudflare Authenticated Origin Pull (AOP) mTLS header
+      const aopReq = new NextRequest('http://localhost:3000/api/auth/login', {
+        headers: {
+          'cf-connecting-ip': '203.0.113.1',
+          'x-real-ip': '198.51.100.50',
+          'x-cf-authenticated-pull': 'SUCCESS',
+        },
+      });
+      assert.strictEqual(isCloudflareRequest(aopReq), true);
+      assert.strictEqual(getClientIp(aopReq), '203.0.113.1');
+
+      // 4. Verified request via Cloudflare Origin Secret header
+      const secretReq = new NextRequest('http://localhost:3000/api/auth/login', {
+        headers: {
+          'cf-connecting-ip': '203.0.113.1',
+          'x-real-ip': '198.51.100.50',
+          'x-cf-origin-secret': 'cf-test-origin-shared-secret-1234',
+        },
+      });
+      assert.strictEqual(isCloudflareRequest(secretReq), true);
+      assert.strictEqual(getClientIp(secretReq), '203.0.113.1');
+    } finally {
+      process.env.NODE_ENV = prevNodeEnv;
+      process.env.CLOUDFLARE_ORIGIN_SECRET = prevOriginSecret;
+    }
+  });
 });
+

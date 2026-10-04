@@ -9,21 +9,100 @@ interface TurnstileVerifyResponse {
   cdata?: string;
 }
 
+export const CLOUDFLARE_IPV4_CIDRS = [
+  '173.245.48.0/20',
+  '103.21.244.0/22',
+  '103.22.200.0/22',
+  '103.31.4.0/22',
+  '141.101.64.0/18',
+  '108.162.192.0/18',
+  '190.93.240.0/20',
+  '188.114.96.0/20',
+  '197.234.240.0/22',
+  '198.41.128.0/17',
+  '162.158.0.0/15',
+  '104.16.0.0/13',
+  '104.24.0.0/14',
+  '172.64.0.0/13',
+  '131.0.72.0/22',
+];
+
+function ipToUint(ip: string): number | null {
+  const parts = ip.split('.');
+  if (parts.length !== 4) return null;
+  let num = 0;
+  for (let i = 0; i < 4; i++) {
+    const octet = parseInt(parts[i], 10);
+    if (isNaN(octet) || octet < 0 || octet > 255) return null;
+    num = (num << 8) | octet;
+  }
+  return num >>> 0;
+}
+
+export function isCloudflareIp(ip: string): boolean {
+  const uint = ipToUint(ip);
+  if (uint === null) return false;
+
+  for (const cidr of CLOUDFLARE_IPV4_CIDRS) {
+    const [rangeIp, prefixStr] = cidr.split('/');
+    const prefix = parseInt(prefixStr, 10);
+    const rangeUint = ipToUint(rangeIp);
+    if (rangeUint === null) continue;
+    const mask = prefix === 0 ? 0 : (~0 << (32 - prefix)) >>> 0;
+    if (((uint & mask) >>> 0) === ((rangeUint & mask) >>> 0)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /**
- * Extracts the real client IP from Cloudflare CF-Connecting-IP, falling back to x-forwarded-for.
+ * Validates whether the incoming request originated from Cloudflare edge proxy.
+ * Checks Authenticated Origin Pull indicators, origin secret header, or socket IP in Cloudflare ranges.
+ */
+export function isCloudflareRequest(request: NextRequest): boolean {
+  // In development and unit test environments, allow headers unless testing production enforcement
+  if (process.env.NODE_ENV !== 'production') {
+    return Boolean(request.headers.get('cf-connecting-ip'));
+  }
+
+  // 1. Authenticated Origin Pull secret verification if configured
+  const originSecret = process.env.CLOUDFLARE_ORIGIN_SECRET;
+  if (originSecret && request.headers.get('x-cf-origin-secret') === originSecret) {
+    return true;
+  }
+
+  // 2. Authenticated Origin Pull mTLS indicator from reverse proxy (e.g. Nginx ssl_client_verify)
+  if (request.headers.get('x-cf-authenticated-pull') === 'SUCCESS') {
+    return true;
+  }
+
+  // 3. Verify incoming socket IP is within Cloudflare's published IP ranges
+  const socketIp = (request as any).ip || request.headers.get('x-real-ip') || '';
+  if (socketIp && isCloudflareIp(socketIp)) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Extracts the real client IP for rate limiting and auditing.
+ * In production: ONLY trusts CF-Connecting-IP when verified to have come through Cloudflare.
+ * Direct connections bypassing Cloudflare fall back strictly to the socket address.
  */
 export function getClientIp(request: NextRequest): string {
-  const cfConnectingIp = request.headers.get('cf-connecting-ip');
-  if (cfConnectingIp) {
-    return cfConnectingIp.trim();
+  const socketIp = ((request as any).ip || request.headers.get('x-real-ip') || '127.0.0.1').trim();
+
+  // In production, only trust CF-Connecting-IP if the request is known to have come through Cloudflare
+  if (isCloudflareRequest(request)) {
+    const cfConnectingIp = request.headers.get('cf-connecting-ip');
+    if (cfConnectingIp && cfConnectingIp.trim()) {
+      return cfConnectingIp.trim();
+    }
   }
 
-  const xForwardedFor = request.headers.get('x-forwarded-for');
-  if (xForwardedFor) {
-    return xForwardedFor.split(',')[0].trim();
-  }
-
-  return '127.0.0.1';
+  return socketIp;
 }
 
 /**

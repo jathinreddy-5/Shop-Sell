@@ -98,7 +98,7 @@ Configure your cloud security groups / firewall (AWS Security Group, GCP VPC Fir
   2c0f:f248::/32
   ```
 
-### B. Authenticated Origin Pulls (AOP)
+### B. Authenticated Origin Pulls (AOP) & Client IP Trust Requirement
 1. In Cloudflare Dashboard, go to **SSL/TLS** &rarr; **Origin Server**.
 2. Enable **Authenticated Origin Pulls**.
 3. Download the official Cloudflare Origin CA certificate and install it in your Nginx / reverse proxy configuration:
@@ -107,6 +107,9 @@ Configure your cloud security groups / firewall (AWS Security Group, GCP VPC Fir
    ssl_verify_client on;
    ```
 This guarantees that only Cloudflare edge nodes with valid client certificates can negotiate TLS connections with your origin.
+
+**Mandatory Security Invariant**: The origin server MUST ONLY accept traffic from Cloudflare (via Authenticated Origin Pulls mTLS or network firewall dropping all non-Cloudflare ingress).
+In production (`NODE_ENV=production`), application-level per-IP rate limiting verifies Cloudflare origin authenticity (matching official Cloudflare edge IP CIDRs, Authenticated Origin Pull mTLS headers, or `CLOUDFLARE_ORIGIN_SECRET`) before trusting `CF-Connecting-IP`. If a direct request reaches the application from an unverified IP, `CF-Connecting-IP` is ignored and the socket IP is used, ensuring that spoofed `CF-Connecting-IP` headers cannot be used to bypass rate limits or evict victim rate-limit quotas.
 
 ---
 
