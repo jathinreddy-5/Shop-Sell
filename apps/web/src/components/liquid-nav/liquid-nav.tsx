@@ -11,13 +11,22 @@ import React, {
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { LiquidNavProps, LiquidNavItem } from './types';
 import {
-  generateNotchPath,
-  springEase,
+  createLiquidPath,
   DEFAULT_NOTCH_CONFIG,
 } from './notch-path';
+
+const liquidSpring = {
+  type: 'spring' as const,
+  stiffness: 260,
+  damping: 28,
+  mass: 0.7,
+};
+
+const CIRCLE_SIZE = 44;
 
 export function LiquidNav({
   items,
@@ -70,57 +79,22 @@ export function LiquidNav({
       }
     }
 
-    return bestMatch ? bestMatch.id : '';
+    return bestMatch ? bestMatch.id : (visibleItems[0]?.id ?? '');
   }, [controlledActiveId, pathname, visibleItems]);
 
   const [activeId, setActiveId] = useState<string>(computedActiveId);
 
   // Sync activeId when computed route changes (e.g. navigation settles, browser back/forward)
-  const prevComputedRef = useRef<string>(computedActiveId);
   useEffect(() => {
-    if (computedActiveId !== prevComputedRef.current) {
-      prevComputedRef.current = computedActiveId;
+    if (computedActiveId) {
       setActiveId(computedActiveId);
     }
   }, [computedActiveId]);
 
-  // Dimension & animation state
+  // Dimension state for responsive SVG sizing
   const [dimensions, setDimensions] = useState<{ width: number; height: number }>({
     width: variant === 'side' ? 68 : variant === 'top' ? 280 : 360,
     height: variant === 'side' ? 420 : variant === 'top' ? 56 : 64,
-  });
-
-  // Center position along the rail (x for top/bottom, y for side)
-  const [centerPos, setCenterPos] = useState<number>(() => {
-    // Initial SSR heuristic estimate to prevent flash at 0
-    const idx = visibleItems.findIndex((it) => it.id === computedActiveId);
-    if (idx < 0) return -1;
-    const total = Math.max(1, visibleItems.length);
-    const span = variant === 'side' ? 420 : 360;
-    return (idx + 0.5) * (span / total);
-  });
-
-  const centerPosRef = useRef<number>(centerPos);
-  useEffect(() => {
-    centerPosRef.current = centerPos;
-  }, [centerPos]);
-
-  const [stretch, setStretch] = useState<number>(1.0);
-  const [isTransitioning, setIsTransitioning] = useState<boolean>(false);
-
-  // Track animation state ref to enable clean interruption on rapid clicks
-  const animRef = useRef<{
-    rafId: number | null;
-    startTime: number;
-    startCenter: number;
-    targetCenter: number;
-    stretchMagnitude: number;
-  }>({
-    rafId: null,
-    startTime: 0,
-    startCenter: centerPos,
-    targetCenter: centerPos,
-    stretchMagnitude: 0,
   });
 
   // Measure element center relative to container
@@ -142,128 +116,59 @@ export function LiquidNav({
     [variant]
   );
 
-  // Smooth interruptible animation loop
-  const animateTo = useCallback(
-    (targetCenter: number, isImmediate = false) => {
-      // Check prefers-reduced-motion
-      const prefersReducedMotion =
-        typeof window !== 'undefined' &&
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-      if (isImmediate || prefersReducedMotion) {
-        if (animRef.current.rafId) {
-          cancelAnimationFrame(animRef.current.rafId);
-          animRef.current.rafId = null;
-        }
-        centerPosRef.current = targetCenter;
-        setCenterPos(targetCenter);
-        setStretch(1.0);
-        setIsTransitioning(false);
-        return;
-      }
-
-      // Calculate distance for dynamic stretch scaling
-      const currentC = centerPosRef.current >= 0 ? centerPosRef.current : targetCenter;
-      const distance = Math.abs(targetCenter - currentC);
-      if (distance < 0.5) {
-        centerPosRef.current = targetCenter;
-        setCenterPos(targetCenter);
-        setStretch(1.0);
-        setIsTransitioning(false);
-        return;
-      }
-
-      // Longer jumps stretch more (up to +38%)
-      const stretchMagnitude = Math.min(0.38, (distance / 280) * 0.38);
-
-      if (animRef.current.rafId) {
-        cancelAnimationFrame(animRef.current.rafId);
-      }
-
-      animRef.current = {
-        rafId: null,
-        startTime: performance.now(),
-        startCenter: currentC,
-        targetCenter,
-        stretchMagnitude,
-      };
-
-      setIsTransitioning(true);
-      const duration = DEFAULT_NOTCH_CONFIG.durationMs;
-
-      const step = (now: number) => {
-        const elapsed = now - animRef.current.startTime;
-        const t = Math.min(1, Math.max(0, elapsed / duration));
-
-        const easedT = springEase(t);
-        const nextCenter =
-          animRef.current.startCenter +
-          (animRef.current.targetCenter - animRef.current.startCenter) * easedT;
-
-        // Notch stretch peaks halfway through the jump
-        const currentStretch =
-          1.0 + animRef.current.stretchMagnitude * Math.sin(Math.PI * t);
-
-        centerPosRef.current = nextCenter;
-        setCenterPos(nextCenter);
-        setStretch(currentStretch);
-
-        if (t < 1) {
-          animRef.current.rafId = requestAnimationFrame(step);
-        } else {
-          centerPosRef.current = animRef.current.targetCenter;
-          setCenterPos(animRef.current.targetCenter);
-          setStretch(1.0);
-          setIsTransitioning(false);
-          animRef.current.rafId = null;
-        }
-      };
-
-      animRef.current.rafId = requestAnimationFrame(step);
+  // Geometric fallback center for initial render before DOM measurement
+  const getFallbackCenter = useCallback(
+    (id: string): number => {
+      const idx = visibleItems.findIndex((it) => it.id === id);
+      if (idx < 0) return 0;
+      const total = Math.max(1, visibleItems.length);
+      const span = variant === 'side' ? dimensions.height : dimensions.width;
+      return (idx + 0.5) * (span / total);
     },
-    []
+    [variant, visibleItems, dimensions]
   );
 
-  // Trigger animation whenever activeId changes
+  // Synchronized active center: both notch and circle derive position from this exact value
+  const [activeCenter, setActiveCenter] = useState<number>(() => {
+    const idx = visibleItems.findIndex((it) => it.id === computedActiveId);
+    const total = Math.max(1, visibleItems.length);
+    const span = variant === 'side' ? 420 : variant === 'top' ? 280 : 360;
+    return idx >= 0 ? (idx + 0.5) * (span / total) : 40;
+  });
+
+  // Re-measure and update activeCenter on activeId change
   useEffect(() => {
     if (!activeId) return;
-    const targetPos = measureCenter(activeId);
-    if (targetPos !== null) {
-      animateTo(targetPos);
+    const measured = measureCenter(activeId);
+    if (measured !== null) {
+      setActiveCenter(measured);
+    } else {
+      setActiveCenter(getFallbackCenter(activeId));
     }
-  }, [activeId, measureCenter, animateTo]);
+  }, [activeId, measureCenter, getFallbackCenter]);
 
   // ResizeObserver for dynamic recomputation on resize, layout shift, or font load
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const updateContainerDimensions = () => {
+    const updateMeasurements = () => {
       const rect = container.getBoundingClientRect();
       if (rect.width > 0 && rect.height > 0) {
         setDimensions({ width: rect.width, height: rect.height });
       }
-    };
-
-    updateContainerDimensions();
-
-    const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        if (entry.target === container) {
-          const rect = container.getBoundingClientRect();
-          if (rect.width > 0 && rect.height > 0) {
-            setDimensions({ width: rect.width, height: rect.height });
-          }
-        }
-      }
-
       if (activeId) {
         const measured = measureCenter(activeId);
-        if (measured !== null && !isTransitioning) {
-          centerPosRef.current = measured;
-          setCenterPos(measured);
+        if (measured !== null) {
+          setActiveCenter(measured);
         }
       }
+    };
+
+    updateMeasurements();
+
+    const observer = new ResizeObserver(() => {
+      updateMeasurements();
     });
 
     observer.observe(container);
@@ -272,35 +177,27 @@ export function LiquidNav({
       if (el) observer.observe(el);
     });
 
-    // Initial measurement
-    if (activeId) {
-      const initialMeasured = measureCenter(activeId);
-      if (initialMeasured !== null) {
-        centerPosRef.current = initialMeasured;
-        setCenterPos(initialMeasured);
-      }
-    }
+    return () => observer.disconnect();
+  }, [activeId, measureCenter, visibleItems]);
 
-    return () => {
-      observer.disconnect();
-      if (animRef.current.rafId) {
-        cancelAnimationFrame(animRef.current.rafId);
-      }
-    };
-  }, [visibleItems, activeId, measureCenter, isTransitioning]);
-
-  // Handle user click: optimistic, immediate animation start, no replay if already active
+  // Handle user click: optimistic target derivation, no unmounts, uninterrupted spring
   const handleItemClick = (item: LiquidNavItem, e: React.MouseEvent) => {
     if (item.onClick) {
       item.onClick();
     }
 
     if (item.id === activeId) {
-      // Do nothing if already active (no replay)
       return;
     }
 
-    // Optimistic state change
+    // Immediately measure and update activeCenter for zero-latency target derivation
+    const measured = measureCenter(item.id);
+    if (measured !== null) {
+      setActiveCenter(measured);
+    } else {
+      setActiveCenter(getFallbackCenter(item.id));
+    }
+
     setActiveId(item.id);
     if (onChange) onChange(item.id);
   };
@@ -326,59 +223,39 @@ export function LiquidNav({
     e.preventDefault();
     const targetItem = visibleItems[targetIndex];
     if (targetItem) {
+      const measured = measureCenter(targetItem.id);
+      if (measured !== null) {
+        setActiveCenter(measured);
+      } else {
+        setActiveCenter(getFallbackCenter(targetItem.id));
+      }
       setActiveId(targetItem.id);
       if (onChange) onChange(targetItem.id);
-      const targetPos = measureCenter(targetItem.id);
-      if (targetPos !== null) {
-        animateTo(targetPos);
-      }
       itemsRef.current.get(targetItem.id)?.focus();
     }
   };
 
   // Active item object
   const activeItem = visibleItems.find((it) => it.id === activeId) || null;
+  const ActiveIcon = activeItem?.icon;
 
-  // Dynamic SVG path for the bar with the carved notch
-  const pathData = useMemo(() => {
-    return generateNotchPath({
-      variant,
-      width: dimensions.width,
-      height: dimensions.height,
-      center: activeItem && centerPos >= 0 ? centerPos : -1,
-      notchRadius: DEFAULT_NOTCH_CONFIG.radius,
-      notchDepth: DEFAULT_NOTCH_CONFIG.depth,
-      stretch,
-    });
-  }, [variant, dimensions, centerPos, stretch, activeItem]);
+  // Deterministic SVG path: command structure is always identical (M, L, C, C, L, ...)
+  const path = useMemo(() => {
+    return createLiquidPath(variant, dimensions.width, dimensions.height, activeCenter);
+  }, [variant, dimensions, activeCenter]);
 
-  // Compute floating circle transform coordinates
-  const circleTransform = useMemo(() => {
-    const circleSize = 48;
-    const r = circleSize / 2;
+  // Floating circle target position: both circle and notch share the same activeCenter and overlap seamlessly
+  const targetX =
+    variant === 'side'
+      ? dimensions.width - 38
+      : activeCenter - CIRCLE_SIZE / 2;
 
-    if (variant === 'bottom') {
-      // Circle rises upward out of the notch
-      // Center X = centerPos, Center Y = 10
-      const x = centerPos - r;
-      const y = -14;
-      return `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
-    }
-
-    if (variant === 'top') {
-      // Circle hangs below the bar
-      // Center X = centerPos, Center Y = height - 10
-      const x = centerPos - r;
-      const y = dimensions.height - 34;
-      return `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
-    }
-
-    // variant === 'side'
-    // Circle glides vertically along the rail
-    const x = dimensions.width - 34;
-    const y = centerPos - r;
-    return `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
-  }, [variant, centerPos, dimensions]);
+  const targetY =
+    variant === 'bottom'
+      ? -10
+      : variant === 'top'
+      ? dimensions.height - 40
+      : activeCenter - CIRCLE_SIZE / 2;
 
   return (
     <nav
@@ -400,77 +277,109 @@ export function LiquidNav({
             ? 'flex items-center justify-between h-14 w-full px-2'
             : 'flex items-center justify-around h-16 w-full px-2'
         }`}
+        style={{
+          background: 'transparent',
+        }}
       >
-        {/* Single Organic SVG Bar with Gliding Notch */}
+        {/* Single Organic SVG Bar with Gliding Notch - seamlessly blending into header */}
         <svg
-          className="absolute inset-0 w-full h-full pointer-events-none drop-shadow-md z-0"
+          className="absolute inset-0 w-full h-full pointer-events-none z-0"
           width={dimensions.width}
           height={dimensions.height}
           viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
           aria-hidden="true"
         >
-          <defs>
-            <linearGradient id={`${pathId}-fill`} x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#09090b" />
-              <stop offset="100%" stopColor="#18181b" />
-            </linearGradient>
-            <filter id={`${pathId}-glow`} x1="-20%" y1="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="#000000" floodOpacity="0.4" />
-            </filter>
-          </defs>
-          <path
+          <motion.path
             id="liquid-nav-path"
-            d={pathData}
-            fill={`url(#${pathId}-fill)`}
-            filter={`url(#${pathId}-glow)`}
             data-testid="liquid-nav-svg-path"
-            data-center={centerPos.toFixed(1)}
+            data-center={activeCenter.toFixed(1)}
+            fill="#F8FAFC"
+            className="fill-slate-50 dark:fill-slate-900"
+            stroke="none"
+            initial={false}
+            animate={{ d: path }}
+            transition={liquidSpring}
           />
         </svg>
 
-        {/* Floating Elevated Circle with Active Icon in Yellow (#FFE500) */}
-        {activeItem && centerPos >= 0 && (
+        {/* Persistent Floating Elevated Circle with Active Icon in Yellow (#FFE500) */}
+        <motion.div
+          data-testid="liquid-nav-circle"
+          data-center={activeCenter.toFixed(1)}
+          className="absolute left-0 top-0 pointer-events-none z-20 flex items-center justify-center will-change-transform"
+          style={{
+            width: CIRCLE_SIZE,
+            height: CIRCLE_SIZE,
+          }}
+          initial={false}
+          animate={{
+            x: targetX,
+            y: targetY,
+            opacity: activeItem ? 1 : 0,
+            scale: activeItem ? 1 : 0.8,
+          }}
+          transition={liquidSpring}
+        >
           <div
-            className="absolute left-0 top-0 pointer-events-none z-20 flex items-center justify-center will-change-transform"
+            className="relative flex h-11 w-11 items-center justify-center rounded-full"
             style={{
-              transform: circleTransform,
-              width: 48,
-              height: 48,
+              backgroundColor: '#111827',
+              border: '2px solid rgba(255, 229, 0, 0.55)',
+              boxShadow: '0 6px 18px rgba(15, 23, 42, 0.16)',
             }}
-            data-testid="liquid-nav-circle"
-            data-center={centerPos.toFixed(1)}
           >
-            <div className="relative flex h-12 w-12 items-center justify-center rounded-full bg-zinc-900 border-2 border-amber-400/40 shadow-lg shadow-amber-400/20">
-              <div
-                key={activeItem.id}
-                className="flex items-center justify-center transition-all duration-300 transform scale-100 opacity-100"
-              >
-                {activeItem.avatarUrl ? (
-                  <div className="relative h-8 w-8 overflow-hidden rounded-full ring-2 ring-[#FFE500]">
-                    <Image
-                      src={activeItem.avatarUrl}
-                      alt={activeItem.label}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                ) : (
-                  <activeItem.icon className="h-5 w-5 text-[#FFE500] drop-shadow-[0_0_8px_rgba(255,229,0,0.6)]" />
-                )}
+            <AnimatePresence mode="popLayout" initial={false}>
+              {activeItem && (
+                <motion.div
+                  key={activeItem.id}
+                  initial={{
+                    opacity: 0,
+                    scale: 0.65,
+                    rotate: -8,
+                  }}
+                  animate={{
+                    opacity: 1,
+                    scale: 1,
+                    rotate: 0,
+                  }}
+                  exit={{
+                    opacity: 0,
+                    scale: 0.65,
+                    rotate: 8,
+                  }}
+                  transition={{
+                    duration: 0.18,
+                    ease: 'easeOut',
+                  }}
+                  className="flex items-center justify-center"
+                >
+                  {activeItem.avatarUrl ? (
+                    <div className="relative h-8 w-8 overflow-hidden rounded-full ring-2 ring-[#FFE500]">
+                      <Image
+                        src={activeItem.avatarUrl}
+                        alt={activeItem.label}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : ActiveIcon ? (
+                    <ActiveIcon className="h-5 w-5 text-[#FFE500] drop-shadow-[0_0_6px_rgba(255,229,0,0.35)]" />
+                  ) : null}
 
-                {/* Badge visible inside active circle */}
-                {activeItem.badge !== undefined && activeItem.badge !== null && (
-                  <span
-                    className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#FFE500] px-1 text-[10px] font-black text-black ring-2 ring-zinc-900 shadow-sm"
-                    data-testid="liquid-nav-active-badge"
-                  >
-                    {activeItem.badge}
-                  </span>
-                )}
-              </div>
-            </div>
+                  {/* Badge visible inside active circle */}
+                  {activeItem.badge !== undefined && activeItem.badge !== null && (
+                    <span
+                      className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#FFE500] px-1 text-[10px] font-black text-black ring-2 ring-zinc-900 shadow-sm"
+                      data-testid="liquid-nav-active-badge"
+                    >
+                      {activeItem.badge}
+                    </span>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-        )}
+        </motion.div>
 
         {/* Navigation Items (Links / Interactive targets) */}
         <div
@@ -497,7 +406,7 @@ export function LiquidNav({
                 aria-current={isActive ? 'page' : undefined}
                 aria-label={item.label}
                 title={item.label}
-                className={`group relative flex items-center justify-center outline-none transition-all duration-300 focus-visible:ring-2 focus-visible:ring-[#FFE500] rounded-xl ${
+                className={`group relative flex items-center justify-center outline-none focus-visible:ring-2 focus-visible:ring-[#FFE500] rounded-xl ${
                   variant === 'side'
                     ? 'h-11 w-11'
                     : 'h-11 min-w-[48px] px-2'
@@ -505,16 +414,19 @@ export function LiquidNav({
                 data-testid={`liquid-nav-item-${item.id}`}
                 data-active={isActive ? 'true' : 'false'}
               >
-                {/* Inactive Icon on the bar: smooth scale & transition */}
-                <div
-                  className={`flex flex-col items-center justify-center transition-all duration-300 ${
-                    isActive
-                      ? 'opacity-0 scale-75 pointer-events-none'
-                      : 'opacity-80 group-hover:opacity-100 group-hover:scale-110 text-white'
-                  }`}
+                {/* Inactive Icon on the bar: state-driven Motion transition */}
+                <motion.div
+                  initial={false}
+                  animate={{
+                    opacity: isActive ? 0 : 0.85,
+                    scale: isActive ? 0.75 : 1,
+                  }}
+                  transition={{ duration: 0.18, ease: 'easeOut' }}
+                  className="flex flex-col items-center justify-center group-hover:scale-110 transition-transform"
+                  style={{ pointerEvents: isActive ? 'none' : 'auto' }}
                 >
                   {item.avatarUrl ? (
-                    <div className="relative h-6 w-6 overflow-hidden rounded-full ring-1 ring-white/40">
+                    <div className="relative h-6 w-6 overflow-hidden rounded-full ring-1 ring-slate-300">
                       <Image
                         src={item.avatarUrl}
                         alt={item.label}
@@ -523,21 +435,21 @@ export function LiquidNav({
                       />
                     </div>
                   ) : (
-                    <Icon className="h-5 w-5 text-white" />
+                    <Icon className="h-5 w-5 text-[#475569] group-hover:text-[#1E293B] transition-colors" />
                   )}
 
                   {/* Desktop label if space permits in horizontal nav */}
                   {variant === 'top' && (
-                    <span className="mt-0.5 text-[10px] font-medium tracking-tight text-white/90">
+                    <span className="mt-0.5 text-[10px] font-medium tracking-tight text-[#64748B] group-hover:text-[#1E293B] transition-colors whitespace-nowrap">
                       {item.label}
                     </span>
                   )}
-                </div>
+                </motion.div>
 
                 {/* Badge on inactive item */}
                 {!isActive && item.badge !== undefined && item.badge !== null && (
                   <span
-                    className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-500 px-1 text-[10px] font-bold text-white shadow-sm"
+                    className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[10px] font-bold text-white shadow-sm"
                     data-testid={`liquid-nav-badge-${item.id}`}
                   >
                     {item.badge}

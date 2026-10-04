@@ -14,7 +14,26 @@ import {
   Check,
   ChevronRight,
   ArrowLeft,
+  FileText,
+  Sparkles,
 } from 'lucide-react';
+import { getProductGallery } from '@/lib/products/product-images';
+
+export interface ProductSpecifications {
+  brandName?: string;
+  modelYear?: string;
+  countryOfOrigin?: string;
+  boxContents?: string;
+  warrantyDescription?: string;
+  manufacturer?: string;
+  modelSeries?: string;
+  specificUses?: string;
+  unitCount?: string;
+  itemTypeName?: string;
+  packerContactInfo?: string;
+  asin?: string;
+  customAttributes?: { key: string; value: string }[];
+}
 
 interface ProductData {
   slug: string;
@@ -31,9 +50,61 @@ interface ProductData {
   images: string[];
   variants: string[];
   description: string;
+  longDescription?: string;
+  keyFeatures?: string[];
+  specifications?: ProductSpecifications;
 }
 
 const PRODUCT_CATALOG: Record<string, ProductData> = {
+  'infinix-hot-70-pro-5g': {
+    slug: 'infinix-hot-70-pro-5g',
+    name: 'Infinix Hot 70 Pro 5G (Titanium Shadow, 256GB)',
+    category: 'Electronics & Mobiles',
+    categorySlug: 'electronics-gadgets',
+    price: 18999,
+    compareAtPrice: 24999,
+    rating: 4.88,
+    reviewCount: 312,
+    soldCount: '2,480 sold',
+    storeName: 'Infinix Official Store',
+    storeSlug: 'infinix-official',
+    images: [
+      'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=800&q=80',
+      'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&q=80',
+    ],
+    variants: ['Titanium Shadow (256GB)', 'Aurora Blue (256GB)', 'Solar Gold (512GB)'],
+    description:
+      'Flagship power packed into an ultra-slim chassis with 120Hz curved AMOLED eye-care display, 108MP OIS AI camera, and 68W HyperCharge.',
+    longDescription:
+      'The Infinix Hot 70 Pro 5G delivers flagship computing and optical brilliance. Featuring a 120Hz curved AMOLED eye-care display with 1.07 billion colors, a 108MP OIS-stabilized AI triple camera, and 68W HyperCharge for quick day-long endurance. Built with an aerospace-grade cooling chamber and MediaTek Dimensity 5G chipset for lag-free gaming, multi-tasking, and creator workflows.',
+    keyFeatures: [
+      '108MP OIS Ultra-Clear Triple Camera with Nightscape 4.0',
+      '6.78-inch FHD+ 120Hz True-Color AMOLED Curved Display',
+      '5000 mAh All-Day Battery with 68W Fast Super Charge',
+      'MediaTek Dimensity 5G Octa-Core Processor with 12GB RAM Expansion',
+      'Dual Stereo Speakers with Hi-Res Audio Certification & DTS',
+    ],
+    specifications: {
+      brandName: 'Infinix',
+      modelYear: '2026',
+      countryOfOrigin: 'India',
+      boxContents: 'Smartphone, 68W Fast Charger, Type-C Cable, SIM Ejector, Protective Case, User Manual',
+      warrantyDescription: '1 Year Manufacturor domestic warranty',
+      manufacturer: 'Infinix Mobility Limited',
+      modelSeries: 'Infinix Hot 70 Pro Series',
+      specificUses: 'Photography, High Performance Gaming, Multimedia Streaming',
+      unitCount: '1 Count',
+      itemTypeName: 'Smartphone',
+      packerContactInfo: 'Infinix Mobility Limited, Shenzhen, China / Plot No. 24, Sector 60, Noida, UP - 201301',
+      asin: 'B0HJ4PNVSM',
+      customAttributes: [
+        { key: 'Color', value: 'Titanium Shadow' },
+        { key: 'Internal Storage', value: '256GB UFS 3.1' },
+        { key: 'Operating System', value: 'Android 15 with XOS 14' },
+        { key: 'RAM', value: '12GB (8GB + 4GB Virtual)' },
+      ],
+    },
+  },
   'acousticpro-true-wireless-earbuds': {
     slug: 'acousticpro-true-wireless-earbuds',
     name: 'AcousticPro True Wireless Earbuds',
@@ -53,6 +124,33 @@ const PRODUCT_CATALOG: Record<string, ProductData> = {
     ],
     variants: ['Matte Black', 'Arctic White', 'Navy Blue'],
     description: 'Custom-tuned 11mm beryllium drivers with lossless audio streaming, low-latency gaming mode, and active spatial noise cancellation.',
+    longDescription:
+      'Engineered for discerning audiophiles, the AcousticPro True Wireless Earbuds combine 11mm custom beryllium diaphragm drivers with 42dB hybrid Active Noise Cancellation. Enjoy 36 hours of playtime with the ultra-compact USB-C fast-charging case and quad-mic beamforming for crystal-clear conference calls.',
+    keyFeatures: [
+      'Hybrid 42dB ANC with Transparency Ambient Mode',
+      'Custom-tuned 11mm Beryllium Diaphragm Drivers',
+      '36-Hour Battery Life with Fast Qi Wireless Charging',
+      'Quad-Mic ENC Beamforming for Crystal-Clear Calling',
+      'IPX5 Sweat & Water Resistance Rating',
+    ],
+    specifications: {
+      brandName: 'AcousticPro',
+      modelYear: '2026',
+      countryOfOrigin: 'India',
+      boxContents: '1 Pair TWS Earbuds, 1x Wireless Charging Case, 3x Silicone Ear Tip Pairs (S/M/L), 1x Type-C Cable, Guide',
+      warrantyDescription: '1 Year Comprehensive Brand Replacement Warranty',
+      manufacturer: 'AcousticPro Audio Labs India Pvt Ltd',
+      modelSeries: 'AcousticPro Studio TWS Series',
+      specificUses: 'Hi-Fi Music Listening, Noise Isolation, Video Conferencing, Sports',
+      unitCount: '1 Count',
+      itemTypeName: 'True Wireless In-Ear Headphones',
+      packerContactInfo: 'AcousticPro Logistics Hub, Sector 18, Gurugram, Haryana - 122015',
+      asin: 'B09AUDIO01',
+      customAttributes: [
+        { key: 'Bluetooth Version', value: 'Bluetooth 5.4 Low Latency' },
+        { key: 'Audio Codecs', value: 'LDAC, AAC, SBC' },
+      ],
+    },
   },
   'noise-isolating-anc-studio-buds': {
     slug: 'noise-isolating-anc-studio-buds',
@@ -293,13 +391,30 @@ export default function ProductDetailPage() {
       soldCount: '450+ sold',
       storeName: 'Shop:Sell Verified Store',
       storeSlug: 'verified-store',
-      images: [
-        'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80',
-        'https://images.unsplash.com/photo-1545454675-3531b543be5d?w=800&q=80',
-        'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800&q=80',
-      ],
+      images: getProductGallery({ name: title, slug }),
       variants: ['Standard Edition', 'Artisan Finish'],
       description: `Authentic ${title}. Handcrafted with precision and verified by Shop:Sell quality assurance before insured express transit across India.`,
+      longDescription: `Experience uncompromising quality with ${title}. Meticulously designed for longevity and performance, verified under rigorous quality control standards, and packaged in eco-friendly protective materials for insured doorstep dispatch across India.`,
+      keyFeatures: [
+        `Authentic ${title} with certified manufacturer warranty`,
+        'Precision engineered for durability and reliable daily use',
+        'Insured express delivery with real-time shipment tracking',
+        'Compliant with Indian Legal Metrology and e-commerce standards',
+      ],
+      specifications: {
+        brandName: 'Shop:Sell Verified',
+        modelYear: '2026',
+        countryOfOrigin: 'India',
+        boxContents: '1x Main Unit, User Guide, Warranty Registration Card',
+        warrantyDescription: '1 Year Manufacturer domestic warranty',
+        manufacturer: 'Shop:Sell Verified Partner Facility',
+        modelSeries: title,
+        specificUses: 'General Consumer Daily Use',
+        unitCount: '1 Count',
+        itemTypeName: 'Consumer Goods',
+        packerContactInfo: 'Shop:Sell Express Logistics Hub, Mumbai - 400001',
+        asin: `B0${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+      },
     };
   }, [slug]);
 
@@ -559,6 +674,187 @@ export default function ProductDetailPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Comprehensive Product Description & Statutory Specifications */}
+      <div className="mt-16 space-y-12 border-t border-slate-200 pt-12 dark:border-slate-800">
+        {/* Section 1: Complete Description & Key Highlights */}
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+              <FileText className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                Product Overview & Description
+              </h2>
+              <p className="text-xs text-slate-500">
+                Detailed commercial specifications and verified product highlights
+              </p>
+            </div>
+          </div>
+
+          <div className="text-sm leading-relaxed text-slate-600 dark:text-slate-300 space-y-4">
+            <p>{product.longDescription || product.description}</p>
+          </div>
+
+          {product.keyFeatures && product.keyFeatures.length > 0 && (
+            <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-1.5">
+                <Sparkles className="h-4 w-4 text-amber-500" />
+                Key Highlights & Features
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {product.keyFeatures.map((feat, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-start gap-2.5 rounded-xl bg-slate-50 p-3 text-xs font-medium text-slate-700 dark:bg-slate-800/50 dark:text-slate-200"
+                  >
+                    <Check className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <span>{feat}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Section 2: Technical & Statutory Specifications (Matching User's Reference Image) */}
+        {product.specifications && (
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400">
+                  <ShieldCheck className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">
+                    Technical & Statutory Specifications
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Mandatory declarations under Legal Metrology (Packaged Commodities) Rules
+                  </p>
+                </div>
+              </div>
+              <span className="self-start sm:self-auto rounded-full bg-slate-100 px-3 py-1 font-mono text-[11px] font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                ASIN: {product.specifications.asin || 'B0HJ4PNVSM'}
+              </span>
+            </div>
+
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+              <table className="w-full text-left text-xs sm:text-sm">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+                    <td className="w-1/3 py-3.5 px-5 font-bold text-slate-900 dark:text-slate-200">
+                      Brand Name
+                    </td>
+                    <td className="w-2/3 py-3.5 px-5 text-slate-700 dark:text-slate-300">
+                      {product.specifications.brandName || 'Infinix'}
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+                    <td className="py-3.5 px-5 font-bold text-slate-900 dark:text-slate-200">
+                      Model Year
+                    </td>
+                    <td className="py-3.5 px-5 text-slate-700 dark:text-slate-300">
+                      {product.specifications.modelYear || '2026'}
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+                    <td className="py-3.5 px-5 font-bold text-slate-900 dark:text-slate-200">
+                      Country of Origin
+                    </td>
+                    <td className="py-3.5 px-5 text-slate-700 dark:text-slate-300">
+                      {product.specifications.countryOfOrigin || 'India'}
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+                    <td className="py-3.5 px-5 font-bold text-slate-900 dark:text-slate-200">
+                      Box Contents
+                    </td>
+                    <td className="py-3.5 px-5 text-slate-700 dark:text-slate-300">
+                      {product.specifications.boxContents || 'Smartphone, Accessories'}
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+                    <td className="py-3.5 px-5 font-bold text-slate-900 dark:text-slate-200">
+                      Warranty Description
+                    </td>
+                    <td className="py-3.5 px-5 text-slate-700 dark:text-slate-300">
+                      {product.specifications.warrantyDescription || '1 Year Manufacturer domestic warranty'}
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+                    <td className="py-3.5 px-5 font-bold text-slate-900 dark:text-slate-200">
+                      Manufacturer
+                    </td>
+                    <td className="py-3.5 px-5 text-slate-700 dark:text-slate-300">
+                      {product.specifications.manufacturer || 'Infinix Mobility Limited'}
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+                    <td className="py-3.5 px-5 font-bold text-slate-900 dark:text-slate-200">
+                      Model Series
+                    </td>
+                    <td className="py-3.5 px-5 text-slate-700 dark:text-slate-300">
+                      {product.specifications.modelSeries || product.name}
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+                    <td className="py-3.5 px-5 font-bold text-slate-900 dark:text-slate-200">
+                      Specific Uses For Product
+                    </td>
+                    <td className="py-3.5 px-5 text-slate-700 dark:text-slate-300">
+                      {product.specifications.specificUses || 'Photography, Gaming, Daily Communication'}
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+                    <td className="py-3.5 px-5 font-bold text-slate-900 dark:text-slate-200">
+                      Unit Count
+                    </td>
+                    <td className="py-3.5 px-5 text-slate-700 dark:text-slate-300">
+                      {product.specifications.unitCount || '1 Count'}
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+                    <td className="py-3.5 px-5 font-bold text-slate-900 dark:text-slate-200">
+                      Item Type Name
+                    </td>
+                    <td className="py-3.5 px-5 text-slate-700 dark:text-slate-300">
+                      {product.specifications.itemTypeName || product.category}
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+                    <td className="py-3.5 px-5 font-bold text-slate-900 dark:text-slate-200">
+                      Packer Contact Information
+                    </td>
+                    <td className="py-3.5 px-5 text-slate-700 dark:text-slate-300">
+                      {product.specifications.packerContactInfo || 'Infinix Mobility Limited, Shenzhen, China'}
+                    </td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+                    <td className="py-3.5 px-5 font-bold text-slate-900 dark:text-slate-200">
+                      ASIN
+                    </td>
+                    <td className="py-3.5 px-5 font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                      {product.specifications.asin || 'B0HJ4PNVSM'}
+                    </td>
+                  </tr>
+                  {product.specifications.customAttributes?.map((attr, idx) => (
+                    <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition">
+                      <td className="py-3.5 px-5 font-bold text-slate-900 dark:text-slate-200">
+                        {attr.key}
+                      </td>
+                      <td className="py-3.5 px-5 text-slate-700 dark:text-slate-300">
+                        {attr.value}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

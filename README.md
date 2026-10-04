@@ -44,6 +44,8 @@
 - [Testing](#testing)
 - [Deployment](#deployment)
 - [Scalability](#scalability)
+- [Cloudflare Security](#cloudflare-security)
+- [Key Features](#key-features)
 - [Project Vision](#project-vision)
 
 ---
@@ -1141,6 +1143,21 @@ Future scaling strategies can include:
 - Search infrastructure scaling
 - Database partitioning
 - Catalogue sharding
+
+Refer to [`docs/architecture.md`](docs/architecture.md) for details on PgBouncer pooling, read replica distribution, CDN caching, Redis cluster topology, and partitioning/sharding strategies.
+
+---
+
+# Cloudflare Security
+
+## 🔒 Cloudflare Security, Turnstile & Origin Protection
+
+Shop:Sell incorporates a defense-in-depth edge security posture via Cloudflare:
+- **Cloudflare Turnstile**: Managed challenge protection on login (`/login`), OTP generation (`/api/auth/request-otp`), and seller applications (`/become-a-seller`).
+- **Cryptographic Token Verification**: Edge middleware verifies short-lived (15 min) JWT access tokens via `jose` (HS256) using `JWT_SECRET`. Client-submitted `shopsell_roles` cookies are never trusted for authorization.
+- **Shared-Store Rate Limiting**: Per-email and per-IP login throttling, 5 OTPs/hour limit, and lockout after 5 failed verification attempts via Upstash Redis.
+- **Origin Protection & Authenticated Origin Pulls**: Ensure origin web traffic is strictly restricted to official Cloudflare IP ranges and verified via client TLS certificates.
+- **Detailed Checklist**: Refer to [`docs/cloudflare-setup.md`](docs/cloudflare-setup.md) for step-by-step dashboard instructions.
 
 ---
 

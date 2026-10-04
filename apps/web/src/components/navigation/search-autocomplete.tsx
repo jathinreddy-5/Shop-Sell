@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Search, Clock, X, ArrowUpRight, Sparkles } from 'lucide-react';
 import { LoadingThreeDotsJumping } from '@/components/loading';
+import { getProductImage } from '@/lib/products/product-images';
 
 interface AutocompleteProduct {
   id: string;
@@ -67,7 +68,7 @@ export function SearchAutocomplete() {
           name: `${query.charAt(0).toUpperCase() + query.slice(1)} Performance Edition`,
           slug: 'sample-product-slug-1',
           price: 2499,
-          thumbnail: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100&q=80',
+          thumbnail: getProductImage({ name: `${query} Performance Edition`, category_name: 'Electronics' }),
           category: 'Electronics',
         },
         {

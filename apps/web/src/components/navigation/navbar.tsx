@@ -2,58 +2,16 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ShoppingBag, Heart, Search, Store, Shield, User, LogOut } from 'lucide-react';
+import { ShoppingBag, Heart, Search, Store, User } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { SearchAutocomplete } from './search-autocomplete';
 import { LiquidNav } from '@/components/liquid-nav';
 
 export function Navbar() {
-  const { user, isCustomer, isSeller, isAdmin, loginAsDevRole, logout } = useAuth();
+  const { user, isSeller } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:border-slate-800 dark:bg-slate-900/90">
-      {/* Dev Role Quick Switcher Banner */}
-      <div className="bg-slate-900 px-4 py-1.5 text-xs text-white">
-        <div className="container mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-emerald-400">Current Role:</span>
-            <span className="rounded bg-slate-800 px-2 py-0.5 font-mono uppercase tracking-wider text-slate-200">
-              {user ? user.roles.join(' + ') : 'Guest / Customer'}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-slate-400">Switch Identity:</span>
-            <button
-              onClick={() => loginAsDevRole('customer')}
-              className="rounded bg-slate-800 px-2 py-0.5 transition hover:bg-slate-700 hover:text-white"
-            >
-              Customer
-            </button>
-            <button
-              onClick={() => loginAsDevRole('owner')}
-              className="rounded bg-emerald-700 px-2 py-0.5 font-medium text-white transition hover:bg-emerald-600"
-            >
-              Seller / Owner
-            </button>
-            <button
-              onClick={() => loginAsDevRole('admin')}
-              className="rounded bg-purple-700 px-2 py-0.5 font-medium text-white transition hover:bg-purple-600"
-            >
-              Admin
-            </button>
-            {user && (
-              <button
-                onClick={logout}
-                className="ml-2 flex items-center gap-1 text-slate-400 hover:text-rose-400"
-                title="Logout"
-              >
-                <LogOut className="h-3 w-3" />
-                Reset
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
 
       {/* Main Nav */}
       <div className="container mx-auto flex h-16 items-center justify-between gap-4 px-4">

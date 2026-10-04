@@ -15,10 +15,14 @@
     "test": "node --experimental-strip-types --test src/__tests__/**/*.spec.ts"
   },
   "dependencies": {
+    "@marsidev/react-turnstile": "^1.6.1",
     "@shop-sell/shared": "file:../../packages/shared",
     "clsx": "^2.1.1",
+    "firebase": "^12.19.0",
+    "ioredis": "^6.0.0",
+    "jose": "^6.2.12",
     "lucide-react": "^0.475.0",
-    "motion": "^13.5.0",
+    "motion": "^13.5.1",
     "next": "^15.1.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

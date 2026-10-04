@@ -1,15 +1,62 @@
 import 'reflect-metadata';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as dns from 'dns';
+dns.setDefaultResultOrder('ipv4first');
+
+// Ensure root .env variables are available to early constructors like DatabaseService
+for (const envFile of ['.env', '../../.env', '../.env']) {
+  const envPath = path.resolve(process.cwd(), envFile);
+  if (fs.existsSync(envPath)) {
+    const lines = fs.readFileSync(envPath, 'utf8').split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith('#')) continue;
+      const eqIdx = trimmed.indexOf('=');
+      if (eqIdx > 0) {
+        const key = trimmed.slice(0, eqIdx).trim();
+        const val = trimmed.slice(eqIdx + 1).trim();
+        if (!process.env[key]) {
+          process.env[key] = val;
+        }
+      }
+    }
+  }
+}
+
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import {
+  validateJwtSecret,
+  validateAdminJwtSecret,
+  validateSupabaseJwtSecret,
+  validateDemoAccountsConfig,
+  validateInternalApiSecret,
+  createProxyMiddleware,
+} from '@shop-sell/shared';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  // Validate secrets at startup (fail fast if missing, < 32 bytes, or placeholder in production)
+  const jwtSecret = process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET;
+  validateJwtSecret(jwtSecret, process.env.NODE_ENV);
+  if (process.env.SUPABASE_JWT_SECRET) {
+    validateSupabaseJwtSecret(process.env.SUPABASE_JWT_SECRET, process.env.NODE_ENV);
+  }
+  validateAdminJwtSecret(process.env.ADMIN_JWT_SECRET, jwtSecret, process.env.NODE_ENV);
+  validateDemoAccountsConfig(process.env.ENABLE_DEMO_ACCOUNTS, process.env.NODE_ENV);
+  const proxySecret = validateInternalApiSecret(process.env.INTERNAL_API_SECRET, process.env.NODE_ENV);
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Trust first proxy (e.g. Nginx, Cloudflare) so secure cookies & client IP work behind HTTPS
   app.set('trust proxy', 1);
 
   app.setGlobalPrefix('api');
+
+  // Reject direct calls that do not originate from the apps/web proxy
+  const isTest = process.env.NODE_ENV === 'test';
+  app.use(createProxyMiddleware(proxySecret, isTest));
 
   // Structured JSON logging for cloud observability (Railway / Render / CloudWatch)
   app.use((req: any, res: any, next: any) => {

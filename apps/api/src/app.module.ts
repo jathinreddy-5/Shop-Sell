@@ -13,12 +13,14 @@ import { EventsModule } from './modules/events/events.module';
 import { RecommendationsModule } from './modules/recommendations/recommendations.module';
 import { PayoutsModule } from './modules/payouts/payouts.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { AdminCoreModule } from './modules/admin-core/admin-core.module';
+import { ProfileModule } from './modules/profile/profile.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.local', '.env'],
+      envFilePath: ['.env.local', '.env', '../../.env.local', '../../.env'],
     }),
     DatabaseModule,
     AuthModule,
@@ -32,7 +34,9 @@ import { AdminModule } from './modules/admin/admin.module';
     EventsModule,
     RecommendationsModule,
     PayoutsModule,
+    AdminCoreModule,
     AdminModule,
+    ProfileModule,
   ],
 })
 export class AppModule {}

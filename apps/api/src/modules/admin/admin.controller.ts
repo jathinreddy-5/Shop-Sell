@@ -6,25 +6,27 @@ import {
   Body,
   Param,
   UseGuards,
+  UseInterceptors,
   Req,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import { Roles } from '../../common/decorators/roles.decorator';
-import { SupabaseAuthGuard } from '../../common/guards/supabase-auth.guard';
-import { RolesGuard } from '../../common/guards/roles.guard';
+import { AdminAuthGuard, AdminRequest } from '../admin-core/rbac/admin-auth.guard';
+import { AuditInterceptor } from '../admin-core/audit/audit.interceptor';
+import { RequirePermission } from '../admin-core/rbac/require-permission.decorator';
 
 @Controller('admin')
-@UseGuards(SupabaseAuthGuard, RolesGuard)
-@Roles('admin')
+@UseGuards(AdminAuthGuard)
+@UseInterceptors(AuditInterceptor)
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
+  @RequirePermission('category:view')
   @Get('categories')
   async listCategories() {
     return this.adminService.listCategories();
   }
 
+  @RequirePermission('category:manage')
   @Post('categories')
   async createCategory(
     @Body()
@@ -38,27 +40,30 @@ export class AdminController {
     return this.adminService.createCategory(body);
   }
 
+  @RequirePermission('catalog:moderate')
   @Patch('products/:id/moderation')
   async moderateProduct(
     @Param('id') id: string,
     @Body('status') status: 'active' | 'archived' | 'draft',
     @Body('reason') reason: string,
-    @Req() req: any
+    @Req() req: AdminRequest
   ) {
-    const adminId = req.user.id;
+    const adminId = req.adminUser!.id;
     return this.adminService.moderateProduct(id, status, adminId, reason);
   }
 
+  @RequirePermission('refund:issue')
   @Post('orders/:id/refund')
   async issueRefund(
     @Param('id') id: string,
     @Body('reason') reason: string,
-    @Req() req: any
+    @Req() req: AdminRequest
   ) {
-    const adminId = req.user.id;
+    const adminId = req.adminUser!.id;
     return this.adminService.issueRefund(id, reason || 'Customer requested refund', adminId);
   }
 
+  @RequirePermission('analytics:view')
   @Get('analytics/recommendations')
   async getAnalytics() {
     return this.adminService.getRecommendationAnalytics();

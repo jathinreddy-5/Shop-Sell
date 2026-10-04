@@ -53,8 +53,32 @@ export class RecommendationsService {
       } catch {}
     }
 
-    // 2. Fetch User History from Redis or PostgreSQL
+    // 2. Fetch User History & Profile Signals
     let recentSearches: string[] = [];
+    let userProfile: any = null;
+    let userInterests: string[] = [];
+
+    if (userId) {
+      try {
+        const profRes = await this.db.query(
+          `SELECT shopping_for, gender, default_pincode, size_profile
+           FROM public.profiles WHERE id = $1 LIMIT 1`,
+          [userId]
+        );
+        if (profRes.rows.length > 0) {
+          userProfile = profRes.rows[0];
+        }
+
+        const intRes = await this.db.query<{ slug: string }>(
+          `SELECT ic.slug FROM public.profile_interests pi
+           JOIN public.interest_categories ic ON pi.interest_id = ic.id
+           WHERE pi.profile_id = $1`,
+          [userId]
+        );
+        userInterests = intRes.rows.map((r) => r.slug.toLowerCase());
+      } catch {}
+    }
+
     if (identifier) {
       try {
         if (this.redisClient.status === 'ready' || this.redisClient.status === 'connecting') {
@@ -120,22 +144,37 @@ export class RecommendationsService {
     }
 
     // (B) Trending Products (Popularity & Sales Velocity)
-    const trendingRes = await this.db.query(
-      `SELECT p.id, p.store_id, p.name, p.slug, p.price, p.compare_at_price, p.stock,
-              p.category_id, p.images, p.rating_avg, p.rating_count, p.sales_count, p.view_count,
-              p.status, s.store_name, c.name as category_name
-       FROM public.products p
-       JOIN public.stores s ON p.store_id = s.id
-       JOIN public.categories c ON p.category_id = c.id
-       WHERE p.status = 'active' AND p.stock > 0
-       ORDER BY p.sales_count DESC, p.view_count DESC
-       LIMIT 12`
-    );
+    let trendingProducts: any[] = [];
+    try {
+      const trendingRes = await this.db.query(
+        `SELECT p.id, p.store_id, p.name, p.slug, p.price, p.compare_at_price, p.stock,
+                p.category_id, p.images, p.rating_avg, p.rating_count, p.sales_count, p.view_count,
+                p.status, s.store_name, c.name as category_name
+         FROM public.products p
+         JOIN public.stores s ON p.store_id = s.id
+         JOIN public.categories c ON p.category_id = c.id
+         WHERE p.status = 'active' AND p.stock > 0
+         ORDER BY p.sales_count DESC, p.view_count DESC
+         LIMIT 12`
+      );
 
-    const trendingProducts = trendingRes.rows.map((p) => ({
-      ...p,
-      image: p.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500',
-    }));
+      trendingProducts = trendingRes.rows.map((p) => ({
+        ...p,
+        image: p.images?.[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500',
+      }));
+    } catch {
+      // Fallback: If DB query encounters connection issue, try search index or fallback curated products
+      try {
+        const searchFallback = await this.searchService.search({ limit: 12, inStockOnly: true });
+        if (searchFallback.products && searchFallback.products.length > 0) {
+          trendingProducts = searchFallback.products;
+        }
+      } catch {}
+
+      if (trendingProducts.length === 0) {
+        trendingProducts = this.getFallbackTrendingProducts();
+      }
+    }
 
     // Add trending to candidates
     for (const p of trendingProducts) {
@@ -177,6 +216,33 @@ export class RecommendationsService {
         wRating * c.ratingQuality +
         wFresh * c.freshness +
         wStock * c.stockPriceFit;
+
+      // Personalization BOOSTS (Never hard filters)
+      const pCat = (c.product.category_name || '').toLowerCase();
+      const pName = (c.product.name || '').toLowerCase();
+
+      // Interest categories boost
+      if (userInterests.length > 0) {
+        const matchesInterest = userInterests.some((intSlug) =>
+          pCat.includes(intSlug.replace('apparel-', '').replace('-living', '')) ||
+          pName.includes(intSlug.replace('apparel-', '').replace('-living', ''))
+        );
+        if (matchesInterest) {
+          score += 0.25;
+        }
+      }
+
+      // "Shopping for" preference boost
+      if (userProfile?.shopping_for && userProfile.shopping_for !== 'prefer_not_to_say') {
+        const sf = userProfile.shopping_for;
+        if (sf === 'mens' && (pCat.includes('men') || pName.includes('men') || pCat.includes('male'))) {
+          score += 0.20;
+        } else if (sf === 'womens' && (pCat.includes('women') || pName.includes('women') || pCat.includes('couture'))) {
+          score += 0.20;
+        } else if (sf === 'kids' && (pCat.includes('kid') || pName.includes('kid') || pName.includes('child'))) {
+          score += 0.20;
+        }
+      }
 
       // Penalties: Out of stock exclusion
       if (c.product.stock <= 0) {
@@ -236,5 +302,70 @@ export class RecommendationsService {
     }
 
     return response;
+  }
+
+  private getFallbackTrendingProducts() {
+    return [
+      {
+        id: 'prod-fallback-1',
+        name: 'Handcrafted Wooden Desk Organizer',
+        slug: 'handcrafted-wooden-desk-organizer',
+        price: 1499,
+        compare_at_price: 1999,
+        stock: 25,
+        rating_avg: 4.8,
+        rating_count: 42,
+        sales_count: 120,
+        store_name: 'Artisan Works',
+        category_name: 'Home & Living',
+        images: ['https://images.unsplash.com/photo-1544816155-12df9643f363?w=500'],
+        image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=500',
+      },
+      {
+        id: 'prod-fallback-2',
+        name: 'Organic Cotton Casual Oversized Shirt',
+        slug: 'organic-cotton-casual-oversized-shirt',
+        price: 1299,
+        compare_at_price: 1899,
+        stock: 30,
+        rating_avg: 4.6,
+        rating_count: 58,
+        sales_count: 95,
+        store_name: 'EcoWear Co.',
+        category_name: 'Apparel',
+        images: ['https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=500'],
+        image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=500',
+      },
+      {
+        id: 'prod-fallback-3',
+        name: 'Minimalist Wireless Charging Pad',
+        slug: 'minimalist-wireless-charging-pad',
+        price: 999,
+        compare_at_price: 1499,
+        stock: 40,
+        rating_avg: 4.7,
+        rating_count: 89,
+        sales_count: 210,
+        store_name: 'TechGear Labs',
+        category_name: 'Electronics',
+        images: ['https://images.unsplash.com/photo-1586816879360-004f5b0c51e5?w=500'],
+        image: 'https://images.unsplash.com/photo-1586816879360-004f5b0c51e5?w=500',
+      },
+      {
+        id: 'prod-fallback-4',
+        name: 'Handmade Ceramic Coffee Mug Set',
+        slug: 'handmade-ceramic-coffee-mug-set',
+        price: 799,
+        compare_at_price: 1199,
+        stock: 15,
+        rating_avg: 4.9,
+        rating_count: 34,
+        sales_count: 75,
+        store_name: 'Clay & Co',
+        category_name: 'Home & Living',
+        images: ['https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500'],
+        image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500',
+      },
+    ];
   }
 }

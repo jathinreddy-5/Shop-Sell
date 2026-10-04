@@ -22,6 +22,7 @@
     "seed": "node ./node_modules/typescript/bin/tsc -p tsconfig.json && node dist/seed.js",
     "reindex": "node ./node_modules/typescript/bin/tsc -p tsconfig.json && node dist/reindex.js",
     "doctor": "node ./node_modules/typescript/bin/tsc -p tsconfig.json && node dist/doctor.js",
+    "test:rls": "node ./node_modules/typescript/bin/tsc -p tsconfig.json && node dist/test-rls.js",
     "test:integration": "npm --workspace=@shop-sell/api run test:integration",
     "test:e2e": "node ./node_modules/@playwright/test/cli.js test",
     "test:load": "node ./node_modules/typescript/bin/tsc -p tsconfig.json && node dist/benchmark-load.js",

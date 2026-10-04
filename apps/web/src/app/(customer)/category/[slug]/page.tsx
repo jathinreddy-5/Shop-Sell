@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Star, ChevronRight, ShoppingBag } from 'lucide-react';
+import { getProductImage } from '@/lib/products/product-images';
 
 const mockCategoryMap: Record<
   string,
@@ -87,13 +88,13 @@ export default async function CategoryPage({
           >
             <div className="aspect-square bg-slate-100 dark:bg-slate-800">
               <img
-                src={`https://images.unsplash.com/photo-${1505740420928 + idx * 1000}?w=500&q=80`}
+                src={getProductImage({
+                  name: `${category.name} Edition #${idx}`,
+                  category_name: category.name,
+                  slug: `${categorySlug}-${idx}`,
+                }, idx)}
                 alt={`${category.name} Item ${idx}`}
                 className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                onError={(e) => {
-                  (e.target as any).src =
-                    'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80';
-                }}
               />
             </div>
             <div className="flex flex-1 flex-col p-4">

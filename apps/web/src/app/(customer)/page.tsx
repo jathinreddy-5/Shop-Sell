@@ -24,6 +24,7 @@ import {
   ExpandingCardItem,
 } from '../../components/expanding-cards';
 import { LoadingThreeDotsJumping } from '../../components/loading';
+import { getProductImage } from '@/lib/products/product-images';
 
 const fallbackHomeData: HomeRecommendationsResponse = ({
   recentSearches: [
@@ -275,10 +276,7 @@ const categoryExpandingCards: ExpandingCardItem[] = [
 ];
 
 function mapProductToExpandingCard(p: any): ExpandingCardItem {
-  const image =
-    p.images?.[0] ||
-    p.image ||
-    'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800';
+  const image = getProductImage(p);
   const rating = p.rating_avg || p.rating || 4.8;
   const reviewCount = p.rating_count || p.reviews || 42;
   const store = p.store_name || p.store || 'Verified Store';
@@ -706,10 +704,7 @@ export default function CustomerHomePage() {
 }
 
 function ProductCard({ product }: { product: any }) {
-  const image =
-    product.images?.[0] ||
-    product.image ||
-    'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500';
+  const image = getProductImage(product);
   const rating = product.rating_avg || product.rating || 4.8;
   const reviewCount = product.rating_count || product.reviews || 42;
   const store = product.store_name || product.store || 'Verified Store';
