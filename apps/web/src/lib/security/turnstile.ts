@@ -27,6 +27,16 @@ export const CLOUDFLARE_IPV4_CIDRS = [
   '131.0.72.0/22',
 ];
 
+export const CLOUDFLARE_IPV6_CIDRS = [
+  '2400:cb00::/32',
+  '2606:4700::/32',
+  '2803:f800::/32',
+  '2405:b500::/32',
+  '2405:8100::/32',
+  '2a06:98c0::/29',
+  '2c0f:f248::/32',
+];
+
 function ipToUint(ip: string): number | null {
   const parts = ip.split('.');
   if (parts.length !== 4) return null;
@@ -39,8 +49,69 @@ function ipToUint(ip: string): number | null {
   return num >>> 0;
 }
 
+function ipv6ToBigInt(ip: string): bigint | null {
+  const cleanIp = ip.replace(/^\[|\]$/g, '').trim().toLowerCase();
+  if (!cleanIp.includes(':')) return null;
+
+  if (cleanIp.includes('.')) {
+    const lastColon = cleanIp.lastIndexOf(':');
+    const ipv4Part = cleanIp.substring(lastColon + 1);
+    const v4Uint = ipToUint(ipv4Part);
+    if (v4Uint === null) return null;
+    const v4Hex = `${(v4Uint >>> 16).toString(16)}:${(v4Uint & 0xffff).toString(16)}`;
+    return ipv6ToBigInt(cleanIp.substring(0, lastColon + 1) + v4Hex);
+  }
+
+  const parts = cleanIp.split('::');
+  if (parts.length > 2) return null;
+
+  let groups: string[];
+  if (parts.length === 2) {
+    const left = parts[0] ? parts[0].split(':') : [];
+    const right = parts[1] ? parts[1].split(':') : [];
+    const missing = 8 - (left.length + right.length);
+    if (missing < 1) return null;
+    const middle = new Array(missing).fill('0');
+    groups = [...left, ...middle, ...right];
+  } else {
+    groups = cleanIp.split(':');
+  }
+
+  if (groups.length !== 8) return null;
+
+  let result = 0n;
+  for (const group of groups) {
+    if (!/^[0-9a-f]{1,4}$/i.test(group)) return null;
+    result = (result << 16n) | BigInt(parseInt(group, 16));
+  }
+  return result;
+}
+
 export function isCloudflareIp(ip: string): boolean {
-  const uint = ipToUint(ip);
+  if (!ip || typeof ip !== 'string') return false;
+  const clean = ip.trim().toLowerCase();
+
+  // IPv6 check
+  if (clean.includes(':')) {
+    const ipBig = ipv6ToBigInt(clean);
+    if (ipBig === null) return false;
+
+    const fullMask = (1n << 128n) - 1n;
+    for (const cidr of CLOUDFLARE_IPV6_CIDRS) {
+      const [rangeIp, prefixStr] = cidr.split('/');
+      const prefix = parseInt(prefixStr, 10);
+      const rangeBig = ipv6ToBigInt(rangeIp);
+      if (rangeBig === null) continue;
+      const mask = (fullMask << (128n - BigInt(prefix))) & fullMask;
+      if ((ipBig & mask) === (rangeBig & mask)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // IPv4 check
+  const uint = ipToUint(clean);
   if (uint === null) return false;
 
   for (const cidr of CLOUDFLARE_IPV4_CIDRS) {
@@ -56,29 +127,70 @@ export function isCloudflareIp(ip: string): boolean {
   return false;
 }
 
+function isTrustedProxyIp(ip: string): boolean {
+  if (!ip) return false;
+  const clean = ip.trim().toLowerCase();
+  if (clean === '127.0.0.1' || clean === '::1' || clean === 'localhost') return true;
+
+  if (process.env.TRUSTED_PROXY_IPS) {
+    const trusted = process.env.TRUSTED_PROXY_IPS.split(',').map((s) => s.trim().toLowerCase());
+    if (trusted.includes(clean)) return true;
+  }
+
+  const uint = ipToUint(clean);
+  if (uint !== null) {
+    // 10.0.0.0/8
+    if ((uint & 0xff000000) >>> 0 === 0x0a000000) return true;
+    // 172.16.0.0/12
+    if ((uint & 0xfff00000) >>> 0 === 0xac100000) return true;
+    // 192.168.0.0/16
+    if ((uint & 0xffff0000) >>> 0 === 0xc0a80000) return true;
+    // 127.0.0.0/8
+    if ((uint & 0xff000000) >>> 0 === 0x7f000000) return true;
+  }
+  return false;
+}
+
+/**
+ * Extracts socket IP. Only trusts x-real-ip if request arrives via our own internal proxy or loopback.
+ */
+function getSocketIp(request: NextRequest): string {
+  const directIp = (request as any).ip;
+  if (directIp && typeof directIp === 'string' && directIp.trim()) {
+    const trimmed = directIp.trim();
+    if (isTrustedProxyIp(trimmed)) {
+      const forwardedRealIp = request.headers.get('x-real-ip');
+      if (forwardedRealIp && forwardedRealIp.trim()) return forwardedRealIp.trim();
+    }
+    return trimmed;
+  }
+
+  const realIp = request.headers.get('x-real-ip');
+  return (realIp && realIp.trim()) || '127.0.0.1';
+}
+
 /**
  * Validates whether the incoming request originated from Cloudflare edge proxy.
- * Checks Authenticated Origin Pull indicators, origin secret header, or socket IP in Cloudflare ranges.
+ * Strictly prefers CLOUDFLARE_ORIGIN_SECRET and Authenticated Origin Pull (AOP) mTLS over IP inspection.
  */
 export function isCloudflareRequest(request: NextRequest): boolean {
-  // In development and unit test environments, allow headers unless testing production enforcement
   if (process.env.NODE_ENV !== 'production') {
     return Boolean(request.headers.get('cf-connecting-ip'));
   }
 
-  // 1. Authenticated Origin Pull secret verification if configured
+  // 1. Prefer Authenticated Origin Pull secret verification if configured
   const originSecret = process.env.CLOUDFLARE_ORIGIN_SECRET;
   if (originSecret && request.headers.get('x-cf-origin-secret') === originSecret) {
     return true;
   }
 
-  // 2. Authenticated Origin Pull mTLS indicator from reverse proxy (e.g. Nginx ssl_client_verify)
+  // 2. Prefer Authenticated Origin Pull mTLS indicator from reverse proxy
   if (request.headers.get('x-cf-authenticated-pull') === 'SUCCESS') {
     return true;
   }
 
-  // 3. Verify incoming socket IP is within Cloudflare's published IP ranges
-  const socketIp = (request as any).ip || request.headers.get('x-real-ip') || '';
+  // 3. Verify incoming socket IP is within Cloudflare's published IPv4/IPv6 ranges
+  const socketIp = getSocketIp(request);
   if (socketIp && isCloudflareIp(socketIp)) {
     return true;
   }
@@ -92,9 +204,8 @@ export function isCloudflareRequest(request: NextRequest): boolean {
  * Direct connections bypassing Cloudflare fall back strictly to the socket address.
  */
 export function getClientIp(request: NextRequest): string {
-  const socketIp = ((request as any).ip || request.headers.get('x-real-ip') || '127.0.0.1').trim();
+  const socketIp = getSocketIp(request);
 
-  // In production, only trust CF-Connecting-IP if the request is known to have come through Cloudflare
   if (isCloudflareRequest(request)) {
     const cfConnectingIp = request.headers.get('cf-connecting-ip');
     if (cfConnectingIp && cfConnectingIp.trim()) {

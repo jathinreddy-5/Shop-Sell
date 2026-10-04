@@ -28,6 +28,8 @@ async function createSignedToken(payload: Record<string, any>, secret = TEST_JWT
 }
 
 describe('Security Hardening Test Suite (Next.js apps/web)', () => {
+  // Ensure INTERNAL_API_SECRET is set for tests
+  process.env.INTERNAL_API_SECRET = 'test-internal-proxy-secret-32-chars-long';
   // 1. Tampered shopsell_roles cookie with a customer token -> redirect to /become-a-seller
   it('should redirect to /become-a-seller when shopsell_roles cookie is tampered to owner/admin but JWT contains only customer role', async () => {
     const customerToken = await createSignedToken({
@@ -243,6 +245,7 @@ describe('Security Hardening Test Suite (Next.js apps/web)', () => {
     // CRITICAL: Victim attempting from their own IP must NOT be locked out!
     const victimCheck = await checkLoginRateLimit(victimEmail, victimIp);
     assert.strictEqual(victimCheck.allowed, true, 'Victim from different IP must not be locked out by attacker');
+    assert.strictEqual(victimCheck.requireTurnstile, true, 'Elevated failed attempts on email triggers Turnstile requirement');
   });
 
   // 8. Unregistered vs registered email on request-otp -> identical response
@@ -381,13 +384,13 @@ describe('Security Hardening Test Suite (Next.js apps/web)', () => {
     );
   });
 
-  // 11. FIX 6: Client IP trust & Cloudflare check
+  // 11. FIX 6: Client IP trust & Cloudflare check (IPv4 and IPv6)
   it('should ignore spoofed CF-Connecting-IP in production unless request passes Cloudflare check', () => {
     const prevNodeEnv = process.env.NODE_ENV;
     const prevOriginSecret = process.env.CLOUDFLARE_ORIGIN_SECRET;
 
     try {
-      process.env.NODE_ENV = 'production';
+      (process.env as any).NODE_ENV = 'production';
       process.env.CLOUDFLARE_ORIGIN_SECRET = 'cf-test-origin-shared-secret-1234';
 
       // 1. Direct unverified connection attempting to spoof CF-Connecting-IP
@@ -403,7 +406,7 @@ describe('Security Hardening Test Suite (Next.js apps/web)', () => {
       assert.strictEqual(unverifiedClientIp, '198.51.100.50');
       assert.notStrictEqual(unverifiedClientIp, '203.0.113.1');
 
-      // 2. Verified request via Cloudflare edge IP range (e.g. 173.245.48.15 in 173.245.48.0/20)
+      // 2. Verified request via Cloudflare IPv4 edge IP range (e.g. 173.245.48.15 in 173.245.48.0/20)
       const cfIpReq = new NextRequest('http://localhost:3000/api/auth/login', {
         headers: {
           'cf-connecting-ip': '203.0.113.1',
@@ -414,7 +417,29 @@ describe('Security Hardening Test Suite (Next.js apps/web)', () => {
       assert.strictEqual(isCloudflareRequest(cfIpReq), true);
       assert.strictEqual(getClientIp(cfIpReq), '203.0.113.1');
 
-      // 3. Verified request via Cloudflare Authenticated Origin Pull (AOP) mTLS header
+      // 3. Verified request via Cloudflare IPv6 edge IP range (e.g. 2606:4700:4700::1111 in 2606:4700::/32)
+      assert.strictEqual(isCloudflareIp('2606:4700:4700::1111'), true);
+      assert.strictEqual(isCloudflareIp('2001:db8::1'), false);
+      const cfIpv6Req = new NextRequest('http://localhost:3000/api/auth/login', {
+        headers: {
+          'cf-connecting-ip': '203.0.113.1',
+          'x-real-ip': '2606:4700:4700::1111',
+        },
+      });
+      assert.strictEqual(isCloudflareRequest(cfIpv6Req), true);
+      assert.strictEqual(getClientIp(cfIpv6Req), '203.0.113.1');
+
+      // 4. Untrusted direct socket IP cannot spoof x-real-ip
+      const directAttackerReq = new NextRequest('http://localhost:3000/api/auth/login', {
+        headers: {
+          'cf-connecting-ip': '203.0.113.1',
+          'x-real-ip': '173.245.48.15', // Spoofed Cloudflare IP in header
+        },
+      });
+      (directAttackerReq as any).ip = '198.51.100.99'; // Real external socket IP
+      assert.strictEqual(getClientIp(directAttackerReq), '198.51.100.99');
+
+      // 5. Verified request via Cloudflare Authenticated Origin Pull (AOP) mTLS header
       const aopReq = new NextRequest('http://localhost:3000/api/auth/login', {
         headers: {
           'cf-connecting-ip': '203.0.113.1',
@@ -425,7 +450,7 @@ describe('Security Hardening Test Suite (Next.js apps/web)', () => {
       assert.strictEqual(isCloudflareRequest(aopReq), true);
       assert.strictEqual(getClientIp(aopReq), '203.0.113.1');
 
-      // 4. Verified request via Cloudflare Origin Secret header
+      // 6. Verified request via Cloudflare Origin Secret header
       const secretReq = new NextRequest('http://localhost:3000/api/auth/login', {
         headers: {
           'cf-connecting-ip': '203.0.113.1',
@@ -436,7 +461,7 @@ describe('Security Hardening Test Suite (Next.js apps/web)', () => {
       assert.strictEqual(isCloudflareRequest(secretReq), true);
       assert.strictEqual(getClientIp(secretReq), '203.0.113.1');
     } finally {
-      process.env.NODE_ENV = prevNodeEnv;
+      (process.env as any).NODE_ENV = prevNodeEnv;
       process.env.CLOUDFLARE_ORIGIN_SECRET = prevOriginSecret;
     }
   });
@@ -478,7 +503,7 @@ describe('Security Hardening Test Suite (Next.js apps/web)', () => {
     const originalFetch = globalThis.fetch;
 
     try {
-      process.env.NODE_ENV = 'production';
+      (process.env as any).NODE_ENV = 'production';
       process.env.UPSTASH_REDIS_REST_URL = 'https://prod-redis.upstash.io';
       process.env.UPSTASH_REDIS_REST_TOKEN = 'prod-token-valid-string-12345';
 
@@ -501,7 +526,7 @@ describe('Security Hardening Test Suite (Next.js apps/web)', () => {
       assert.strictEqual(lowRiskCheck.allowed, true, 'Low-risk route should fail open when Redis fails');
     } finally {
       globalThis.fetch = originalFetch;
-      process.env.NODE_ENV = prevNodeEnv;
+      (process.env as any).NODE_ENV = prevNodeEnv;
       process.env.UPSTASH_REDIS_REST_URL = prevUrl;
       process.env.UPSTASH_REDIS_REST_TOKEN = prevToken;
     }

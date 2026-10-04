@@ -47,6 +47,7 @@ export class AuthService implements OnModuleDestroy {
   private readonly jwtSecret: string;
   private redisClient: Redis | null = null;
   private readonly fallbackOtpStore = new Map<string, OtpRecord>();
+  private readonly fallbackOtpAttemptsStore = new Map<string, number>();
   private readonly resetTokenStore = new Map<string, ResetTokenRecord>();
 
   constructor(
@@ -111,16 +112,37 @@ export class AuthService implements OnModuleDestroy {
     this.fallbackOtpStore.set(cleanId, record);
   }
 
+  private async incrementOtpAttempts(cleanId: string, ttlSeconds = 600): Promise<number> {
+    const key = `auth:otp:attempts:${cleanId}`;
+    if (this.redisClient) {
+      try {
+        const attempts = await this.redisClient.incr(key);
+        if (attempts === 1) {
+          await this.redisClient.expire(key, Math.max(1, ttlSeconds));
+        }
+        return attempts;
+      } catch {
+        // Fallback to in-memory store
+      }
+    }
+    const current = (this.fallbackOtpAttemptsStore.get(cleanId) || 0) + 1;
+    this.fallbackOtpAttemptsStore.set(cleanId, current);
+    return current;
+  }
+
   private async deleteOtpRecord(cleanId: string): Promise<void> {
     const key = `auth:otp:${cleanId}`;
+    const attemptsKey = `auth:otp:attempts:${cleanId}`;
     if (this.redisClient) {
       try {
         await this.redisClient.del(key);
+        await this.redisClient.del(attemptsKey);
       } catch {
         // ignore
       }
     }
     this.fallbackOtpStore.delete(cleanId);
+    this.fallbackOtpAttemptsStore.delete(cleanId);
   }
 
   // --- Password Hashing Helpers (Async scrypt to prevent event loop blocking) ---
@@ -420,10 +442,14 @@ export class AuthService implements OnModuleDestroy {
       throw new UnauthorizedException('Verification code has expired. Please request a new one');
     }
 
-    if (record.attempts >= 5) {
+    // Atomically increment attempts count in Redis
+    const remainingSec = Math.max(1, Math.floor((record.expiresAt - now) / 1000));
+    const attempts = await this.incrementOtpAttempts(cleanId, remainingSec);
+
+    if (attempts > 5) {
       await this.deleteOtpRecord(cleanId);
       throw new UnauthorizedException(
-        'Too many invalid attempts. Account temporarily locked for this code. Please request a new verification code'
+        'Too many invalid attempts. Code invalidated. Please request a new verification code'
       );
     }
 
@@ -431,10 +457,11 @@ export class AuthService implements OnModuleDestroy {
     const testHash = this.hashOtp(otp, cleanId);
     let isValid = false;
     try {
-      isValid = crypto.timingSafeEqual(
-        Buffer.from(record.hashedOtp),
-        Buffer.from(testHash)
-      );
+      const bufA = Buffer.from(record.hashedOtp, 'utf8');
+      const bufB = Buffer.from(testHash, 'utf8');
+      if (bufA.length === bufB.length) {
+        isValid = crypto.timingSafeEqual(bufA, bufB);
+      }
     } catch {
       isValid = false;
     }
@@ -452,15 +479,12 @@ export class AuthService implements OnModuleDestroy {
     }
 
     if (!isValid) {
-      record.attempts += 1;
-      if (record.attempts >= 5) {
+      if (attempts >= 5) {
         await this.deleteOtpRecord(cleanId);
         throw new UnauthorizedException(
           'Too many invalid attempts. Code invalidated. Please request a new verification code'
         );
       }
-      const remainingSec = Math.max(1, Math.floor((record.expiresAt - now) / 1000));
-      await this.saveOtpRecord(cleanId, record, remainingSec);
       throw new UnauthorizedException('Incorrect verification code');
     }
 
@@ -646,6 +670,8 @@ export class AuthService implements OnModuleDestroy {
       sub: user.sub,
       email: user.email,
       role: 'authenticated',
+      aud: 'authenticated',
+      iss: 'shopsell-api',
       app_metadata: user.app_metadata || { provider: 'email', roles: user.roles },
       user_metadata: user.user_metadata || {},
     };

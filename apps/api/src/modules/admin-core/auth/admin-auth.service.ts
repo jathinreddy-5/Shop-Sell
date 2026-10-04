@@ -12,6 +12,8 @@ export interface AdminJwtPayload {
   email: string;
   roles: string[];
   session_id: string;
+  iss?: string;
+  aud?: string | string[];
   iat: number;
   exp: number;
 }
@@ -56,11 +58,13 @@ export class AdminAuthService {
       email: admin.email,
       roles: roleSlugs,
       session_id: sessionId,
+      iss: 'shopsell-api',
+      aud: 'shopsell-admin',
       iat: now,
       exp: now + this.MAX_SESSION_LIFETIME_SECONDS,
     };
 
-    const token = jwt.sign(payload, this.jwtSecret);
+    const token = jwt.sign(payload, this.jwtSecret, { algorithm: 'HS256' });
 
     // Save session in Redis with inactivity tracking
     const sessionKey = `admin:session:${sessionId}`;
@@ -106,9 +110,20 @@ export class AdminAuthService {
   async verifyAdminToken(token: string): Promise<{ admin: AdminUser; roles: string[]; sessionId: string }> {
     let payload: AdminJwtPayload;
     try {
-      payload = jwt.verify(token, this.jwtSecret) as AdminJwtPayload;
+      payload = jwt.verify(token, this.jwtSecret, { algorithms: ['HS256'] }) as AdminJwtPayload;
     } catch (err: any) {
       throw new UnauthorizedException(`Invalid or expired admin session token: ${err.message}`);
+    }
+
+    // Audience & Issuer validation
+    if (payload.aud) {
+      const audList = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
+      if (!audList.includes('shopsell-admin')) {
+        throw new UnauthorizedException(`Invalid admin token audience: ${payload.aud}`);
+      }
+    }
+    if (payload.iss && payload.iss !== 'shopsell-api') {
+      throw new UnauthorizedException(`Invalid admin token issuer: ${payload.iss}`);
     }
 
     const { sub: adminId, session_id: sessionId } = payload;

@@ -10,6 +10,7 @@ import * as jwt from 'jsonwebtoken';
 import { DatabaseService } from '../../../database/database.service';
 import { AdminAuditService } from '../audit/admin-audit.service';
 import { RbacService } from '../rbac/rbac.service';
+import { validateJwtSecret, logSecurityAlert, hashIdentifier } from '@shop-sell/shared';
 
 export interface ImpersonationSession {
   impersonationToken: string;
@@ -78,17 +79,18 @@ export class CustomerImpersonationService {
     const now = Math.floor(Date.now() / 1000);
     const exp = now + this.IMPERSONATION_LIFETIME_SECONDS;
     const expiresAt = new Date(exp * 1000).toISOString();
-
-    const secret =
-      process.env.JWT_SECRET ||
-      process.env.SUPABASE_JWT_SECRET ||
-      'super-secret-jwt-token-with-minimum-32-characters-long';
+    const secret = validateJwtSecret(
+      process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET,
+      process.env.NODE_ENV
+    );
 
     const impersonationToken = jwt.sign(
       {
         sub: customer.id,
         email: customer.email,
-        aud: 'authenticated',
+        aud: 'shopsell-impersonation',
+        typ: 'impersonation',
+        iss: 'shopsell-api',
         role: 'authenticated',
         is_impersonation: true,
         impersonated_by_admin: params.adminId,
@@ -96,7 +98,11 @@ export class CustomerImpersonationService {
         iat: now,
         exp: exp,
       },
-      secret
+      secret,
+      {
+        algorithm: 'HS256',
+        header: { typ: 'impersonation+jwt', alg: 'HS256' },
+      }
     );
 
     const bannerMessage = `VIEWING AS CUSTOMER: ${customer.email} (READ-ONLY SESSION EXPIRES IN 15 MINUTES)`;
@@ -115,9 +121,18 @@ export class CustomerImpersonationService {
         customer_email: customer.email,
         expires_at: expiresAt,
         read_only: true,
+        aud: 'shopsell-impersonation',
+        typ: 'impersonation+jwt',
       },
       ip_address: params.clientIp,
       user_agent: params.userAgent,
+    });
+
+    logSecurityAlert({
+      eventType: 'FAILED_LOGIN', // tagged under security audit stream
+      ip: params.clientIp || 'unknown',
+      emailHash: hashIdentifier(customer.email),
+      reason: `Impersonation session granted for admin ${params.adminId}. Ticket: ${params.ticketRef}`,
     });
 
     return {

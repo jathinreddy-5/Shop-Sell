@@ -23,21 +23,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Invalid email address' }, { status: 400 });
     }
 
-    // 2. Cloudflare Turnstile Verification
-    const turnstileResult = await verifyTurnstileToken(turnstileToken, clientIp);
-    if (!turnstileResult.success) {
-      return NextResponse.json(
-        { success: false, error: turnstileResult.error || 'Turnstile verification failed' },
-        { status: 403 }
-      );
-    }
-
-    // 3. Per-email & Per-IP Rate Limiting & Lockout
+    // 2. Per-email & Per-IP Rate Limiting & Lockout
     const rateCheck = await checkLoginRateLimit(email, clientIp);
     if (!rateCheck.allowed) {
       return NextResponse.json(
         { success: false, error: rateCheck.error },
         { status: rateCheck.status || 429 }
+      );
+    }
+
+    // 3. Cloudflare Turnstile Verification
+    if (rateCheck.requireTurnstile && (!turnstileToken || typeof turnstileToken !== 'string' || !turnstileToken.trim())) {
+      return NextResponse.json(
+        {
+          success: false,
+          requireTurnstile: true,
+          error: 'Unusual activity detected for this account. Please complete the security check to proceed.',
+        },
+        { status: 403 }
+      );
+    }
+
+    const turnstileResult = await verifyTurnstileToken(turnstileToken, clientIp);
+    if (!turnstileResult.success) {
+      return NextResponse.json(
+        { success: false, requireTurnstile: rateCheck.requireTurnstile, error: turnstileResult.error || 'Turnstile verification failed' },
+        { status: 403 }
       );
     }
 

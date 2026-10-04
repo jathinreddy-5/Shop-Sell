@@ -249,12 +249,16 @@ export async function checkOtpVerifyAttempts(identifier: string) {
 
 // 3. Login Password Rate Limit & Throttling (strictly fails closed in production)
 // Security Architecture:
-// Hard lockout is keyed to (email + IP) compound key: rl:login:lockout:${cleanEmail}:${cleanIp}
-// This prevents an external attacker from locking out a victim by spamming their email address.
-// An attacker can only lock out their OWN IP from trying that email.
+// Hard lockout is keyed to (email + IP) compound key: rl:login:lockout:${cleanEmail}:${cleanIp} (max 5 failed attempts).
+// This prevents an external attacker from locking out a victim by spamming their email address from other IPs.
 // A global per-IP limit prevents broad brute-force attacks across accounts from a single IP.
-// A global per-email counter applies progressive delay (throttling) rather than hard lockout.
-export async function checkLoginRateLimit(email: string, ip: string) {
+// A higher per-email threshold (10 attempts across all IPs) triggers Turnstile verification requirement rather than a hard block.
+export async function checkLoginRateLimit(email: string, ip: string): Promise<{
+  allowed: boolean;
+  status?: number;
+  error?: string;
+  requireTurnstile?: boolean;
+}> {
   const cleanEmail = email.trim().toLowerCase();
   const cleanIp = (ip || '127.0.0.1').trim();
 
@@ -267,7 +271,7 @@ export async function checkLoginRateLimit(email: string, ip: string) {
       eventType: 'ACCOUNT_LOCKOUT',
       emailHash: hashIdentifier(cleanEmail),
       ip: cleanIp,
-      reason: 'Account compound lockout triggered after multiple failed login attempts',
+      reason: 'Account compound lockout triggered after multiple failed login attempts from this IP',
     });
     return {
       allowed: false,
@@ -278,8 +282,8 @@ export async function checkLoginRateLimit(email: string, ip: string) {
     };
   }
 
-  // 2. Per-IP limit: max 10 attempts across all accounts per 15 minutes
-  const ipLimit = await checkRateLimit(`rl:login:ip:${cleanIp}`, 10, 900, { failClosed: true });
+  // 2. Per-IP limit: max 15 attempts across all accounts per 15 minutes
+  const ipLimit = await checkRateLimit(`rl:login:ip:${cleanIp}`, 15, 900, { failClosed: true });
   if (!ipLimit.allowed) {
     logSecurityAlert({
       eventType: 'ACCOUNT_LOCKOUT',
@@ -296,24 +300,19 @@ export async function checkLoginRateLimit(email: string, ip: string) {
     };
   }
 
-  // 2. Global email counter: progressive artificial delay when target has multiple attempts,
-  // capped strictly at 1000ms (1s) to prevent holding excessive concurrent connections.
-  const emailCounter = await checkRateLimit(`rl:login:email_attempts:${cleanEmail}`, 100, 900, {
+  // 3. Higher per-email threshold across all IPs: triggers Turnstile rather than hard lockout.
+  // This allows legitimate users to log in with Turnstile bot verification even if their account is under distributed brute-force.
+  const emailCounter = await checkRateLimit(`rl:login:email_attempts:${cleanEmail}`, 10, 900, {
     failClosed: true,
   });
-  if (!emailCounter.allowed) {
-    return {
-      allowed: false,
-      status: emailCounter.status || 429,
-      error: emailCounter.error || 'Too many login attempts for this account.',
-    };
-  }
+  const requireTurnstile = !emailCounter.allowed || emailCounter.totalAttempts >= 5;
+
   if (emailCounter.totalAttempts > 3) {
     const delayMs = Math.min(1000, (emailCounter.totalAttempts - 3) * 100);
     await new Promise((resolve) => setTimeout(resolve, delayMs));
   }
 
-  return { allowed: true };
+  return { allowed: true, requireTurnstile };
 }
 
 export async function resetLoginRateLimit(email: string, ip: string): Promise<void> {

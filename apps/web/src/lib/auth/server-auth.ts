@@ -44,6 +44,31 @@ export async function verifyAuthToken(request: NextRequest): Promise<VerifiedUse
       algorithms: ['HS256'],
     });
 
+    // 1. Audience verification: reject admin tokens on customer/seller routes
+    if (payload.aud) {
+      const audList = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
+      if (audList.includes('shopsell-admin') || audList.includes('admin')) {
+        return null;
+      }
+      const allowedAudiences = [
+        'authenticated',
+        'shopsell',
+        'shopsell-app',
+        'shopsell-customer',
+        'shopsell-impersonation',
+      ];
+      const isAudValid = audList.some((a) => allowedAudiences.includes(a as string));
+      if (!isAudValid) return null;
+    }
+
+    // 2. Issuer verification if issuer claim is present
+    if (payload.iss) {
+      const allowedIssuers = ['shopsell', 'shopsell-api', 'supabase'];
+      if (!allowedIssuers.includes(payload.iss as string)) {
+        return null;
+      }
+    }
+
     return payload as VerifiedUserPayload;
   } catch (err) {
     return null;

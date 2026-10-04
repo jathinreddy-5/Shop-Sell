@@ -12,7 +12,6 @@ import {
   validateDemoAccountsConfig,
   validateInternalApiSecret,
   verifyProxySecret,
-  DEV_INTERNAL_API_SECRET,
   DEV_ADMIN_JWT_SECRET,
   createProxyMiddleware,
   hashIdentifier,
@@ -103,7 +102,7 @@ describe('API Security Hardening Test Suite (NestJS apps/api)', () => {
     assert.strictEqual(nextCalled, true);
   });
 
-  // FIX 1: Startup validation for INTERNAL_API_SECRET
+  // FIX 1: Startup validation for INTERNAL_API_SECRET (No fallback allowed in any environment)
   it('should fail fast if INTERNAL_API_SECRET is missing, shorter than 32 bytes, or placeholder in production', () => {
     // Missing in production
     assert.throws(
@@ -111,9 +110,19 @@ describe('API Security Hardening Test Suite (NestJS apps/api)', () => {
       /FATAL SECURITY ERROR: INTERNAL_API_SECRET is missing/
     );
 
-    // Shorter than 32 bytes in production
+    // Missing in development (strict: no insecure dev fallback)
+    assert.throws(
+      () => validateInternalApiSecret(undefined, 'development'),
+      /FATAL SECURITY ERROR: INTERNAL_API_SECRET is missing/
+    );
+
+    // Shorter than 32 bytes in production and development
     assert.throws(
       () => validateInternalApiSecret('short-secret', 'production'),
+      /FATAL SECURITY ERROR: INTERNAL_API_SECRET is too short/
+    );
+    assert.throws(
+      () => validateInternalApiSecret('short-secret', 'development'),
       /FATAL SECURITY ERROR: INTERNAL_API_SECRET is too short/
     );
 
@@ -123,19 +132,13 @@ describe('API Security Hardening Test Suite (NestJS apps/api)', () => {
       /FATAL SECURITY ERROR: INTERNAL_API_SECRET cannot use an insecure example or placeholder secret in production/
     );
 
-    // Dev secret placeholder rejected in production
-    assert.throws(
-      () => validateInternalApiSecret(DEV_INTERNAL_API_SECRET, 'production'),
-      /FATAL SECURITY ERROR: INTERNAL_API_SECRET cannot use an insecure example or placeholder secret in production/
-    );
-
-    // In development: fallback to DEV_INTERNAL_API_SECRET if missing
-    const devFallback = validateInternalApiSecret(undefined, 'development');
-    assert.strictEqual(devFallback, DEV_INTERNAL_API_SECRET);
-
     // In production: valid 32+ byte secret succeeds
     const prodValid = validateInternalApiSecret(proxySecret, 'production');
     assert.strictEqual(prodValid, proxySecret);
+
+    // In development: valid 32+ byte secret succeeds
+    const devValid = validateInternalApiSecret(proxySecret, 'development');
+    assert.strictEqual(devValid, proxySecret);
   });
 
   // FIX 2: Test-runner bypass cannot be triggered by request headers or in production
@@ -372,15 +375,16 @@ describe('API Security Hardening Test Suite (NestJS apps/api)', () => {
   it('should invalidate OTP after 5 wrong attempts and return 401, expire at 10 minutes, and be single-use', async () => {
     // Simulate AuthService OTP store and verification state machine
     class OtpSimulator {
-      private store = new Map<string, { hashedOtp: string; expiresAt: number; attempts: number }>();
+      private store = new Map<string, { hashedOtp: string; expiresAt: number }>();
+      private attemptsStore = new Map<string, number>();
 
       sendOtp(cleanId: string, otp: string) {
         const now = Date.now();
         this.store.set(cleanId, {
-          hashedOtp: `hash:${otp}`,
+          hashedOtp: crypto.createHash('sha256').update(otp).digest('hex'),
           expiresAt: now + 10 * 60 * 1000, // 10 minutes
-          attempts: 0,
         });
+        this.attemptsStore.delete(cleanId);
         return { ttlMs: 10 * 60 * 1000 };
       }
 
@@ -392,14 +396,26 @@ describe('API Security Hardening Test Suite (NestJS apps/api)', () => {
         }
         if (now > record.expiresAt) {
           this.store.delete(cleanId);
+          this.attemptsStore.delete(cleanId);
           throw new UnauthorizedException('Verification code has expired. Please request a new one');
         }
 
-        const isValid = record.hashedOtp === `hash:${inputOtp}`;
+        const attempts = (this.attemptsStore.get(cleanId) || 0) + 1;
+        this.attemptsStore.set(cleanId, attempts);
+        if (attempts > 5) {
+          this.store.delete(cleanId);
+          this.attemptsStore.delete(cleanId);
+          throw new UnauthorizedException(
+            'Too many invalid attempts. Code invalidated. Please request a new verification code'
+          );
+        }
+
+        const testHash = crypto.createHash('sha256').update(inputOtp).digest('hex');
+        const isValid = crypto.timingSafeEqual(Buffer.from(record.hashedOtp), Buffer.from(testHash));
         if (!isValid) {
-          record.attempts += 1;
-          if (record.attempts >= 5) {
-            this.store.delete(cleanId); // Invalidate completely
+          if (attempts >= 5) {
+            this.store.delete(cleanId);
+            this.attemptsStore.delete(cleanId);
             throw new UnauthorizedException(
               'Too many invalid attempts. Code invalidated. Please request a new verification code'
             );
@@ -409,6 +425,7 @@ describe('API Security Hardening Test Suite (NestJS apps/api)', () => {
 
         // Single-use: delete immediately on success
         this.store.delete(cleanId);
+        this.attemptsStore.delete(cleanId);
         return { success: true };
       }
 
@@ -664,10 +681,10 @@ describe('API Security Hardening Test Suite (NestJS apps/api)', () => {
         assert.ok(!jsonStr.includes(rawEmail), 'Raw email must NOT appear in security log');
       }
 
-      // Check SHA-256 email hashing
-      const expectedHash = crypto.createHash('sha256').update(rawEmail.toLowerCase()).digest('hex');
+      // Check HMAC-SHA256 email hashing
+      const expectedHash = hashIdentifier(rawEmail);
       const loginLog = capturedLogs.find((l) => l.includes('FAILED_LOGIN'))!;
-      assert.ok(loginLog.includes(expectedHash), 'Email must be hashed with SHA-256');
+      assert.ok(loginLog.includes(expectedHash!), 'Email must be hashed with HMAC-SHA256');
     } finally {
       console.warn = originalWarn;
     }

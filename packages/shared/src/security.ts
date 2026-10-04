@@ -13,14 +13,10 @@ const KNOWN_PLACEHOLDERS = [
   'secret',
   'shopsell-internal-proxy-secret-shared-key',
   'your-internal-api-secret-here-min-32-chars',
-  'shopsell-dev-only-internal-proxy-secret-never-use-in-production-min32b',
   'your-admin-jwt-secret-here-min-32-chars',
   'dev-admin-secret-shopsell-ultra-secure-key-2026',
   'dev-admin-secret-shopsell-ultra-secure-key-2026-min32b',
 ];
-
-export const DEV_INTERNAL_API_SECRET =
-  'shopsell-dev-only-internal-proxy-secret-never-use-in-production-min32b';
 
 export const DEV_ADMIN_JWT_SECRET =
   'dev-admin-secret-shopsell-ultra-secure-key-2026-min32b';
@@ -152,34 +148,28 @@ export function validateDemoAccountsConfig(enableDemo?: string | boolean, nodeEn
 }
 
 /**
- * Validates that INTERNAL_API_SECRET is present, at least 32 bytes (256 bits),
- * and not set to a default placeholder in production.
- * In non-production, falls back to a clearly labeled dev secret that is never accepted in production.
+ * Validates that INTERNAL_API_SECRET is present and at least 32 bytes (256 bits)
+ * in all environments (development, test, and production).
+ * No insecure fallbacks are permitted in any environment.
  */
 export function validateInternalApiSecret(secret?: string, nodeEnv?: string): string {
-  const env = nodeEnv || process.env.NODE_ENV || 'development';
-  const isProd = env === 'production';
-
   if (!secret || typeof secret !== 'string' || secret.trim() === '') {
-    if (isProd) {
-      throw new Error(
-        'FATAL SECURITY ERROR: INTERNAL_API_SECRET is missing. A cryptographically secure secret (min 32 bytes) is required in production.'
-      );
-    }
-    return DEV_INTERNAL_API_SECRET;
+    throw new Error(
+      'FATAL SECURITY ERROR: INTERNAL_API_SECRET is missing. A cryptographically secure secret (min 32 bytes) is required in all environments.'
+    );
   }
 
   const trimmed = secret.trim();
   const byteLength = Buffer.byteLength(trimmed, 'utf8');
 
   if (byteLength < 32) {
-    if (isProd) {
-      throw new Error(
-        `FATAL SECURITY ERROR: INTERNAL_API_SECRET is too short (${byteLength} bytes). It must be at least 32 bytes in production.`
-      );
-    }
-    return trimmed;
+    throw new Error(
+      `FATAL SECURITY ERROR: INTERNAL_API_SECRET is too short (${byteLength} bytes). It must be at least 32 bytes in all environments.`
+    );
   }
+
+  const env = nodeEnv || process.env.NODE_ENV || 'development';
+  const isProd = env === 'production';
 
   if (isProd && KNOWN_PLACEHOLDERS.includes(trimmed)) {
     throw new Error(
@@ -208,12 +198,17 @@ export function verifyProxySecret(incomingHeader: unknown, expectedSecret: strin
 }
 
 /**
- * Hashes an identifier (email, phone, user ID) using SHA-256 to ensure no PII is logged.
+ * Hashes an identifier (email, phone, user ID) using HMAC-SHA256 with LOG_HASH_KEY to prevent rainbow table attacks.
  */
-export function hashIdentifier(identifier?: string): string | undefined {
+export function hashIdentifier(identifier?: string, customKey?: string): string | undefined {
   if (!identifier || typeof identifier !== 'string') return undefined;
   const clean = identifier.trim().toLowerCase();
-  return crypto.createHash('sha256').update(clean, 'utf8').digest('hex');
+  const key =
+    customKey ||
+    process.env.LOG_HASH_KEY ||
+    process.env.JWT_SECRET ||
+    'shopsell-default-log-hash-salt-key-min-32-chars';
+  return crypto.createHmac('sha256', key).update(clean, 'utf8').digest('hex');
 }
 
 export type SecurityEventType =
