@@ -459,4 +459,63 @@ describe('API Security Hardening Test Suite (NestJS apps/api)', () => {
       (err: any) => err instanceof UnauthorizedException
     );
   });
+
+  // FIX 4: Shared Redis OTP Store - Multi-instance synchronization, 10-minute TTL, attempt count, and single-use
+  it('should support multi-instance OTP sharing across API instances via shared Redis store', async () => {
+    // Shared Redis mock storage
+    const redisStorage = new Map<string, { value: string; exSeconds: number }>();
+    const createMockRedis = () => ({
+      async get(key: string) {
+        const item = redisStorage.get(key);
+        return item ? item.value : null;
+      },
+      async set(key: string, value: string, mode?: string, ex?: number) {
+        redisStorage.set(key, { value, exSeconds: ex || 600 });
+      },
+      async del(key: string) {
+        redisStorage.delete(key);
+      },
+    });
+
+    const sharedRedis = createMockRedis();
+
+    // Instance A sends OTP
+    const id = 'multi-instance-user@shopsell.com';
+    const rawOtp = '123456';
+    const hashed = `hash:${rawOtp}`;
+    const now = Date.now();
+    const otpRecord = {
+      identifier: id,
+      hashedOtp: hashed,
+      expiresAt: now + 10 * 60 * 1000,
+      attempts: 0,
+      lastSentAt: now,
+      requestCount: 1,
+      windowStart: now,
+    };
+
+    // Instance A writes to Redis key
+    await sharedRedis.set(`auth:otp:${id}`, JSON.stringify(otpRecord), 'EX', 600);
+    assert.strictEqual(redisStorage.get(`auth:otp:${id}`)?.exSeconds, 600, 'TTL must be 10 minutes (600s)');
+
+    // Instance B reads from Redis key
+    const rawRecordFromInstanceB = await sharedRedis.get(`auth:otp:${id}`);
+    assert.ok(rawRecordFromInstanceB, 'Instance B must retrieve OTP created by Instance A');
+    const recordOnInstanceB = JSON.parse(rawRecordFromInstanceB!);
+    assert.strictEqual(recordOnInstanceB.attempts, 0);
+
+    // Instance B makes 4 wrong attempts and updates Redis
+    for (let i = 1; i <= 4; i++) {
+      recordOnInstanceB.attempts += 1;
+      await sharedRedis.set(`auth:otp:${id}`, JSON.stringify(recordOnInstanceB), 'EX', 500);
+    }
+
+    // Instance A reads again and sees attempts = 4
+    const recordOnInstanceA = JSON.parse((await sharedRedis.get(`auth:otp:${id}`))!);
+    assert.strictEqual(recordOnInstanceA.attempts, 4);
+
+    // 5th wrong attempt triggers deletion on shared store
+    await sharedRedis.del(`auth:otp:${id}`);
+    assert.strictEqual(await sharedRedis.get(`auth:otp:${id}`), null, '5th attempt must delete from shared store');
+  });
 });

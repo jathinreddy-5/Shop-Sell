@@ -6,11 +6,14 @@ import {
   BadRequestException,
   HttpException,
   HttpStatus,
+  OnModuleDestroy,
 } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import * as crypto from 'crypto';
+import Redis from 'ioredis';
 import { AuthUserPayload, Profile, UserRole, validateJwtSecret } from '@shop-sell/shared';
 import { DatabaseService } from '../../database/database.service';
+import { createRedisClient } from '../../common/redis';
 
 import { SmsService } from './sms.service';
 import { EmailService } from './email.service';
@@ -33,9 +36,10 @@ interface ResetTokenRecord {
 }
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleDestroy {
   private readonly jwtSecret: string;
-  private readonly otpStore = new Map<string, OtpRecord>();
+  private redisClient: Redis | null = null;
+  private readonly fallbackOtpStore = new Map<string, OtpRecord>();
   private readonly resetTokenStore = new Map<string, ResetTokenRecord>();
 
   constructor(
@@ -48,6 +52,68 @@ export class AuthService {
     }
     const secret = process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET;
     this.jwtSecret = validateJwtSecret(secret, process.env.NODE_ENV);
+
+    try {
+      this.redisClient = createRedisClient();
+    } catch {
+      this.redisClient = null;
+    }
+  }
+
+  async onModuleDestroy() {
+    if (this.redisClient) {
+      try {
+        await this.redisClient.quit();
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  private async getOtpRecord(cleanId: string): Promise<OtpRecord | null> {
+    const key = `auth:otp:${cleanId}`;
+    if (this.redisClient) {
+      try {
+        const raw = await this.redisClient.get(key);
+        if (raw) {
+          return JSON.parse(raw) as OtpRecord;
+        }
+      } catch {
+        // Fallback to in-memory store if Redis is unavailable
+      }
+    }
+    const mem = this.fallbackOtpStore.get(cleanId);
+    if (!mem) return null;
+    if (Date.now() > mem.expiresAt) {
+      this.fallbackOtpStore.delete(cleanId);
+      return null;
+    }
+    return mem;
+  }
+
+  private async saveOtpRecord(cleanId: string, record: OtpRecord, ttlSeconds = 600): Promise<void> {
+    const key = `auth:otp:${cleanId}`;
+    if (this.redisClient) {
+      try {
+        await this.redisClient.set(key, JSON.stringify(record), 'EX', Math.max(1, ttlSeconds));
+        return;
+      } catch {
+        // Fallback to in-memory store if Redis is unavailable
+      }
+    }
+    this.fallbackOtpStore.set(cleanId, record);
+  }
+
+  private async deleteOtpRecord(cleanId: string): Promise<void> {
+    const key = `auth:otp:${cleanId}`;
+    if (this.redisClient) {
+      try {
+        await this.redisClient.del(key);
+      } catch {
+        // ignore
+      }
+    }
+    this.fallbackOtpStore.delete(cleanId);
   }
 
   // --- Password Hashing Helpers ---
@@ -250,7 +316,7 @@ export class AuthService {
     const cleanId = this.normalizeIdentifier(identifier);
     const isPhone = !cleanId.includes('@');
     const now = Date.now();
-    const existing = this.otpStore.get(cleanId);
+    const existing = await this.getOtpRecord(cleanId);
 
     // Rate Limiting & Cooldown check: 30s resend cooldown
     if (existing) {
@@ -274,7 +340,7 @@ export class AuthService {
       : now;
 
     // Invalidate previous OTP and store new one with 10-minute validity
-    this.otpStore.set(cleanId, {
+    const record: OtpRecord = {
       identifier: cleanId,
       hashedOtp,
       expiresAt: now + 10 * 60 * 1000, // 10 minutes validity
@@ -282,7 +348,8 @@ export class AuthService {
       lastSentAt: now,
       requestCount,
       windowStart,
-    });
+    };
+    await this.saveOtpRecord(cleanId, record, 10 * 60);
 
     // Deliver OTP via real SMS provider or real SMTP email service
     let maskedTarget: string;
@@ -312,7 +379,7 @@ export class AuthService {
     }
 
     const isPhone = !cleanId.includes('@');
-    const record = this.otpStore.get(cleanId);
+    const record = await this.getOtpRecord(cleanId);
     const now = Date.now();
 
     if (!record) {
@@ -320,12 +387,12 @@ export class AuthService {
     }
 
     if (now > record.expiresAt) {
-      this.otpStore.delete(cleanId);
+      await this.deleteOtpRecord(cleanId);
       throw new UnauthorizedException('Verification code has expired. Please request a new one');
     }
 
     if (record.attempts >= 5) {
-      this.otpStore.delete(cleanId);
+      await this.deleteOtpRecord(cleanId);
       throw new UnauthorizedException(
         'Too many invalid attempts. Account temporarily locked for this code. Please request a new verification code'
       );
@@ -358,16 +425,18 @@ export class AuthService {
     if (!isValid) {
       record.attempts += 1;
       if (record.attempts >= 5) {
-        this.otpStore.delete(cleanId);
+        await this.deleteOtpRecord(cleanId);
         throw new UnauthorizedException(
           'Too many invalid attempts. Code invalidated. Please request a new verification code'
         );
       }
+      const remainingSec = Math.max(1, Math.floor((record.expiresAt - now) / 1000));
+      await this.saveOtpRecord(cleanId, record, remainingSec);
       throw new UnauthorizedException('Incorrect verification code');
     }
 
     // Invalidate immediately (single-use)
-    this.otpStore.delete(cleanId);
+    await this.deleteOtpRecord(cleanId);
 
     // Find or create user
     let userRes = await this.db.query(
