@@ -15,15 +15,37 @@ import {
   Flame,
 } from 'lucide-react';
 import { ExpandingCardGrid, ExpandingCardItem } from '../../../components/expanding-cards';
+import { useAuth } from '@/lib/auth/auth-context';
+import { useCart } from '@/lib/cart/cart-context';
 
 export default function TodayDemoPage() {
+  const { user } = useAuth();
+  const { addToCart, openLoginPrompt } = useCart();
   const [addedItems, setAddedItems] = useState<Record<string, boolean>>({});
 
-  const handleAddToCart = (id: string) => {
-    setAddedItems((prev) => ({ ...prev, [id]: true }));
-    setTimeout(() => {
-      setAddedItems((prev) => ({ ...prev, [id]: false }));
-    }, 2500);
+  const handleAddToCart = (item: ExpandingCardItem, onClose?: () => void) => {
+    if (!user) {
+      if (onClose) onClose();
+      openLoginPrompt(item.title);
+      return;
+    }
+    const meta = item.metadata || {};
+    const numericPrice = typeof meta.price === 'string' ? parseInt(meta.price.replace(/[^\d]/g, ''), 10) || 3499 : 3499;
+    const success = addToCart({
+      id: item.id,
+      name: item.title,
+      slug: (meta.slug as string) || 'sample',
+      store: 'Shop:Sell Verified',
+      price: numericPrice,
+      qty: 1,
+      image: item.image,
+    });
+    if (success) {
+      setAddedItems((prev) => ({ ...prev, [item.id]: true }));
+      setTimeout(() => {
+        setAddedItems((prev) => ({ ...prev, [item.id]: false }));
+      }, 2500);
+    }
   };
 
   const sampleCards: ExpandingCardItem[] = [
@@ -134,14 +156,14 @@ export default function TodayDemoPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 antialiased selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen bg-slate-950 text-slate-50 antialiased selection:bg-emerald-500 selection:text-white">
       {/* Top Ambient Glow */}
-      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(99,102,241,0.15),rgba(255,255,255,0))]" />
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(5,150,105,0.15),rgba(255,255,255,0))]" />
 
       <main className="relative z-10 mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
         {/* Header Section */}
         <header className="mb-10 text-left">
-          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3.5 py-1 text-xs font-semibold text-indigo-400 backdrop-blur-md mb-4">
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1 text-xs font-semibold text-emerald-400 backdrop-blur-md mb-4">
             <Sparkles className="h-3.5 w-3.5" />
             <span>App Store &ldquo;Today&rdquo; Shared-Layout Engine</span>
           </div>
@@ -241,7 +263,7 @@ export default function TodayDemoPage() {
                           key={c.id}
                           type="button"
                           onClick={() => onSwitchCard(c.id)}
-                          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition shadow-sm active:scale-95"
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:border-[#059669] hover:text-[#059669] dark:hover:text-emerald-400 transition shadow-sm active:scale-95"
                         >
                           <span>Switch to {c.title.split(' ')[0]}</span>
                           <ArrowRight className="h-3 w-3" />
@@ -253,7 +275,7 @@ export default function TodayDemoPage() {
                 {/* Key Benefits Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                   <div className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-800/60">
-                    <Truck className="h-5 w-5 text-indigo-500" />
+                    <Truck className="h-5 w-5 text-[#059669]" />
                     <div>
                       <p className="text-xs font-bold text-slate-900 dark:text-white">Express Delivery</p>
                       <p className="text-[11px] text-slate-400">2-4 business days</p>
@@ -279,8 +301,8 @@ export default function TodayDemoPage() {
                 <div className="flex flex-col sm:flex-row items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
                   <button
                     type="button"
-                    onClick={() => handleAddToCart(item.id)}
-                    className="flex-1 w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-4 text-base font-bold text-white shadow-lg shadow-indigo-600/30 transition hover:bg-indigo-500 focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-400 active:scale-[0.98]"
+                    onClick={() => handleAddToCart(item, onClose)}
+                    className="flex-1 w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-[#059669] px-6 py-4 text-base font-bold text-white shadow-lg shadow-emerald-950/20 transition hover:bg-[#047857] focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-400 active:scale-[0.98]"
                   >
                     {isAdded ? (
                       <>
@@ -313,7 +335,7 @@ export default function TodayDemoPage() {
         <footer className="mt-16 text-center border-t border-slate-800/80 pt-8">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-indigo-400 hover:text-indigo-300 transition-colors"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-[#059669] hover:text-emerald-400 transition-colors"
           >
             <span>Back to Shop:Sell Marketplace Home</span>
             <ArrowRight className="h-4 w-4" />

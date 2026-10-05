@@ -47,6 +47,36 @@ export default function CheckoutPage() {
     }, 1200);
   };
 
+  if (!user) {
+    return (
+      <div className="container mx-auto max-w-lg px-4 py-20 text-center">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-[#059669] dark:bg-slate-800">
+          <ShieldCheck className="h-8 w-8" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+          Sign In Required to Checkout
+        </h2>
+        <p className="mt-2 text-xs sm:text-sm text-slate-500">
+          Please log in to your account to securely complete your payment and order dispatch.
+        </p>
+        <div className="mt-6 flex flex-col gap-3 max-w-xs mx-auto">
+          <Link
+            href="/login?redirect=/checkout"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#059669] px-6 py-3 text-xs font-bold text-white shadow-sm hover:bg-[#047857]"
+          >
+            Sign In to Continue <ArrowRight className="h-4 w-4" />
+          </Link>
+          <Link
+            href="/cart"
+            className="text-xs text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+          >
+            Return to Cart
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   if (completedOrder) {
     return (
       <div className="container mx-auto max-w-lg px-4 py-16 text-center">
@@ -73,7 +103,7 @@ export default function CheckoutPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Payment Gateway:</span>
-              <span className="font-semibold text-indigo-600">Razorpay (INR)</span>
+              <span className="font-semibold text-[#059669]">Razorpay (INR)</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Estimated Delivery:</span>
@@ -86,7 +116,7 @@ export default function CheckoutPage() {
           <div className="mt-6 flex flex-col gap-2">
             <Link
               href="/orders"
-              className="flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 py-3 text-xs font-bold text-white shadow-md shadow-indigo-600/20 hover:bg-indigo-500"
+              className="flex items-center justify-center gap-1.5 rounded-xl bg-[#059669] py-3 text-xs font-bold text-white shadow-md shadow-emerald-950/20 hover:bg-[#047857]"
             >
               Track Order Status <ArrowRight className="h-4 w-4" />
             </Link>
@@ -113,7 +143,7 @@ export default function CheckoutPage() {
         <div className="space-y-6 lg:col-span-2">
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="mb-4 flex items-center gap-2 text-base font-bold text-slate-900 dark:text-white">
-              <MapPin className="h-5 w-5 text-indigo-600" />
+              <MapPin className="h-5 w-5 text-[#059669]" />
               <span>1. Delivery Address</span>
             </div>
 
@@ -129,7 +159,7 @@ export default function CheckoutPage() {
                   onChange={(e) =>
                     setShippingAddress({ ...shippingAddress, full_name: e.target.value })
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-xs outline-none focus:border-indigo-600 dark:border-slate-700 dark:bg-slate-800"
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-xs outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]/20 dark:border-slate-700 dark:bg-slate-800"
                 />
               </div>
 
@@ -144,7 +174,7 @@ export default function CheckoutPage() {
                   onChange={(e) =>
                     setShippingAddress({ ...shippingAddress, phone: e.target.value })
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-xs outline-none focus:border-indigo-600 dark:border-slate-700 dark:bg-slate-800"
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-xs outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]/20 dark:border-slate-700 dark:bg-slate-800"
                 />
               </div>
 
@@ -159,7 +189,7 @@ export default function CheckoutPage() {
                   onChange={(e) =>
                     setShippingAddress({ ...shippingAddress, street: e.target.value })
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-xs outline-none focus:border-indigo-600 dark:border-slate-700 dark:bg-slate-800"
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-xs outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]/20 dark:border-slate-700 dark:bg-slate-800"
                 />
               </div>
 
@@ -174,7 +204,7 @@ export default function CheckoutPage() {
                   onChange={(e) =>
                     setShippingAddress({ ...shippingAddress, city: e.target.value })
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-xs outline-none focus:border-indigo-600 dark:border-slate-700 dark:bg-slate-800"
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-xs outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]/20 dark:border-slate-700 dark:bg-slate-800"
                 />
               </div>
 
@@ -189,7 +219,7 @@ export default function CheckoutPage() {
                   onChange={(e) =>
                     setShippingAddress({ ...shippingAddress, state: e.target.value })
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-xs outline-none focus:border-indigo-600 dark:border-slate-700 dark:bg-slate-800"
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-xs outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]/20 dark:border-slate-700 dark:bg-slate-800"
                 />
               </div>
 
@@ -207,7 +237,7 @@ export default function CheckoutPage() {
                       postal_code: e.target.value,
                     })
                   }
-                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-xs outline-none focus:border-indigo-600 dark:border-slate-700 dark:bg-slate-800"
+                  className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-xs outline-none focus:border-[#059669] focus:ring-1 focus:ring-[#059669]/20 dark:border-slate-700 dark:bg-slate-800"
                 />
               </div>
 
@@ -230,11 +260,11 @@ export default function CheckoutPage() {
         <div className="space-y-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="mb-4 flex items-center gap-2 text-base font-bold text-slate-900 dark:text-white">
-              <CreditCard className="h-5 w-5 text-indigo-600" />
+              <CreditCard className="h-5 w-5 text-[#059669]" />
               <span>2. Payment</span>
             </div>
 
-            <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-3 text-xs dark:border-indigo-950 dark:bg-slate-800">
+            <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3 text-xs dark:border-emerald-950 dark:bg-slate-800">
               <div className="font-bold text-slate-900 dark:text-white">
                 Razorpay Payment Gateway
               </div>
@@ -255,7 +285,7 @@ export default function CheckoutPage() {
               <div className="border-t border-slate-100 pt-2 text-sm font-bold text-slate-900 dark:border-slate-800 dark:text-white">
                 <div className="flex justify-between">
                   <span>Payable Now</span>
-                  <span className="text-indigo-600 dark:text-indigo-400">₹4,897</span>
+                  <span className="text-[#059669] dark:text-emerald-400">₹4,897</span>
                 </div>
               </div>
             </div>
@@ -263,7 +293,7 @@ export default function CheckoutPage() {
             <button
               type="submit"
               disabled={isProcessing}
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3.5 text-xs font-bold text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-500 disabled:opacity-50"
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#059669] py-3.5 text-xs font-bold text-white shadow-md shadow-emerald-950/20 transition hover:bg-[#047857] disabled:opacity-50"
             >
               {isProcessing ? (
                 <LoadingThreeDotsJumping size={6} jumpHeight={8} gap={4} color="#FFFFFF" label="Processing Transaction" />

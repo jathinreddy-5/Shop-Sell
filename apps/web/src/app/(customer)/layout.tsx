@@ -11,36 +11,36 @@ export default function CustomerLayout({
 }) {
   return (
     <OnboardingProvider>
-      <div className="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950">
+      <div className="flex min-h-screen flex-col bg-[#FBFBFA] dark:bg-stone-950">
         <Navbar />
         <main className="flex-1 pb-24 md:pb-0">{children}</main>
         <CustomerMobileNav />
-        <footer className="border-t border-slate-200 bg-white py-8 text-center text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900 pb-28 md:pb-8">
+        <footer className="border-t border-[#E5E7EB] bg-white py-8 text-center text-xs text-stone-500 dark:border-stone-800 dark:bg-stone-900 pb-28 md:pb-8">
           <div className="container mx-auto px-4">
-            <p className="font-medium text-slate-700 dark:text-slate-300">
+            <p className="font-medium text-stone-700 dark:text-stone-300">
               Shop:Sell — Production Multi-Vendor Marketplace Platform
             </p>
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs font-semibold text-stone-600 dark:text-stone-400">
               <Link
                 href="/terms"
-                className="text-[#6D3DF5] hover:text-[#5B2FE0] hover:underline transition"
+                className="text-[#059669] hover:text-[#047857] hover:underline transition dark:text-emerald-400"
               >
                 Terms and Conditions
               </Link>
               <span className="text-slate-300 dark:text-slate-700">•</span>
-              <Link href="/terms#privacy" className="hover:text-[#6D3DF5] transition">
+              <Link href="/terms#privacy" className="hover:text-[#059669] transition">
                 Privacy Policy
               </Link>
               <span className="text-slate-300 dark:text-slate-700">•</span>
-              <Link href="/terms#refunds" className="hover:text-[#6D3DF5] transition">
+              <Link href="/terms#refunds" className="hover:text-[#059669] transition">
                 Return & Refund Policy
               </Link>
               <span className="text-slate-300 dark:text-slate-700">•</span>
-              <Link href="/terms#shipping" className="hover:text-[#6D3DF5] transition">
+              <Link href="/terms#shipping" className="hover:text-[#059669] transition">
                 Shipping Policy
               </Link>
               <span className="text-slate-300 dark:text-slate-700">•</span>
-              <Link href="/terms#grievance" className="hover:text-[#6D3DF5] transition">
+              <Link href="/terms#grievance" className="hover:text-[#059669] transition">
                 Grievance Officer
               </Link>
             </div>

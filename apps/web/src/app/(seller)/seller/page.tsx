@@ -160,7 +160,7 @@ export default function SellerDashboardPage() {
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500">Active Listings</span>
-            <div className="rounded-xl bg-indigo-50 p-2 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400">
+            <div className="rounded-xl bg-emerald-50 p-2 text-[#059669] dark:bg-emerald-950 dark:text-emerald-400">
               <Package className="h-4 w-4" />
             </div>
           </div>
@@ -195,7 +195,7 @@ export default function SellerDashboardPage() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Truck className="h-5 w-5 text-indigo-600" />
+            <Truck className="h-5 w-5 text-[#059669]" />
             <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
               Orders Requiring Dispatch
             </h2>
@@ -246,14 +246,14 @@ export default function SellerDashboardPage() {
                       <Package className="h-3.5 w-3.5" /> Line Item &amp; SKU
                     </p>
                     <p className="text-sm font-bold text-slate-900 dark:text-white">{meta.productTitle}</p>
-                    <p className="text-xs text-indigo-600 dark:text-indigo-400 font-mono mt-1">
+                    <p className="text-xs text-[#059669] dark:text-emerald-400 font-mono mt-1">
                       SKU: {meta.sku} ({meta.itemsCount} unit)
                     </p>
                   </div>
                 </div>
 
                 {/* Tracking URL Form */}
-                <div className="space-y-3 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-5 dark:border-indigo-950/60 dark:bg-indigo-950/20">
+                <div className="space-y-3 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5 dark:border-emerald-950/60 dark:bg-emerald-950/20">
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
                     Enter Carrier Dispatch Tracking URL
                   </label>
@@ -264,7 +264,7 @@ export default function SellerDashboardPage() {
                     onChange={(e) =>
                       setTrackingUrls((prev) => ({ ...prev, [item.id]: e.target.value }))
                     }
-                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm focus:border-[#059669] focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                   />
                   <p className="text-[11px] text-slate-500 dark:text-slate-400">
                     Customer will receive an automated SMS and WhatsApp update with this tracking link.
@@ -279,7 +279,7 @@ export default function SellerDashboardPage() {
                     className={`flex-1 inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-base font-bold text-white shadow-lg transition ${
                       isDispatched
                         ? 'bg-emerald-600 cursor-default'
-                        : 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-600/30'
+                        : 'bg-[#059669] hover:bg-[#047857] shadow-emerald-950/20'
                     }`}
                   >
                     {isDispatched ? (
@@ -340,7 +340,7 @@ export default function SellerDashboardPage() {
                     <h3 className="text-xl font-bold text-slate-900 dark:text-white">
                       Edit Inventory: {item.title}
                     </h3>
-                    <p className="text-xs font-mono text-indigo-500 mt-0.5">
+                    <p className="text-xs font-mono text-[#059669] mt-0.5">
                       SKU: {meta.sku} • Department: {meta.category}
                     </p>
                   </div>
@@ -404,7 +404,7 @@ export default function SellerDashboardPage() {
                   <button
                     type="button"
                     onClick={() => handleUpdateStock(item.id)}
-                    className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-indigo-600/30 transition hover:bg-indigo-500"
+                    className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-[#059669] px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-emerald-950/20 transition hover:bg-[#047857]"
                   >
                     {isSaved ? <CheckCircle className="h-5 w-5" /> : <Save className="h-5 w-5" />}
                     <span>{isSaved ? 'Stock Updated in Database & Search Index!' : 'Save & Publish Inventory Level'}</span>

@@ -46,7 +46,7 @@ export default function AccountLayout({
         </div>
         <div className="flex items-center gap-2.5">
           <div className="flex items-center gap-3 bg-slate-100 dark:bg-slate-900 px-3.5 py-2 rounded-xl">
-            <div className="h-8 w-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs uppercase">
+            <div className="h-8 w-8 rounded-full bg-[#059669] text-white flex items-center justify-center font-bold text-xs uppercase">
               {user?.email?.charAt(0) || 'G'}
             </div>
             <div className="text-xs">

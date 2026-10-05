@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth/auth-context';
+import { useCart } from '@/lib/cart/cart-context';
 import {
   Star,
   ShieldCheck,
@@ -371,7 +373,10 @@ function formatSlugToTitle(slug: string): string {
 
 export default function ProductDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const slug = (params?.slug as string) || '';
+  const { user } = useAuth();
+  const { addToCart, openLoginPrompt } = useCart();
 
   const product = useMemo<ProductData>(() => {
     if (PRODUCT_CATALOG[slug]) {
@@ -430,8 +435,40 @@ export default function ProductDetailPage() {
   }, [product]);
 
   const handleAddToCart = () => {
-    setIsAdded(true);
-    setTimeout(() => setIsAdded(false), 2500);
+    if (!user) {
+      openLoginPrompt(product.name);
+      return;
+    }
+    const success = addToCart({
+      id: product.slug,
+      name: product.name,
+      slug: product.slug,
+      store: product.storeName,
+      price: product.price,
+      qty,
+      image: selectedImage || product.images[0],
+    });
+    if (success) {
+      setIsAdded(true);
+      setTimeout(() => setIsAdded(false), 2500);
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (!user) {
+      openLoginPrompt(product.name);
+      return;
+    }
+    addToCart({
+      id: product.slug,
+      name: product.name,
+      slug: product.slug,
+      store: product.storeName,
+      price: product.price,
+      qty,
+      image: selectedImage || product.images[0],
+    });
+    router.push('/checkout');
   };
 
   return (
@@ -457,7 +494,7 @@ export default function ProductDetailPage() {
 
         <Link
           href="/"
-          className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-[#059669] hover:text-[#047857] dark:text-emerald-400"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
           <span>Back to Marketplace</span>
@@ -483,7 +520,7 @@ export default function ProductDetailPage() {
                   onClick={() => setSelectedImage(img)}
                   className={`relative aspect-square w-20 overflow-hidden rounded-xl border-2 transition ${
                     selectedImage === img
-                      ? 'border-indigo-600 ring-2 ring-indigo-600/30'
+                      ? 'border-[#059669] ring-2 ring-[#059669]/30'
                       : 'border-slate-200 hover:border-slate-400 dark:border-slate-800'
                   }`}
                 >
@@ -499,7 +536,7 @@ export default function ProductDetailPage() {
           {/* Header & Seller */}
           <div>
             <div className="flex items-center justify-between">
-              <span className="rounded-md bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400">
+              <span className="rounded-md bg-emerald-50 px-2.5 py-1 text-xs font-bold text-[#059669] dark:bg-emerald-950/60 dark:text-emerald-400">
                 {product.category}
               </span>
               <button
@@ -579,7 +616,7 @@ export default function ProductDetailPage() {
                     onClick={() => setSelectedVariant(v)}
                     className={`rounded-xl border px-3.5 py-2 text-xs font-semibold transition ${
                       selectedVariant === v
-                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400'
+                        ? 'border-[#059669] bg-emerald-50 text-[#059669] dark:bg-emerald-950/60 dark:text-emerald-400'
                         : 'border-slate-200 text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-300'
                     }`}
                   >
@@ -613,7 +650,7 @@ export default function ProductDetailPage() {
               className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-xs font-bold shadow-md transition ${
                 isAdded
                   ? 'bg-emerald-600 text-white shadow-emerald-600/20'
-                  : 'bg-indigo-600 text-white shadow-indigo-600/20 hover:bg-indigo-500'
+                  : 'bg-[#059669] text-white shadow-emerald-950/20 hover:bg-[#047857]'
               }`}
             >
               {isAdded ? (
@@ -627,12 +664,13 @@ export default function ProductDetailPage() {
               )}
             </button>
 
-            <Link
-              href="/checkout"
+            <button
+              type="button"
+              onClick={handleBuyNow}
               className="rounded-xl border border-slate-900 bg-slate-900 px-6 py-3 text-xs font-bold text-white shadow-sm transition hover:bg-slate-800 dark:border-white dark:bg-white dark:text-slate-900"
             >
               Buy Now
-            </Link>
+            </button>
           </div>
 
           {/* Seller / Store Information Card */}
@@ -652,7 +690,7 @@ export default function ProductDetailPage() {
             </div>
             <Link
               href={`/search?q=${encodeURIComponent(product.storeName)}`}
-              className="text-xs font-bold text-indigo-600 hover:text-indigo-700"
+              className="text-xs font-bold text-[#059669] hover:text-[#047857]"
             >
               Visit Store &rarr;
             </Link>
@@ -665,7 +703,7 @@ export default function ProductDetailPage() {
               <span>1 Year Warranty</span>
             </div>
             <div className="flex flex-col items-center gap-1">
-              <Truck className="h-4 w-4 text-indigo-600" />
+              <Truck className="h-4 w-4 text-[#059669]" />
               <span>Fast 48h Dispatch</span>
             </div>
             <div className="flex flex-col items-center gap-1">
@@ -724,7 +762,7 @@ export default function ProductDetailPage() {
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-[#047857] dark:bg-emerald-950 dark:text-emerald-400">
                   <ShieldCheck className="h-5 w-5" />
                 </div>
                 <div>
@@ -836,7 +874,7 @@ export default function ProductDetailPage() {
                     <td className="py-3.5 px-5 font-bold text-slate-900 dark:text-slate-200">
                       ASIN
                     </td>
-                    <td className="py-3.5 px-5 font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                    <td className="py-3.5 px-5 font-mono font-bold text-[#059669] dark:text-emerald-400">
                       {product.specifications.asin || 'B0HJ4PNVSM'}
                     </td>
                   </tr>

@@ -3,6 +3,8 @@
 import React, { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/lib/auth/auth-context';
+import { useCart } from '@/lib/cart/cart-context';
 import { Star, Filter, ArrowUpDown, ShoppingBag, Check, ExternalLink, ShieldCheck, Truck } from 'lucide-react';
 import {
   ExpandingCardGrid,
@@ -121,16 +123,39 @@ const mockCatalog: ProductItem[] = [
 function SearchContent() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
+  const { user } = useAuth();
+  const { addToCart, openLoginPrompt } = useCart();
   const [sortBy, setSortBy] = useState('popular');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [inStockOnly, setInStockOnly] = useState(false);
   const [addedItems, setAddedItems] = useState<string[]>([]);
 
-  const handleAddToCart = (id: string) => {
-    setAddedItems((prev) => [...prev, id]);
-    setTimeout(() => {
-      setAddedItems((prev) => prev.filter((item) => item !== id));
-    }, 2000);
+  const handleAddToCart = (id: string, onClose?: () => void) => {
+    const item = mockCatalog.find((p) => p.id === id);
+    if (!item) return;
+
+    if (!user) {
+      if (onClose) onClose();
+      openLoginPrompt(item.name);
+      return;
+    }
+
+    const success = addToCart({
+      id: item.id,
+      name: item.name,
+      slug: item.slug,
+      store: item.store,
+      price: item.price,
+      qty: 1,
+      image: item.image,
+    });
+
+    if (success) {
+      setAddedItems((prev) => [...prev, id]);
+      setTimeout(() => {
+        setAddedItems((prev) => prev.filter((i) => i !== id));
+      }, 2000);
+    }
   };
 
   // Filter products
@@ -197,7 +222,7 @@ function SearchContent() {
                   name="category"
                   checked={selectedCategory === 'all'}
                   onChange={() => setSelectedCategory('all')}
-                  className="text-indigo-600"
+                  className="text-[#059669] focus:ring-[#059669]"
                 />
                 <span>All Categories</span>
               </label>
@@ -215,7 +240,7 @@ function SearchContent() {
                     name="category"
                     checked={selectedCategory === cat}
                     onChange={() => setSelectedCategory(cat)}
-                    className="text-indigo-600"
+                    className="text-[#059669] focus:ring-[#059669]"
                   />
                   <span>{cat}</span>
                 </label>
@@ -233,7 +258,7 @@ function SearchContent() {
                 type="checkbox"
                 checked={inStockOnly}
                 onChange={(e) => setInStockOnly(e.target.checked)}
-                className="rounded text-indigo-600"
+                className="rounded text-[#059669] focus:ring-[#059669]"
               />
               <span>In Stock Only</span>
             </label>
@@ -299,7 +324,7 @@ function SearchContent() {
 
                     <div className="grid grid-cols-2 gap-3">
                       <div className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-800/50">
-                        <Truck className="h-4 w-4 text-indigo-500" />
+                        <Truck className="h-4 w-4 text-[#059669]" />
                         <span className="text-xs font-medium">Pan-India Express</span>
                       </div>
                       <div className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-800/50">
@@ -311,8 +336,8 @@ function SearchContent() {
                     <div className="flex flex-col sm:flex-row items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
                       <button
                         type="button"
-                        onClick={() => handleAddToCart(meta.id)}
-                        className="flex-1 w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3.5 text-base font-bold text-white shadow-lg transition hover:bg-indigo-500"
+                        onClick={() => handleAddToCart(meta.id, onClose)}
+                        className="flex-1 w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-[#059669] px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-emerald-950/20 transition hover:bg-[#047857]"
                       >
                         {isAdded ? <Check className="h-5 w-5" /> : <ShoppingBag className="h-5 w-5" />}
                         <span>{isAdded ? 'Added to Cart' : `Add to Cart (₹${meta.price.toLocaleString('en-IN')})`}</span>

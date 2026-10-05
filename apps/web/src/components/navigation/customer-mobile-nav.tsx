@@ -3,10 +3,12 @@
 import React from 'react';
 import { Home, Search, ShoppingBag, Package, User } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
+import { useCart } from '@/lib/cart/cart-context';
 import { LiquidNav } from '@/components/liquid-nav';
 
 export function CustomerMobileNav() {
   const { user } = useAuth();
+  const { cartCount } = useCart();
 
   const mobileNavItems = [
     {
@@ -26,7 +28,7 @@ export function CustomerMobileNav() {
       label: 'Cart',
       href: '/cart',
       icon: ShoppingBag,
-      badge: 0,
+      badge: cartCount,
     },
     {
       id: 'orders',

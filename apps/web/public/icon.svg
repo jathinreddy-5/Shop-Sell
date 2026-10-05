@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="shopSellIconGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#047857" />
+      <stop offset="100%" stop-color="#10B981" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#shopSellIconGrad)" />
+  <!-- Bag Handle -->
+  <path d="M25 24V17C25 13.134 28.134 10 32 10C35.866 10 39 13.134 39 17V24" stroke="white" stroke-width="4.5" stroke-linecap="round" />
+  <!-- Bag Body -->
+  <path d="M18 24C18 22.895 18.895 22 20 22H44C45.105 22 46 22.895 46 24V45C46 47.761 43.761 50 41 50H23C20.239 50 18 47.761 18 45V24Z" fill="white" />
+  <!-- Growth Arrow in Deep Emerald Brand Accent -->
+  <path d="M25 40L39 26M39 26H31M39 26V34" stroke="#047857" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+</svg>

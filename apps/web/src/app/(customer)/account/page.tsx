@@ -236,7 +236,7 @@ export default function AccountProfilePage() {
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#059669] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
 
@@ -250,7 +250,7 @@ export default function AccountProfilePage() {
                 value={pincode}
                 onChange={(e) => setPincode(e.target.value.replace(/\D/g, ''))}
                 placeholder="560034"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#059669] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
 
@@ -261,7 +261,7 @@ export default function AccountProfilePage() {
               <select
                 value={shoppingFor}
                 onChange={(e) => setShoppingFor(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#059669] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               >
                 <option value="prefer_not_to_say">Prefer not to say</option>
                 <option value="womens">Women&apos;s</option>
@@ -278,7 +278,7 @@ export default function AccountProfilePage() {
               <select
                 value={gender}
                 onChange={(e) => setGender(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#059669] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               >
                 <option value="prefer_not_to_say">Prefer not to say</option>
                 <option value="female">Female</option>
@@ -343,7 +343,7 @@ export default function AccountProfilePage() {
                     onClick={() => toggleInterest(interest.id)}
                     className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
                       selected
-                        ? 'bg-[#6D3DF5] text-white shadow-sm'
+                        ? 'bg-[#059669] text-white shadow-sm'
                         : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
                     }`}
                   >
@@ -362,7 +362,7 @@ export default function AccountProfilePage() {
                 type="checkbox"
                 checked={marketingConsent}
                 onChange={(e) => setMarketingConsent(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#6D3DF5] focus:ring-[#6D3DF5]"
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#059669] focus:ring-[#059669]"
               />
               <span className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                 Receive curated promotional newsletters, artisan spotlights, and seasonal discount alerts. Changes are logged to the compliance audit record.
@@ -375,7 +375,7 @@ export default function AccountProfilePage() {
             <button
               type="submit"
               disabled={isSaving}
-              className="rounded-2xl bg-[#6D3DF5] px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-[#6D3DF5]/30 hover:bg-[#5B2FE0] transition disabled:opacity-50"
+              className="rounded-2xl bg-[#059669] px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-950/20 hover:bg-[#047857] transition disabled:opacity-50"
             >
               {isSaving ? 'Saving...' : 'Save Profile Changes'}
             </button>
@@ -384,17 +384,17 @@ export default function AccountProfilePage() {
       </form>
 
       {/* Become a Seller Section */}
-      <div className="rounded-3xl border border-indigo-100 bg-gradient-to-r from-indigo-50/70 via-purple-50/40 to-white p-6 sm:p-8 dark:border-indigo-950 dark:bg-slate-900/60 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="rounded-3xl border border-emerald-100 bg-gradient-to-r from-emerald-50/70 via-teal-50/40 to-white p-6 sm:p-8 dark:border-emerald-950 dark:bg-slate-900/60 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-1.5">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#059669] text-white shadow-md shadow-emerald-950/20">
               <Store className="h-5 w-5" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">
                 Become a Seller on Shop:Sell
               </h2>
-              <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+              <span className="text-[11px] font-semibold text-[#059669] dark:text-emerald-400 uppercase tracking-wider">
                 Merchant Registration
               </span>
             </div>
@@ -405,7 +405,7 @@ export default function AccountProfilePage() {
         </div>
         <Link
           href="/become-a-seller"
-          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#6D3DF5] px-6 py-3 text-xs font-bold text-white shadow-md shadow-[#6D3DF5]/25 hover:bg-[#5B2FE0] transition shrink-0"
+          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#059669] px-6 py-3 text-xs font-bold text-white shadow-md shadow-emerald-950/20 hover:bg-[#047857] transition shrink-0"
         >
           <span>Apply to Sell</span>
           <ArrowRight className="h-4 w-4" />
@@ -427,7 +427,7 @@ export default function AccountProfilePage() {
             onClick={handleExportData}
             className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
           >
-            <Download className="h-4 w-4 text-[#6D3DF5]" />
+            <Download className="h-4 w-4 text-[#059669]" />
             <span>Export My Data (JSON)</span>
           </button>
 
@@ -499,7 +499,7 @@ export default function AccountProfilePage() {
             <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-medium">
               Account Role
             </span>
-            <span className="font-semibold text-indigo-600 dark:text-indigo-400 capitalize block mt-0.5">
+            <span className="font-semibold text-[#059669] dark:text-emerald-400 capitalize block mt-0.5">
               {user?.roles?.join(', ') || 'Customer'}
             </span>
           </div>

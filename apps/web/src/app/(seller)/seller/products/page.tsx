@@ -668,7 +668,7 @@ export default function SellerProductsPage() {
                         <div className="text-[10px] text-slate-500 line-clamp-1">
                           Model: {model}
                         </div>
-                        <div className="font-mono text-[10px] text-indigo-600 dark:text-indigo-400">
+                        <div className="font-mono text-[10px] text-[#059669] dark:text-emerald-400">
                           ASIN: {asin}
                         </div>
                       </div>
@@ -722,7 +722,7 @@ export default function SellerProductsPage() {
                           className="flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 transition"
                           title="View Complete Specifications & Description"
                         >
-                          <Eye className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />
+                          <Eye className="h-3.5 w-3.5 text-[#059669] dark:text-emerald-400" />
                           <span>Specs</span>
                         </button>
                         <button
@@ -1010,13 +1010,13 @@ export default function SellerProductsPage() {
               {/* TAB 3: TECHNICAL & STATUTORY SPECIFICATIONS (FROM USER REFERENCE IMAGE) */}
               {modalTab === 'specs' && (
                 <div className="space-y-5 text-xs">
-                  <div className="rounded-2xl bg-indigo-50/70 p-3.5 border border-indigo-100 dark:bg-indigo-950/40 dark:border-indigo-900/50 flex items-start gap-3">
-                    <ShieldCheck className="h-5 w-5 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+                  <div className="rounded-2xl bg-emerald-50/70 p-3.5 border border-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-900/50 flex items-start gap-3">
+                    <ShieldCheck className="h-5 w-5 text-[#059669] dark:text-emerald-400 shrink-0 mt-0.5" />
                     <div>
-                      <h4 className="font-bold text-indigo-950 dark:text-indigo-200">
+                      <h4 className="font-bold text-emerald-950 dark:text-emerald-200">
                         Statutory Technical & Legal Metrology Details
                       </h4>
-                      <p className="text-[11px] text-indigo-700 dark:text-indigo-300 mt-0.5">
+                      <p className="text-[11px] text-emerald-700 dark:text-emerald-300 mt-0.5">
                         These fields power the mandatory two-column specifications table (e.g. Brand Name, Model Year, Country of Origin, Box Contents, Warranty, Manufacturer, ASIN) shown to shoppers under Indian e-commerce compliance.
                       </p>
                     </div>
@@ -1468,7 +1468,7 @@ export default function SellerProductsPage() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4 text-indigo-600" />
+                    <ShieldCheck className="h-4 w-4 text-[#059669]" />
                     <h4 className="font-bold text-slate-900 dark:text-white text-xs">
                       Technical & Statutory Specifications
                     </h4>
@@ -1579,7 +1579,7 @@ export default function SellerProductsPage() {
                         <td className="py-3 px-4 font-bold text-slate-900 dark:text-slate-200">
                           ASIN
                         </td>
-                        <td className="py-3 px-4 font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                        <td className="py-3 px-4 font-mono font-bold text-[#059669] dark:text-emerald-400">
                           {selectedProductForView.specifications?.asin || 'B0HJ4PNVSM'}
                         </td>
                       </tr>

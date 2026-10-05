@@ -96,8 +96,8 @@ export function OtpInput({
               hasError
                 ? 'border-red-400 bg-red-50/50 text-red-700 focus:border-red-600 focus:ring-2 focus:ring-red-500/20'
                 : isFilled
-                ? 'border-[#6D3DF5] bg-white text-[#111827] shadow-sm ring-1 ring-[#6D3DF5]/30'
-                : 'border-[#E2E8F0] bg-white text-[#111827] hover:border-slate-300 focus:border-[#6D3DF5] focus:ring-2 focus:ring-[#6D3DF5]/20'
+                ? 'border-[#059669] bg-white text-[#111827] shadow-sm ring-1 ring-[#059669]/30'
+                : 'border-[#E2E8F0] bg-white text-[#111827] hover:border-slate-300 focus:border-[#059669] focus:ring-2 focus:ring-[#059669]/20'
             } disabled:cursor-not-allowed disabled:opacity-50`}
           />
         );

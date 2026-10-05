@@ -20,7 +20,7 @@ export default function TermsAndPoliciesPage() {
       <div className="container mx-auto max-w-4xl px-4 sm:px-6">
         {/* Navigation Breadcrumb */}
         <div className="mb-6 flex items-center gap-2 text-xs font-semibold text-slate-500">
-          <Link href="/" className="inline-flex items-center gap-1 hover:text-[#6D3DF5] transition">
+          <Link href="/" className="inline-flex items-center gap-1 hover:text-[#059669] transition">
             <ArrowLeft className="h-3.5 w-3.5" />
             <span>Back to Marketplace</span>
           </Link>
@@ -31,7 +31,7 @@ export default function TermsAndPoliciesPage() {
         {/* Page Header */}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-10 shadow-sm dark:border-slate-800 dark:bg-slate-900 mb-8">
           <div className="flex items-center gap-3 mb-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#6D3DF5]/10 text-[#6D3DF5]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-[#059669]">
               <Scale className="h-5 w-5" />
             </div>
             <div>
@@ -51,35 +51,35 @@ export default function TermsAndPoliciesPage() {
           <div className="mt-6 flex flex-wrap gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
             <a
               href="#terms"
-              className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-[#6D3DF5] hover:text-white transition dark:bg-slate-800 dark:text-slate-300"
+              className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-[#059669] hover:text-white transition dark:bg-slate-800 dark:text-slate-300"
             >
               <FileText className="h-3.5 w-3.5" />
               <span>Terms of Use</span>
             </a>
             <a
               href="#privacy"
-              className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-[#6D3DF5] hover:text-white transition dark:bg-slate-800 dark:text-slate-300"
+              className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-[#059669] hover:text-white transition dark:bg-slate-800 dark:text-slate-300"
             >
               <ShieldCheck className="h-3.5 w-3.5" />
               <span>Privacy Policy</span>
             </a>
             <a
               href="#refunds"
-              className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-[#6D3DF5] hover:text-white transition dark:bg-slate-800 dark:text-slate-300"
+              className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-[#059669] hover:text-white transition dark:bg-slate-800 dark:text-slate-300"
             >
               <RotateCcw className="h-3.5 w-3.5" />
               <span>Returns & Refunds</span>
             </a>
             <a
               href="#shipping"
-              className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-[#6D3DF5] hover:text-white transition dark:bg-slate-800 dark:text-slate-300"
+              className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-[#059669] hover:text-white transition dark:bg-slate-800 dark:text-slate-300"
             >
               <Truck className="h-3.5 w-3.5" />
               <span>Shipping Policy</span>
             </a>
             <a
               href="#grievance"
-              className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-[#6D3DF5] hover:text-white transition dark:bg-slate-800 dark:text-slate-300"
+              className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-[#059669] hover:text-white transition dark:bg-slate-800 dark:text-slate-300"
             >
               <Mail className="h-3.5 w-3.5" />
               <span>Grievance Officer</span>
@@ -92,7 +92,7 @@ export default function TermsAndPoliciesPage() {
           {/* 1. Terms of Use */}
           <section id="terms" className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900 scroll-mt-24">
             <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
-              <FileText className="h-5 w-5 text-[#6D3DF5]" />
+              <FileText className="h-5 w-5 text-[#059669]" />
               <span>1. Terms and Conditions of Use</span>
             </h2>
             <div className="space-y-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -114,7 +114,7 @@ export default function TermsAndPoliciesPage() {
           {/* 2. Privacy Policy */}
           <section id="privacy" className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900 scroll-mt-24">
             <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
-              <ShieldCheck className="h-5 w-5 text-[#6D3DF5]" />
+              <ShieldCheck className="h-5 w-5 text-[#059669]" />
               <span>2. Privacy Policy & DPDP Act 2023 Compliance</span>
             </h2>
             <div className="space-y-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -125,7 +125,7 @@ export default function TermsAndPoliciesPage() {
                 <strong>2.2 Consent Architecture:</strong> In accordance with India’s <strong>Digital Personal Data Protection (DPDP) Act, 2023</strong>, all marketing notifications and demographic profiling require affirmative consent. Each consent action is logged immutably in our audit system.
               </p>
               <p>
-                <strong>2.3 Data Rights:</strong> You retain the full legal right to export all personal records in structured JSON format or execute permanent account erasure via your <Link href="/account" className="text-[#6D3DF5] font-semibold hover:underline">Account Settings</Link>.
+                <strong>2.3 Data Rights:</strong> You retain the full legal right to export all personal records in structured JSON format or execute permanent account erasure via your <Link href="/account" className="text-[#059669] font-semibold hover:underline">Account Settings</Link>.
               </p>
             </div>
           </section>
@@ -133,7 +133,7 @@ export default function TermsAndPoliciesPage() {
           {/* 3. Return & Refund Policy */}
           <section id="refunds" className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900 scroll-mt-24">
             <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
-              <RotateCcw className="h-5 w-5 text-[#6D3DF5]" />
+              <RotateCcw className="h-5 w-5 text-[#059669]" />
               <span>3. Return, Replacement & Refund Policy</span>
             </h2>
             <div className="space-y-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -152,7 +152,7 @@ export default function TermsAndPoliciesPage() {
           {/* 4. Shipping Policy */}
           <section id="shipping" className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900 scroll-mt-24">
             <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
-              <Truck className="h-5 w-5 text-[#6D3DF5]" />
+              <Truck className="h-5 w-5 text-[#059669]" />
               <span>4. Shipping and Delivery Policy</span>
             </h2>
             <div className="space-y-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -168,7 +168,7 @@ export default function TermsAndPoliciesPage() {
           {/* 5. Grievance Officer */}
           <section id="grievance" className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900 scroll-mt-24">
             <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
-              <Mail className="h-5 w-5 text-[#6D3DF5]" />
+              <Mail className="h-5 w-5 text-[#059669]" />
               <span>5. Grievance Redressal & Nodal Officer</span>
             </h2>
             <div className="space-y-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">

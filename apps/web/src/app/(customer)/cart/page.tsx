@@ -1,62 +1,16 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { Trash2, Plus, Minus, ArrowRight, ShoppingBag, ShieldCheck } from 'lucide-react';
-
-interface CartItem {
-  id: string;
-  name: string;
-  slug: string;
-  store: string;
-  price: number;
-  qty: number;
-  image: string;
-}
-
-const initialCartItems: CartItem[] = [
-  {
-    id: 'ci-1',
-    name: 'AcousticPro True Wireless Earbuds',
-    slug: 'acousticpro-true-wireless-earbuds',
-    store: 'SoundWave Audio Lab',
-    price: 3499,
-    qty: 1,
-    image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&q=80',
-  },
-  {
-    id: 'ci-2',
-    name: 'Handthrown Ceramic Coffee Mug 350ml',
-    slug: 'handthrown-ceramic-coffee-mug-350ml',
-    store: 'Aura Artisanal Living',
-    price: 699,
-    qty: 2,
-    image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400&q=80',
-  },
-];
+import { useRouter } from 'next/navigation';
+import { Trash2, Plus, Minus, ArrowRight, ShoppingBag, ShieldCheck, Lock } from 'lucide-react';
+import { useAuth } from '@/lib/auth/auth-context';
+import { useCart } from '@/lib/cart/cart-context';
 
 export default function CartPage() {
-  const [items, setItems] = useState<CartItem[]>(initialCartItems);
-
-  const updateQty = (id: string, delta: number) => {
-    setItems((prev) =>
-      prev
-        .map((item) => {
-          if (item.id === id) {
-            const newQty = item.qty + delta;
-            return newQty > 0 ? { ...item, qty: newQty } : null;
-          }
-          return item;
-        })
-        .filter((item): item is CartItem => item !== null)
-    );
-  };
-
-  const removeItem = (id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
-  };
-
-  const subtotal = items.reduce((acc, item) => acc + item.price * item.qty, 0);
+  const router = useRouter();
+  const { user } = useAuth();
+  const { items, updateQty, removeItem, subtotal, openLoginPrompt } = useCart();
   const delivery = subtotal > 999 || items.length === 0 ? 0 : 99;
   const tax = Math.round(subtotal * 0.18 * 100) / 100; // 18% GST standard in India
   const grandTotal = subtotal + delivery;
@@ -64,7 +18,7 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <div className="container mx-auto max-w-lg px-4 py-20 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 dark:bg-slate-800">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-[#059669] dark:bg-slate-800">
           <ShoppingBag className="h-8 w-8" />
         </div>
         <h2 className="text-xl font-bold text-slate-900 dark:text-white">
@@ -75,7 +29,7 @@ export default function CartPage() {
         </p>
         <Link
           href="/"
-          className="mt-6 inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-6 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500"
+          className="mt-6 inline-flex items-center gap-1.5 rounded-xl bg-[#059669] px-6 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-[#047857]"
         >
           Explore Marketplace <ArrowRight className="h-4 w-4" />
         </Link>
@@ -108,11 +62,11 @@ export default function CartPage() {
                 </span>
                 <Link
                   href={`/product/${item.slug}`}
-                  className="block text-sm font-bold text-slate-900 hover:text-indigo-600 dark:text-white"
+                  className="block text-sm font-bold text-slate-900 hover:text-[#059669] dark:text-white"
                 >
                   {item.name}
                 </Link>
-                <div className="mt-1 font-bold text-indigo-600 dark:text-indigo-400">
+                <div className="mt-1 font-bold text-[#059669] dark:text-emerald-400">
                   ₹{item.price.toLocaleString('en-IN')}
                 </div>
               </div>
@@ -177,19 +131,26 @@ export default function CartPage() {
               <div className="border-t border-slate-100 pt-3 text-sm dark:border-slate-800">
                 <div className="flex justify-between font-bold text-slate-900 dark:text-white">
                   <span>Grand Total</span>
-                  <span className="text-base text-indigo-600 dark:text-indigo-400">
+                  <span className="text-base text-[#059669] dark:text-emerald-400">
                     ₹{grandTotal.toLocaleString('en-IN')}
                   </span>
                 </div>
               </div>
             </div>
 
-            <Link
-              href="/checkout"
-              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 text-xs font-bold text-white shadow-md shadow-indigo-600/20 transition hover:bg-indigo-500"
+            <button
+              type="button"
+              onClick={() => {
+                if (!user) {
+                  openLoginPrompt();
+                  return;
+                }
+                router.push('/checkout');
+              }}
+              className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#059669] py-3 text-xs font-bold text-white shadow-md shadow-emerald-950/20 transition hover:bg-[#047857]"
             >
               Proceed to Razorpay Checkout <ArrowRight className="h-4 w-4" />
-            </Link>
+            </button>
 
             <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-slate-500">
               <ShieldCheck className="h-4 w-4 text-emerald-600" />
