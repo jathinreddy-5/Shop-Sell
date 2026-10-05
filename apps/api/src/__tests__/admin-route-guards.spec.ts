@@ -10,6 +10,8 @@ import { SellersController } from '../modules/sellers/sellers.controller';
 import { PayoutsController } from '../modules/payouts/payouts.controller';
 import { AdminAuthService } from '../modules/admin-core/auth/admin-auth.service';
 import { AdminRedisService } from '../modules/admin-core/redis/admin-redis.service';
+import { DatabaseService } from '../database/database.service';
+import { AdminAuditService } from '../modules/admin-core/audit/admin-audit.service';
 
 describe('Phase 1b Item 0b: DI and Route Guard Proof for Migrated Endpoints', () => {
   let app: INestApplication;
@@ -29,6 +31,19 @@ describe('Phase 1b Item 0b: DI and Route Guard Proof for Migrated Endpoints', ()
 
     const auth = app.get(AdminAuthService);
     const redis = app.get(AdminRedisService);
+    const db = app.get(DatabaseService);
+    const audit = app.get(AdminAuditService);
+
+    // Stub DB queries for testing route guard resolution without requiring a live Postgres instance
+    (db as any).query = async () => ({
+      rows: [],
+      command: 'SELECT',
+      rowCount: 0,
+      oid: 0,
+      fields: [],
+    });
+    (audit as any).logEvent = async () => ({} as any);
+
     const secret = (auth as any).jwtSecret;
 
     // Create active session in Redis for a customer user who has no row in public.admin_users
