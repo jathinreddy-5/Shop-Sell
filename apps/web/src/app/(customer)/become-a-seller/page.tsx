@@ -512,7 +512,7 @@ export default function BecomeASellerPage() {
 
             <div className="flex justify-between items-center">
               <span className="text-slate-500">Review Timeline</span>
-              <span className="font-bold text-indigo-600 dark:text-indigo-400">
+              <span className="font-bold text-[#059669] dark:text-emerald-400">
                 Estimated 24 - 48 business hours
               </span>
             </div>
@@ -521,7 +521,7 @@ export default function BecomeASellerPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <Link
               href="/account"
-              className="w-full sm:w-auto rounded-2xl bg-[#6D3DF5] px-6 py-3 text-xs font-bold text-white shadow-md shadow-[#6D3DF5]/30 hover:bg-[#5B2FE0] transition"
+              className="w-full sm:w-auto rounded-2xl bg-[#059669] px-6 py-3 text-xs font-bold text-white shadow-md shadow-[#059669]/30 hover:bg-[#047857] transition"
             >
               Go to Account Profile
             </Link>
@@ -541,7 +541,7 @@ export default function BecomeASellerPage() {
     <div className="container mx-auto max-w-3xl px-4 py-12">
       {/* Title & Onboarding Intro */}
       <div className="mb-10 text-center space-y-3">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/25">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#059669] text-white shadow-lg shadow-emerald-950/20">
           <Store className="h-7 w-7" />
         </div>
         <h1 className="text-3xl font-black tracking-tight text-slate-900 sm:text-4xl dark:text-white">
@@ -590,7 +590,7 @@ export default function BecomeASellerPage() {
         {/* SECTION 1: BUSINESS & SELLER TYPE */}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-5">
           <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400 font-bold text-xs">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-[#047857] dark:bg-emerald-950/60 dark:text-emerald-400 font-bold text-xs">
               1
             </div>
             <div>
@@ -612,7 +612,7 @@ export default function BecomeASellerPage() {
                 value={formData.business_name}
                 onChange={(e) => setFormData({ ...formData, business_name: e.target.value })}
                 placeholder="e.g. Acme Crafts Private Limited / Rajesh Sharma"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#6D3DF5] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#059669] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
               />
               {errors.business_name && (
                 <p className="mt-1 text-xs text-rose-500">{errors.business_name}</p>
@@ -626,7 +626,7 @@ export default function BecomeASellerPage() {
               <select
                 value={formData.business_type}
                 onChange={(e) => setFormData({ ...formData, business_type: e.target.value })}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#6D3DF5] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#059669] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
               >
                 <option value="individual">Individual / Artisan</option>
                 <option value="proprietorship">Sole Proprietorship</option>
@@ -645,7 +645,7 @@ export default function BecomeASellerPage() {
                 value={formData.store_name}
                 onChange={(e) => setFormData({ ...formData, store_name: e.target.value })}
                 placeholder="Brand name shown to shoppers"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#6D3DF5] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#059669] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
               />
             </div>
           </div>
@@ -654,7 +654,7 @@ export default function BecomeASellerPage() {
         {/* SECTION 2: PAN & GSTIN VERIFICATION */}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-5">
           <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400 font-bold text-xs">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-[#047857] dark:bg-emerald-950/60 dark:text-emerald-400 font-bold text-xs">
               2
             </div>
             <div>
@@ -694,7 +694,7 @@ export default function BecomeASellerPage() {
                     })
                   }
                   placeholder="e.g. ABCDE1234F"
-                  className="w-full font-mono uppercase rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none focus:border-[#6D3DF5] dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                  className="w-full font-mono uppercase rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none focus:border-[#059669] dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                 />
                 {errors.pan_number && (
                   <p className="mt-1 text-xs text-rose-500">{errors.pan_number}</p>
@@ -709,7 +709,7 @@ export default function BecomeASellerPage() {
                     setFormData({ ...formData, pan_name: e.target.value, pan_verified: false })
                   }
                   placeholder="Name exactly as on PAN Card"
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none focus:border-[#6D3DF5] dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none focus:border-[#059669] dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                 />
                 {errors.pan_name && (
                   <p className="mt-1 text-xs text-rose-500">{errors.pan_name}</p>
@@ -766,7 +766,7 @@ export default function BecomeASellerPage() {
                   })
                 }
                 placeholder={formData.gst_exempt ? 'Exempted from GST' : '29ABCDE1234F1Z5'}
-                className="w-full font-mono uppercase rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none focus:border-[#6D3DF5] disabled:bg-slate-100 disabled:text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                className="w-full font-mono uppercase rounded-2xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 outline-none focus:border-[#059669] disabled:bg-slate-100 disabled:text-slate-400 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
               />
               {errors.gstin && <p className="mt-1 text-xs text-rose-500">{errors.gstin}</p>}
             </div>
@@ -783,7 +783,7 @@ export default function BecomeASellerPage() {
                       gstin_verified: e.target.checked,
                     })
                   }
-                  className="h-4 w-4 rounded border-slate-300 text-[#6D3DF5] focus:ring-[#6D3DF5]"
+                  className="h-4 w-4 rounded border-slate-300 text-[#059669] focus:ring-[#059669]"
                 />
                 <span className="text-xs text-slate-600 dark:text-slate-300">
                   I claim GST threshold exemption (&lt; ₹40L turnover)
@@ -829,7 +829,7 @@ export default function BecomeASellerPage() {
         {/* SECTION 3: GOVERNMENT ID OF OWNER / SIGNATORY */}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-5">
           <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400 font-bold text-xs">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-[#047857] dark:bg-emerald-950/60 dark:text-emerald-400 font-bold text-xs">
               3
             </div>
             <div>
@@ -852,7 +852,7 @@ export default function BecomeASellerPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, government_id_type: e.target.value })
                 }
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#6D3DF5] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#059669] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               >
                 <option value="aadhaar">Aadhaar Card (UIDAI)</option>
                 <option value="passport">Passport</option>
@@ -876,7 +876,7 @@ export default function BecomeASellerPage() {
                     ? '12-digit Aadhaar Number'
                     : 'Official document ID number'
                 }
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#6D3DF5] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#059669] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
               {errors.government_id_number && (
                 <p className="mt-1 text-xs text-rose-500">{errors.government_id_number}</p>
@@ -889,7 +889,7 @@ export default function BecomeASellerPage() {
             <label className="block text-xs font-bold text-slate-900 dark:text-slate-200 mb-1.5">
               Upload Front & Back Copy (PDF / JPG / PNG max 5MB)
             </label>
-            <div className="relative rounded-2xl border-2 border-dashed border-slate-200 p-4 text-center hover:border-[#6D3DF5] transition dark:border-slate-700">
+            <div className="relative rounded-2xl border-2 border-dashed border-slate-200 p-4 text-center hover:border-[#059669] transition dark:border-slate-700">
               <input
                 type="file"
                 accept=".pdf,.jpg,.jpeg,.png"
@@ -921,7 +921,7 @@ export default function BecomeASellerPage() {
         {/* SECTION 4: REGISTERED BUSINESS ADDRESS WITH PROOF */}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-5">
           <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400 font-bold text-xs">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-[#047857] dark:bg-emerald-950/60 dark:text-emerald-400 font-bold text-xs">
               4
             </div>
             <div>
@@ -953,7 +953,7 @@ export default function BecomeASellerPage() {
                   })
                 }
                 placeholder="e.g. Unit 402, Prestige Tech Park"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#6D3DF5] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#059669] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
               {errors['registered_address.address_line1'] && (
                 <p className="mt-1 text-xs text-rose-500">
@@ -980,7 +980,7 @@ export default function BecomeASellerPage() {
                     })
                   }
                   placeholder="Outer Ring Road, Kadubeesanahalli"
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#6D3DF5] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#059669] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
               </div>
 
@@ -1001,7 +1001,7 @@ export default function BecomeASellerPage() {
                     })
                   }
                   placeholder="Opposite Cessna Business Park"
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#6D3DF5] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#059669] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
               </div>
 
@@ -1023,7 +1023,7 @@ export default function BecomeASellerPage() {
                     })
                   }
                   placeholder="Bengaluru"
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#6D3DF5] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#059669] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
                 {errors['registered_address.city'] && (
                   <p className="mt-1 text-xs text-rose-500">
@@ -1047,7 +1047,7 @@ export default function BecomeASellerPage() {
                       },
                     })
                   }
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#6D3DF5] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#059669] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 >
                   {INDIAN_STATES.map((st) => (
                     <option key={st} value={st}>
@@ -1076,7 +1076,7 @@ export default function BecomeASellerPage() {
                     })
                   }
                   placeholder="560103"
-                  className="w-full font-mono rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#6D3DF5] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="w-full font-mono rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#059669] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
                 {errors['registered_address.pincode'] && (
                   <p className="mt-1 text-xs text-rose-500">
@@ -1094,7 +1094,7 @@ export default function BecomeASellerPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, address_proof_type: e.target.value })
                   }
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#6D3DF5] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#059669] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 >
                   <option value="utility_bill">Electricity / Water / Gas Bill (&lt; 2 mo)</option>
                   <option value="rent_agreement">Registered Rent / Lease Agreement</option>
@@ -1104,7 +1104,7 @@ export default function BecomeASellerPage() {
             </div>
 
             {/* Address Proof File Upload */}
-            <div className="relative rounded-2xl border-2 border-dashed border-slate-200 p-4 text-center hover:border-[#6D3DF5] transition dark:border-slate-700">
+            <div className="relative rounded-2xl border-2 border-dashed border-slate-200 p-4 text-center hover:border-[#059669] transition dark:border-slate-700">
               <input
                 type="file"
                 accept=".pdf,.jpg,.jpeg,.png"
@@ -1135,7 +1135,7 @@ export default function BecomeASellerPage() {
         {/* SECTION 5: VERIFIED MOBILE & EMAIL (OTP) */}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-5">
           <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400 font-bold text-xs">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-[#047857] dark:bg-emerald-950/60 dark:text-emerald-400 font-bold text-xs">
               5
             </div>
             <div>
@@ -1168,7 +1168,7 @@ export default function BecomeASellerPage() {
                   value={formData.contact_phone}
                   onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
                   placeholder="9876543210"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#6D3DF5] dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#059669] dark:border-slate-700 dark:bg-slate-900 dark:text-white"
                 />
               </div>
             </div>
@@ -1188,7 +1188,7 @@ export default function BecomeASellerPage() {
                 value={formData.contact_email}
                 onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
                 placeholder="seller@yourstore.in"
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#6D3DF5] dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-[#059669] dark:border-slate-700 dark:bg-slate-900 dark:text-white"
               />
             </div>
           </div>
@@ -1197,7 +1197,7 @@ export default function BecomeASellerPage() {
         {/* SECTION 6: BANK ACCOUNT, CANCELLED CHEQUE & PENNY-DROP */}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-5">
           <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400 font-bold text-xs">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-[#047857] dark:bg-emerald-950/60 dark:text-emerald-400 font-bold text-xs">
               6
             </div>
             <div>
@@ -1210,7 +1210,7 @@ export default function BecomeASellerPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 dark:border-indigo-950 dark:bg-indigo-950/20 text-xs text-indigo-900 dark:text-indigo-300 flex items-start gap-2">
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4 dark:border-emerald-950 dark:bg-emerald-950/20 text-xs text-emerald-900 dark:text-emerald-300 flex items-start gap-2">
             <Info className="h-4 w-4 shrink-0 mt-0.5" />
             <span>
               <strong>Crucial:</strong> The bank account must be in the identical legal name as
@@ -1239,7 +1239,7 @@ export default function BecomeASellerPage() {
                   })
                 }
                 placeholder="e.g. Acme Crafts Pvt Ltd"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#6D3DF5] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#059669] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
               {errors['payout_details.account_holder_name'] && (
                 <p className="mt-1 text-xs text-rose-500">
@@ -1266,7 +1266,7 @@ export default function BecomeASellerPage() {
                   })
                 }
                 placeholder="e.g. HDFC Bank, ICICI Bank, SBI"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#6D3DF5] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#059669] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
 
@@ -1289,7 +1289,7 @@ export default function BecomeASellerPage() {
                   })
                 }
                 placeholder="10 - 18 digit account number"
-                className="w-full font-mono rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#6D3DF5] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="w-full font-mono rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#059669] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
               {errors['payout_details.account_number'] && (
                 <p className="mt-1 text-xs text-rose-500">
@@ -1317,7 +1317,7 @@ export default function BecomeASellerPage() {
                   })
                 }
                 placeholder="Confirm account number"
-                className="w-full font-mono rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#6D3DF5] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="w-full font-mono rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#059669] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
               {errors['payout_details.confirm_account_number'] && (
                 <p className="mt-1 text-xs text-rose-500">
@@ -1347,14 +1347,14 @@ export default function BecomeASellerPage() {
                     })
                   }
                   placeholder="e.g. HDFC0001234"
-                  className="w-full font-mono uppercase rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#6D3DF5] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="w-full font-mono uppercase rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-[#059669] focus:bg-white dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
 
                 <button
                   type="button"
                   disabled={isVerifyingPennyDrop || formData.payout_details.penny_drop_verified}
                   onClick={handlePennyDrop}
-                  className="shrink-0 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-indigo-700 disabled:opacity-50 transition shadow-sm"
+                  className="shrink-0 rounded-2xl bg-[#059669] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#047857] disabled:opacity-50 transition shadow-sm"
                 >
                   {isVerifyingPennyDrop ? (
                     'Executing IMPS ₹1 test...'
@@ -1379,7 +1379,7 @@ export default function BecomeASellerPage() {
             <label className="block text-xs font-bold text-slate-900 dark:text-slate-200 mb-1.5">
               Upload Cancelled Cheque or Bank Passbook Front Page
             </label>
-            <div className="relative rounded-2xl border-2 border-dashed border-slate-200 p-4 text-center hover:border-[#6D3DF5] transition dark:border-slate-700">
+            <div className="relative rounded-2xl border-2 border-dashed border-slate-200 p-4 text-center hover:border-[#059669] transition dark:border-slate-700">
               <input
                 type="file"
                 accept=".pdf,.jpg,.jpeg,.png"
@@ -1417,7 +1417,7 @@ export default function BecomeASellerPage() {
         {/* SECTION 7: PICKUP & RETURN ADDRESS */}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-5">
           <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400 font-bold text-xs">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-[#047857] dark:bg-emerald-950/60 dark:text-emerald-400 font-bold text-xs">
               7
             </div>
             <div>
@@ -1445,7 +1445,7 @@ export default function BecomeASellerPage() {
                     },
                   })
                 }
-                className="h-4 w-4 rounded border-slate-300 text-[#6D3DF5] focus:ring-[#6D3DF5]"
+                className="h-4 w-4 rounded border-slate-300 text-[#059669] focus:ring-[#059669]"
               />
               <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                 Pickup address is identical to Registered Business Address
@@ -1525,7 +1525,7 @@ export default function BecomeASellerPage() {
                     },
                   })
                 }
-                className="h-4 w-4 rounded border-slate-300 text-[#6D3DF5] focus:ring-[#6D3DF5]"
+                className="h-4 w-4 rounded border-slate-300 text-[#059669] focus:ring-[#059669]"
               />
               <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                 Customer Return (RTO) address is identical to Pickup address
@@ -1537,7 +1537,7 @@ export default function BecomeASellerPage() {
         {/* SECTION 8: SELLER AGREEMENT, COMMISSION TERMS & DPDP CONSENT */}
         <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-5">
           <div className="flex items-center gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400 font-bold text-xs">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-[#047857] dark:bg-emerald-950/60 dark:text-emerald-400 font-bold text-xs">
               8
             </div>
             <div>
@@ -1558,7 +1558,7 @@ export default function BecomeASellerPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, agreement_accepted: e.target.checked })
                 }
-                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#6D3DF5] focus:ring-[#6D3DF5]"
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#059669] focus:ring-[#059669]"
               />
               <span className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
                 <strong>Seller Master Services Agreement:</strong> I agree to the Shop:Sell Merchant
@@ -1577,7 +1577,7 @@ export default function BecomeASellerPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, commission_accepted: e.target.checked })
                 }
-                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#6D3DF5] focus:ring-[#6D3DF5]"
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#059669] focus:ring-[#059669]"
               />
               <span className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
                 <strong>Commission & Settlement Terms:</strong> I accept the Category Commission
@@ -1596,7 +1596,7 @@ export default function BecomeASellerPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, dpdp_consent_accepted: e.target.checked })
                 }
-                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#6D3DF5] focus:ring-[#6D3DF5]"
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#059669] focus:ring-[#059669]"
               />
               <span className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
                 <strong>DPDP Act 2023 Consent:</strong> I hereby give explicit consent for Shop:Sell
@@ -1626,7 +1626,7 @@ export default function BecomeASellerPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#6D3DF5] py-4 text-sm font-bold text-white shadow-xl shadow-[#6D3DF5]/30 hover:bg-[#5B2FE0] transition disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#059669] py-4 text-sm font-bold text-white shadow-xl shadow-[#059669]/30 hover:bg-[#047857] transition disabled:opacity-60"
           >
             {isSubmitting ? (
               <LoadingThreeDotsJumping

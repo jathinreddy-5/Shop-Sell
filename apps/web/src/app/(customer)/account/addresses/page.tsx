@@ -243,7 +243,7 @@ export default function AccountAddressesPage() {
         <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
           <div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-[#6D3DF5]" />
+              <MapPin className="h-5 w-5 text-[#059669]" />
               <span>Saved Addresses</span>
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -258,7 +258,7 @@ export default function AccountAddressesPage() {
               setSuccessMessage(null);
               setShowAddressForm((prev) => !prev);
             }}
-            className="inline-flex items-center gap-1.5 rounded-2xl bg-[#6D3DF5] px-4 py-2 text-xs font-bold text-white shadow-md shadow-[#6D3DF5]/20 hover:bg-[#5B2FE0] transition"
+            className="inline-flex items-center gap-1.5 rounded-2xl bg-[#059669] px-4 py-2 text-xs font-bold text-white shadow-md shadow-emerald-950/20 hover:bg-[#047857] transition"
           >
             <Plus className="h-4 w-4" />
             <span>New address</span>
@@ -295,7 +295,7 @@ export default function AccountAddressesPage() {
                         {addr.label || 'Home'}
                       </span>
                       {addr.is_default && (
-                        <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-[10px] font-bold text-[#6D3DF5] dark:bg-purple-950 dark:text-purple-300">
+                        <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-[#059669] dark:bg-emerald-950 dark:text-emerald-300">
                           Default Address
                         </span>
                       )}
@@ -329,7 +329,7 @@ export default function AccountAddressesPage() {
                     <button
                       type="button"
                       onClick={() => handleSetDefaultAddress(addr.id)}
-                      className="text-xs font-semibold text-[#6D3DF5] hover:underline"
+                      className="text-xs font-semibold text-[#059669] hover:underline"
                     >
                       Make Default
                     </button>
@@ -356,7 +356,7 @@ export default function AccountAddressesPage() {
                 resetForm();
                 setShowAddressForm(true);
               }}
-              className="inline-flex items-center gap-1.5 rounded-2xl bg-[#6D3DF5] px-4 py-2 text-xs font-bold text-white shadow-md shadow-[#6D3DF5]/20 hover:bg-[#5B2FE0] transition"
+              className="inline-flex items-center gap-1.5 rounded-2xl bg-[#059669] px-4 py-2 text-xs font-bold text-white shadow-md shadow-emerald-950/20 hover:bg-[#047857] transition"
             >
               <Plus className="h-4 w-4" />
               <span>New address</span>
@@ -394,7 +394,7 @@ export default function AccountAddressesPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Enter recipient full name"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#059669] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
               />
             </div>
 
@@ -414,7 +414,7 @@ export default function AccountAddressesPage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
                   placeholder="9876543210"
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 pl-12 pr-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 pl-12 pr-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#059669] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
                 />
               </div>
             </div>
@@ -431,7 +431,7 @@ export default function AccountAddressesPage() {
                 value={pincode}
                 onChange={(e) => handlePincodeChange(e.target.value)}
                 placeholder="6-digit PIN code (e.g. 560001)"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#059669] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
               />
             </div>
 
@@ -446,7 +446,7 @@ export default function AccountAddressesPage() {
                 value={houseBuilding}
                 onChange={(e) => setHouseBuilding(e.target.value)}
                 placeholder="Flat / House no., Floor, Building name"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#059669] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
               />
             </div>
 
@@ -461,7 +461,7 @@ export default function AccountAddressesPage() {
                 value={streetArea}
                 onChange={(e) => setStreetArea(e.target.value)}
                 placeholder="Street name, Area, Locality"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#059669] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
               />
             </div>
 
@@ -475,7 +475,7 @@ export default function AccountAddressesPage() {
                 value={landmark}
                 onChange={(e) => setLandmark(e.target.value)}
                 placeholder="e.g. Near City Park or Behind Hospital (Optional)"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#059669] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
               />
             </div>
 
@@ -491,7 +491,7 @@ export default function AccountAddressesPage() {
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   placeholder="City / Town"
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#059669] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
                 />
               </div>
 
@@ -503,7 +503,7 @@ export default function AccountAddressesPage() {
                   required
                   value={state}
                   onChange={(e) => setState(e.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#059669] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
                 >
                   <option value="">Select State ▼</option>
                   {INDIAN_STATES.map((st) => (
@@ -523,7 +523,7 @@ export default function AccountAddressesPage() {
               <select
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#059669] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white transition"
               >
                 <option value="India">India ▼</option>
               </select>
@@ -540,7 +540,7 @@ export default function AccountAddressesPage() {
                     key={t}
                     className={`flex-1 flex items-center justify-center rounded-2xl border py-2.5 px-3 text-xs font-bold cursor-pointer transition ${
                       addressType === t
-                        ? 'border-[#6D3DF5] bg-purple-50 text-[#6D3DF5] dark:bg-purple-950/40 dark:text-purple-300'
+                        ? 'border-[#059669] bg-emerald-50 text-[#059669] dark:bg-emerald-950/40 dark:text-emerald-300'
                         : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
                     }`}
                   >
@@ -565,7 +565,7 @@ export default function AccountAddressesPage() {
                   type="checkbox"
                   checked={saveForFuture}
                   onChange={(e) => setSaveForFuture(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-[#6D3DF5] focus:ring-[#6D3DF5]"
+                  className="h-4 w-4 rounded border-slate-300 text-[#059669] focus:ring-[#059669]"
                 />
                 <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                   Save this address for future orders
@@ -587,7 +587,7 @@ export default function AccountAddressesPage() {
               <button
                 type="submit"
                 disabled={isSaving}
-                className="rounded-2xl bg-[#6D3DF5] px-7 py-2.5 text-xs font-bold text-white shadow-md shadow-[#6D3DF5]/30 hover:bg-[#5B2FE0] transition disabled:opacity-50"
+                className="rounded-2xl bg-[#059669] px-7 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-950/20 hover:bg-[#047857] transition disabled:opacity-50"
               >
                 {isSaving ? 'Saving Address...' : 'Save Address'}
               </button>

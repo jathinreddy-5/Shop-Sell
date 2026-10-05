@@ -24,7 +24,7 @@ export default function AccountOrdersPage() {
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-slate-100 dark:border-slate-800 gap-4">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600">
+              <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-[#059669]">
                 <Package className="h-6 w-6" />
               </div>
               <div>

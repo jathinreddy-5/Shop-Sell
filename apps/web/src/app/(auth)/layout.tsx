@@ -2,6 +2,7 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Sparkles, ShieldCheck } from 'lucide-react';
+import { BrandIcon } from '@/components/brand/brand-icon';
 
 export const metadata = {
   title: 'Authentication | Shop:Sell Marketplace',
@@ -30,11 +31,11 @@ export default function AuthLayout({
             sizes="50vw"
             className="object-cover object-center filter brightness-[0.88] transition-transform duration-1000 ease-out hover:scale-105"
           />
-          {/* Subtle purple gradient & dark navy overlay with warm yellow glow */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#111827]/60 to-[#6D3DF5]/35 mix-blend-multiply" />
+          {/* Subtle emerald gradient & dark navy overlay with warm yellow glow */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#111827]/60 to-[#047857]/25 mix-blend-multiply" />
           <div className="absolute inset-0 bg-radial-gradient from-transparent via-[#111827]/40 to-[#111827]/85" />
           <div className="absolute top-1/4 -left-12 h-64 w-64 rounded-full bg-[#FFE500]/10 blur-3xl pointer-events-none" />
-          <div className="absolute bottom-1/3 -right-12 h-80 w-80 rounded-full bg-[#6D3DF5]/20 blur-3xl pointer-events-none" />
+          <div className="absolute bottom-1/3 -right-12 h-80 w-80 rounded-full bg-[#10B981]/15 blur-3xl pointer-events-none" />
         </div>
 
         {/* Top Header: Brand Tag */}
@@ -43,8 +44,8 @@ export default function AuthLayout({
             href="/"
             className="inline-flex items-center gap-2.5 rounded-2xl bg-white/10 px-4 py-2 backdrop-blur-md transition hover:bg-white/15"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#6D3DF5] text-sm font-black text-white shadow-md shadow-[#6D3DF5]/30">
-              S
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-tr from-[#047857] to-[#10B981] shadow-md shadow-emerald-900/20">
+              <BrandIcon className="h-5 w-5" />
             </div>
             <span className="text-lg font-black tracking-tight text-white">
               Shop<span className="text-[#FFE500]">:</span>Sell
@@ -81,7 +82,7 @@ export default function AuthLayout({
               <span>Instant Payouts</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
               <span>Zero-Egress Security</span>
             </div>
           </div>
@@ -94,11 +95,11 @@ export default function AuthLayout({
           {/* Mobile Top Brand (visible on small screens where left sidebar is hidden) */}
           <div className="mb-6 flex justify-center lg:hidden">
             <Link href="/" className="inline-flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#6D3DF5] text-base font-black text-white shadow-md shadow-[#6D3DF5]/30">
-                S
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-[#047857] to-[#10B981] shadow-md shadow-emerald-900/20">
+                <BrandIcon className="h-5.5 w-5.5" />
               </div>
               <span className="text-xl font-black tracking-tight text-[#111827] dark:text-white">
-                Shop<span className="text-[#6D3DF5]">:</span>Sell
+                Shop<span className="text-[#059669]">:</span>Sell
               </span>
             </Link>
           </div>

@@ -95,7 +95,7 @@ export default function OrdersHistoryPage() {
                   className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider ${
                     order.status === 'delivered'
                       ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                      : 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300'
+                      : 'bg-emerald-100 text-[#047857] dark:bg-emerald-950 dark:text-emerald-300'
                   }`}
                 >
                   {order.status === 'delivered' ? (
@@ -134,7 +134,7 @@ export default function OrdersHistoryPage() {
 
                   <Link
                     href={`/product/acousticpro-true-wireless-earbuds`}
-                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-700"
+                    className="text-xs font-semibold text-[#059669] hover:text-[#047857]"
                   >
                     Write a Review &rarr;
                   </Link>

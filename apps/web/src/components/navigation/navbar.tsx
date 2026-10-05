@@ -4,11 +4,14 @@ import React from 'react';
 import Link from 'next/link';
 import { ShoppingBag, Heart, Search, Store, User } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
+import { useCart } from '@/lib/cart/cart-context';
 import { SearchAutocomplete } from './search-autocomplete';
 import { LiquidNav } from '@/components/liquid-nav';
+import { BrandIcon } from '@/components/brand/brand-icon';
 
 export function Navbar() {
   const { user, isSeller } = useAuth();
+  const { cartCount } = useCart();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:border-slate-800 dark:bg-slate-900/90">
@@ -17,11 +20,11 @@ export function Navbar() {
       <div className="container mx-auto flex h-16 items-center justify-between gap-4 px-4">
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-xl font-bold text-white shadow-md shadow-indigo-500/20">
-            S
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-[#047857] to-[#10B981] shadow-md shadow-emerald-900/20">
+            <BrandIcon className="h-6 w-6" />
           </div>
           <span className="text-xl font-black tracking-tight text-slate-900 dark:text-white">
-            Shop<span className="text-indigo-600">:</span>Sell
+            Shop<span className="text-[#059669] dark:text-emerald-400">:</span>Sell
           </span>
         </Link>
 
@@ -56,7 +59,7 @@ export function Navbar() {
                 label: 'Cart',
                 href: '/cart',
                 icon: ShoppingBag,
-                badge: 0,
+                badge: cartCount,
               },
               {
                 id: 'account',
@@ -79,6 +82,11 @@ export function Navbar() {
             aria-label="Cart"
           >
             <ShoppingBag className="h-5 w-5" />
+            {cartCount > 0 && (
+              <span className="absolute 0 top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#059669] px-1 text-[10px] font-bold text-white shadow-sm">
+                {cartCount}
+              </span>
+            )}
           </Link>
           <Link
             href={user ? '/account' : '/login'}

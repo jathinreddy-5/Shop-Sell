@@ -381,7 +381,7 @@ export function OnboardingModal({
         {/* Header with Step Indicator & Skip Button */}
         <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
           <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-purple-100 text-xs font-bold text-[#6D3DF5] dark:bg-purple-950/60 dark:text-purple-400">
+            <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-100 text-xs font-bold text-[#059669] dark:bg-emerald-950/60 dark:text-emerald-400">
               {step}/2
             </span>
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -441,7 +441,7 @@ export function OnboardingModal({
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="e.g. Priya Sharma"
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#6D3DF5]/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-[#059669] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#059669]/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
               <p className="mt-1 text-[11px] text-slate-400">
                 Purpose: Needed for order delivery receipts, tax invoices, and shipping labels.
@@ -469,11 +469,11 @@ export function OnboardingModal({
                   value={pincode}
                   onChange={(e) => setPincode(e.target.value.replace(/\D/g, ''))}
                   placeholder="e.g. 560034"
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 pl-9 pr-10 py-2.5 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#6D3DF5]/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 pl-9 pr-10 py-2.5 text-sm font-medium text-slate-900 focus:border-[#059669] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#059669]/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
                 {isCheckingPincode && (
                   <div className="absolute right-3">
-                    <LoadingThreeDotsJumping size={16} color="#6D3DF5" />
+                    <LoadingThreeDotsJumping size={16} color="#059669" />
                   </div>
                 )}
               </div>
@@ -493,7 +493,7 @@ export function OnboardingModal({
                         <button
                           type="button"
                           onClick={handleJoinWaitlist}
-                          className="mt-1.5 text-xs font-bold text-[#6D3DF5] underline hover:text-[#5B2FE0]"
+                          className="mt-1.5 text-xs font-bold text-[#059669] underline hover:text-[#047857]"
                         >
                           Join pincode waitlist
                         </button>
@@ -526,9 +526,9 @@ export function OnboardingModal({
                       role="checkbox"
                       aria-checked={selected}
                       onClick={() => toggleInterest(interest.id)}
-                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                      className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
                         selected
-                          ? 'bg-[#6D3DF5] text-white shadow-sm'
+                          ? 'bg-[#059669] text-white shadow-sm'
                           : 'bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300'
                       }`}
                     >
@@ -545,9 +545,9 @@ export function OnboardingModal({
 
             {/* Conditional Apparel Sizing Reveal (No Layout Shift) */}
             {hasApparelSelected && (
-              <div className="rounded-2xl border border-purple-100 bg-purple-50/60 p-3.5 dark:border-purple-900/30 dark:bg-purple-950/20">
-                <div className="flex items-center gap-2 mb-2 text-xs font-bold text-purple-900 dark:text-purple-300">
-                  <Shirt className="h-4 w-4 text-[#6D3DF5]" />
+              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-3.5 dark:border-emerald-900/30 dark:bg-emerald-950/20">
+                <div className="flex items-center gap-2 mb-2 text-xs font-bold text-emerald-900 dark:text-emerald-300">
+                  <Shirt className="h-4 w-4 text-[#059669]" />
                   <span>Sizing Preferences (Optional)</span>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -586,7 +586,7 @@ export function OnboardingModal({
                     </select>
                   </div>
                 </div>
-                <p className="mt-1.5 text-[10px] text-purple-700/80 dark:text-purple-400">
+                <p className="mt-1.5 text-[10px] text-emerald-700/80 dark:text-emerald-400">
                   Purpose: Used solely for size filtering recommendations.
                 </p>
               </div>
@@ -605,7 +605,7 @@ export function OnboardingModal({
               <button
                 type="submit"
                 disabled={isSaving}
-                className="inline-flex items-center gap-2 rounded-2xl bg-[#6D3DF5] px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-[#6D3DF5]/30 hover:bg-[#5B2FE0] transition disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-2xl bg-[#059669] px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-950/20 hover:bg-[#047857] transition disabled:opacity-50"
               >
                 <span>Continue to Step 2</span>
                 <ArrowRight className="h-3.5 w-3.5" />
@@ -645,7 +645,7 @@ export function OnboardingModal({
                       value={contactInput}
                       onChange={(e) => setContactInput(e.target.value)}
                       placeholder="+91 98765 43210"
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 pl-9 pr-3 py-2 text-sm font-medium text-slate-900 focus:border-[#6D3DF5] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 pl-9 pr-3 py-2 text-sm font-medium text-slate-900 focus:border-[#059669] focus:bg-white focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                     />
                   </div>
 
@@ -654,7 +654,7 @@ export function OnboardingModal({
                       type="button"
                       disabled={otpCooldown > 0}
                       onClick={handleSendOtp}
-                      className="rounded-2xl border border-[#6D3DF5] px-3.5 py-2 text-xs font-bold text-[#6D3DF5] hover:bg-[#6D3DF5]/10 disabled:opacity-50"
+                      className="rounded-2xl border border-[#059669] px-3.5 py-2 text-xs font-bold text-[#059669] hover:bg-emerald-50 disabled:opacity-50"
                     >
                       {otpCooldown > 0 ? `${otpCooldown}s` : otpSent ? 'Resend' : 'Send OTP'}
                     </button>
@@ -674,13 +674,13 @@ export function OnboardingModal({
                       value={otp}
                       onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                       placeholder="Enter 6-digit OTP (dev: 123456)"
-                      className="w-48 rounded-xl border border-purple-200 p-2 text-xs font-bold tracking-widest text-center focus:outline-none dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                      className="w-48 rounded-xl border border-emerald-200 p-2 text-xs font-bold tracking-widest text-center focus:outline-none dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                     />
                     <button
                       type="button"
                       onClick={handleVerifyOtp}
                       disabled={isVerifyingOtp || otp.length !== 6}
-                      className="rounded-xl bg-[#6D3DF5] px-3 py-2 text-xs font-bold text-white hover:bg-[#5B2FE0] disabled:opacity-50"
+                      className="rounded-xl bg-[#059669] px-3 py-2 text-xs font-bold text-white hover:bg-[#047857] disabled:opacity-50"
                     >
                       {isVerifyingOtp ? 'Verifying...' : 'Verify'}
                     </button>
@@ -711,7 +711,7 @@ export function OnboardingModal({
                     onClick={() => setShoppingFor(opt.id as any)}
                     className={`rounded-2xl px-3 py-1.5 text-xs font-semibold border transition ${
                       shoppingFor === opt.id
-                        ? 'border-[#6D3DF5] bg-purple-50 text-[#6D3DF5] dark:bg-purple-950/50 dark:text-purple-300'
+                        ? 'border-[#059669] bg-emerald-50 text-[#059669] dark:bg-emerald-950/50 dark:text-emerald-300'
                         : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
                     }`}
                   >
@@ -742,7 +742,7 @@ export function OnboardingModal({
                     onClick={() => setGender(opt.id as any)}
                     className={`rounded-2xl px-3 py-1.5 text-xs font-semibold border transition ${
                       gender === opt.id
-                        ? 'border-[#6D3DF5] bg-purple-50 text-[#6D3DF5] dark:bg-purple-950/50 dark:text-purple-300'
+                        ? 'border-[#059669] bg-emerald-50 text-[#059669] dark:bg-emerald-950/50 dark:text-emerald-300'
                         : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
                     }`}
                   >
@@ -762,11 +762,11 @@ export function OnboardingModal({
                   type="checkbox"
                   checked={marketingConsent}
                   onChange={(e) => setMarketingConsent(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#6D3DF5] focus:ring-[#6D3DF5]"
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#059669] focus:ring-[#059669]"
                 />
                 <span className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                   I agree to receive occasional personalized offers, artisan spotlight newsletters, and festival discounts via WhatsApp, SMS, or Email. You can unsubscribe anytime in Account Settings. See{' '}
-                  <Link href="/privacy" className="text-[#6D3DF5] underline" target="_blank">
+                  <Link href="/privacy" className="text-[#059669] underline" target="_blank">
                     Privacy Policy
                   </Link>
                   .
@@ -788,7 +788,7 @@ export function OnboardingModal({
                 type="button"
                 onClick={handleStep2Submit}
                 disabled={isSaving}
-                className="inline-flex items-center gap-2 rounded-2xl bg-[#6D3DF5] px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-[#6D3DF5]/30 hover:bg-[#5B2FE0] transition disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-2xl bg-[#059669] px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-950/20 hover:bg-[#047857] transition disabled:opacity-50"
               >
                 <span>{isSaving ? 'Saving...' : 'Complete Setup'}</span>
                 <CheckCircle2 className="h-4 w-4" />

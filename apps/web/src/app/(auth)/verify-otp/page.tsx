@@ -104,7 +104,7 @@ function VerifyOtpContent() {
       className="w-full rounded-3xl border border-[#E2E8F0] bg-white p-6 sm:p-10 shadow-xl shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none"
     >
       <div className="mb-6 text-center">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#6D3DF5]/10 text-[#6D3DF5] dark:bg-purple-950/50 dark:text-purple-400">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-[#059669] dark:bg-emerald-950/50 dark:text-emerald-400">
           <ShieldCheck className="h-6 w-6" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#111827] dark:text-white">
@@ -157,7 +157,7 @@ function VerifyOtpContent() {
         <button
           type="submit"
           disabled={isSubmitting || otp.length !== 6}
-          className="flex h-12 w-full items-center justify-center rounded-2xl bg-[#6D3DF5] px-4 font-semibold text-white shadow-lg shadow-[#6D3DF5]/25 transition hover:bg-[#5B2FE0] active:scale-[0.99] disabled:opacity-50"
+          className="flex h-12 w-full items-center justify-center rounded-2xl bg-[#059669] px-4 font-semibold text-white shadow-lg shadow-emerald-950/20 transition hover:bg-[#047857] active:scale-[0.99] disabled:opacity-50"
         >
           {isSubmitting ? (
             <LoadingThreeDotsJumping
@@ -178,14 +178,14 @@ function VerifyOtpContent() {
         <span>Didn&apos;t receive the code?</span>
         {countdown > 0 ? (
           <span className="font-semibold text-slate-500">
-            Resend in <span className="font-mono text-[#6D3DF5] font-bold">{countdown}s</span>
+            Resend in <span className="font-mono text-[#059669] font-bold">{countdown}s</span>
           </span>
         ) : (
           <button
             type="button"
             onClick={handleResend}
             disabled={isResending}
-            className="inline-flex items-center gap-1.5 font-bold text-[#6D3DF5] hover:text-[#5B2FE0] hover:underline transition"
+            className="inline-flex items-center gap-1.5 font-bold text-[#059669] hover:text-[#047857] hover:underline transition"
           >
             <RefreshCw className={`h-3 w-3 ${isResending ? 'animate-spin' : ''}`} />
             <span>Resend OTP</span>
@@ -213,7 +213,7 @@ export default function VerifyOtpPage() {
       fallback={
         <div className="flex min-h-[300px] items-center justify-center">
           <LoadingThreeDotsJumping
-            color="#6D3DF5"
+            color="#059669"
             label="Loading verification screen"
           />
         </div>

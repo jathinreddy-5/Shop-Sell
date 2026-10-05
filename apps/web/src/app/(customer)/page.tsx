@@ -25,6 +25,9 @@ import {
 } from '../../components/expanding-cards';
 import { LoadingThreeDotsJumping } from '../../components/loading';
 import { getProductImage } from '@/lib/products/product-images';
+import { useAuth } from '@/lib/auth/auth-context';
+import { useCart } from '@/lib/cart/cart-context';
+import { DraggablePeekSheet } from '@/components/peek-sheet';
 
 const fallbackHomeData: HomeRecommendationsResponse = ({
   recentSearches: [
@@ -203,6 +206,117 @@ const fallbackHomeData: HomeRecommendationsResponse = ({
   ],
 }) as unknown as HomeRecommendationsResponse;
 
+const promoBanners = [
+  {
+    id: 'deal-s25fe',
+    brand: 'SAMSUNG',
+    tag: 'Starts 9th Oct',
+    subtag: 'Early Access on 8th Oct',
+    title: 'Galaxy S25 FE | Galaxy AI',
+    price: 'From ₹46,999',
+    caption: 'Ready for your next camera upgrade',
+    bg: 'from-[#047857] via-[#059669] to-[#065F46]',
+    accent: 'bg-[#D1FAE5] text-[#065F46]',
+    banks: ['Axis Bank', 'ICICI Bank'],
+    bankOffer: '10% Instant Discount',
+  },
+  {
+    id: 'deal-mivi-5g',
+    brand: 'MIVI',
+    tag: 'Flipkart Unique',
+    subtag: 'Sale on 8th Oct, 12 AM',
+    title: 'Mivi One 5G',
+    price: 'From ₹11,999*',
+    caption: 'Powered by Snapdragon 4 Gen 2',
+    bg: 'from-[#1C1917] via-[#292524] to-[#1C1917]',
+    accent: 'bg-[#D1FAE5] text-[#065F46]',
+    banks: ['Axis Bank', 'ICICI Bank'],
+    bankOffer: '10% Instant Discount',
+  },
+  {
+    id: 'deal-s25-ultra',
+    brand: 'SAMSUNG',
+    tag: 'Flat Offer',
+    subtag: 'Exchange Bonus',
+    title: 'Galaxy S25 Ultra',
+    price: 'Just ₹57,999*',
+    caption: 'Pay 1,000 and get flat 2,000 off',
+    bg: 'from-[#065F46] via-[#047857] to-[#1F2937]',
+    accent: 'bg-[#FEF08A] text-[#713F12]',
+    banks: ['Axis Bank', 'ICICI Bank'],
+    bankOffer: '10% Instant Discount',
+  },
+  {
+    id: 'deal-apple-airpods',
+    brand: 'APPLE',
+    tag: 'Bestseller',
+    subtag: 'Free Engraving',
+    title: 'AirPods Pro (2nd Gen)',
+    price: 'Just ₹17,999*',
+    caption: 'Active Noise Cancellation with Type-C',
+    bg: 'from-[#18181B] via-[#27272A] to-[#18181B]',
+    accent: 'bg-[#D1FAE5] text-[#065F46]',
+    banks: ['HDFC Bank', 'SBI Card'],
+    bankOffer: '₹2,500 Instant Cashback',
+  },
+  {
+    id: 'deal-sony-wh1000xm5',
+    brand: 'SONY',
+    tag: 'Lowest Price',
+    subtag: 'Industry Leader',
+    title: 'Sony WH-1000XM5 ANC',
+    price: 'Under ₹24,990*',
+    caption: '30hr Battery with Dual Processor V1',
+    bg: 'from-[#047857] via-[#059669] to-[#065F46]',
+    accent: 'bg-[#FEF08A] text-[#713F12]',
+    banks: ['Kotak', 'Axis Bank'],
+    bankOffer: 'Extra ₹1,500 Off with Exchange',
+  },
+  {
+    id: 'deal-realme-pad',
+    brand: 'REALME',
+    tag: 'Crazy Deal',
+    subtag: '120Hz 2K Display',
+    title: 'Realme Pad 2 11.5"',
+    price: 'From ₹13,499*',
+    caption: '8360mAh Battery • Dolby Atmos Quad Speakers',
+    bg: 'from-[#1C1917] via-[#047857]/70 to-[#1C1917]',
+    accent: 'bg-[#D1FAE5] text-[#065F46]',
+    banks: ['ICICI Bank', 'OneCard'],
+    bankOffer: 'No Cost EMI from ₹1,499/mo',
+  },
+  {
+    id: 'deal-noise-smartwatch',
+    brand: 'NOISE',
+    tag: 'Festive Launch',
+    subtag: 'Bluetooth Calling',
+    title: 'ColorFit Pro 5 Max',
+    price: 'Just ₹2,499*',
+    caption: 'Stainless Steel Strap • AMOLED Always-On',
+    bg: 'from-[#065F46] via-[#059669] to-[#047857]',
+    accent: 'bg-[#D1FAE5] text-[#065F46]',
+    banks: ['Axis Bank', 'ICICI Bank'],
+    bankOffer: 'Flat 65% Off + Extra 10%',
+  },
+];
+
+const categoryTabs = [
+  'For You',
+  'Fashion',
+  'Mobiles',
+  'Electronics',
+  'Beauty',
+  'Home',
+  'Appliances',
+  'Toys & Baby',
+  'Food & More',
+  'Auto Accs',
+  'Sports & Fit',
+  'Furniture',
+  'Books',
+  '2-Wheelers',
+];
+
 const categoryShortcuts = [
   { name: 'Electronics & Audio', slug: 'electronics-gadgets', count: '45+ items', icon: '🎧' },
   { name: 'Home & Ceramics', slug: 'home-kitchen', count: '38+ items', icon: '🏺' },
@@ -304,11 +418,39 @@ function mapProductToExpandingCard(p: any): ExpandingCardItem {
   };
 }
 
-function renderProductDetail(
-  item: ExpandingCardItem,
-  onClose: () => void
-) {
+function ProductDetailModalContent({
+  item,
+  onClose,
+}: {
+  item: ExpandingCardItem;
+  onClose: () => void;
+}) {
+  const { user } = useAuth();
+  const { addToCart, openLoginPrompt } = useCart();
+  const [added, setAdded] = useState(false);
   const meta = item.metadata || {};
+
+  const handleAddToCart = () => {
+    if (!user) {
+      onClose();
+      openLoginPrompt(item.title);
+      return;
+    }
+    const success = addToCart({
+      id: item.id,
+      name: item.title,
+      slug: meta.slug || 'sample',
+      store: meta.store,
+      price: typeof meta.price === 'number' ? meta.price : 2499,
+      qty: 1,
+      image: item.image,
+    });
+    if (success) {
+      setAdded(true);
+      setTimeout(() => setAdded(false), 2000);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-5 dark:border-slate-800">
@@ -347,13 +489,11 @@ function renderProductDetail(
       <div className="flex flex-col sm:flex-row items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
         <button
           type="button"
-          onClick={() => {
-            alert(`Added ${item.title} to Cart!`);
-          }}
-          className="flex-1 w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-indigo-600/30 transition hover:bg-indigo-500"
+          onClick={handleAddToCart}
+          className="flex-1 w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-[#059669] px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-emerald-950/20 transition hover:bg-[#047857]"
         >
           <ShoppingBag className="h-5 w-5" />
-          <span>Add to Cart ({meta.priceFormatted})</span>
+          <span>{added ? 'Added to Cart!' : `Add to Cart (${meta.priceFormatted})`}</span>
         </button>
 
         <Link
@@ -367,6 +507,13 @@ function renderProductDetail(
       </div>
     </div>
   );
+}
+
+function renderProductDetail(
+  item: ExpandingCardItem,
+  onClose: () => void
+) {
+  return <ProductDetailModalContent item={item} onClose={onClose} />;
 }
 
 function renderCategoryDetail(
@@ -386,7 +533,7 @@ function renderCategoryDetail(
               key={sub}
               href={`/search?q=${encodeURIComponent(sub)}`}
               onClick={onClose}
-              className="rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1 text-xs font-semibold text-slate-700 hover:border-indigo-500 hover:text-indigo-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              className="rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1 text-xs font-semibold text-slate-700 hover:border-emerald-500 hover:text-[#059669] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
             >
               {sub}
             </Link>
@@ -404,10 +551,10 @@ function renderCategoryDetail(
               key={p.slug}
               href={`/product/${p.slug}`}
               onClick={onClose}
-              className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-3 hover:border-indigo-400 transition dark:border-slate-800 dark:bg-slate-800/40"
+              className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-3 hover:border-emerald-400 transition dark:border-slate-800 dark:bg-slate-800/40"
             >
               <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{p.name}</span>
-              <span className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{p.price}</span>
+              <span className="text-sm font-bold text-[#059669] dark:text-emerald-400">{p.price}</span>
             </Link>
           ))}
         </div>
@@ -417,7 +564,7 @@ function renderCategoryDetail(
         <Link
           href={`/category/${meta.slug}`}
           onClick={onClose}
-          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3.5 text-base font-bold text-white shadow-lg transition hover:bg-indigo-500"
+          className="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-[#059669] px-6 py-3.5 text-base font-bold text-white shadow-lg transition hover:bg-[#047857]"
         >
           <span>Explore Entire {item.title} Department</span>
           <ArrowRight className="h-4 w-4" />
@@ -430,6 +577,8 @@ function renderCategoryDetail(
 export default function CustomerHomePage() {
   const [data, setData] = useState<HomeRecommendationsResponse>(fallbackHomeData);
   const [loading, setLoading] = useState(false);
+  const [activeBanner, setActiveBanner] = useState<string | null>(null);
+  const [activeCategoryTab, setActiveCategoryTab] = useState<string>('For You');
 
   useEffect(() => {
     // Attempt real API fetch
@@ -479,15 +628,98 @@ export default function CustomerHomePage() {
 
   return (
     <div className="container mx-auto space-y-12 px-4 py-8">
+      {/* 0. CATEGORY TABS & HERO PROMOTIONAL BANNER CAROUSEL */}
+      <section className="-mx-4 -mt-4 mb-4 space-y-3 sm:mx-0 sm:mt-0">
+        {/* Category Tabs Strip */}
+        <div className="flex items-center gap-4 overflow-x-auto no-scrollbar border-b border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 sm:rounded-2xl sm:border">
+          {categoryTabs.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveCategoryTab(tab)}
+              className={`shrink-0 transition-colors pb-0.5 ${
+                activeCategoryTab === tab
+                  ? 'border-b-2 border-[#059669] font-bold text-[#059669] dark:border-emerald-400 dark:text-emerald-400'
+                  : 'hover:text-stone-900 dark:hover:text-white'
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        {/* Banner Carousel */}
+        <div className="px-4 sm:px-0">
+          <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto no-scrollbar pb-2">
+            {promoBanners.map((banner) => (
+              <div
+                key={banner.id}
+                onClick={() => setActiveBanner(banner.id)}
+                className={`group relative w-[86vw] max-w-sm shrink-0 snap-start cursor-pointer overflow-hidden rounded-3xl bg-gradient-to-br ${banner.bg} p-5 text-white shadow-lg transition hover:scale-[1.01] hover:shadow-xl sm:w-[370px]`}
+              >
+                <div className="flex items-start justify-between">
+                  <span className="text-xs font-black tracking-wider text-slate-200">
+                    {banner.brand}
+                  </span>
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider ${banner.accent}`}
+                  >
+                    {banner.tag}
+                  </span>
+                </div>
+
+                <div className="mt-4">
+                  <h3 className="text-lg font-black leading-tight sm:text-xl">
+                    {banner.title}
+                  </h3>
+                  <p className="mt-1 text-sm font-extrabold text-amber-300">
+                    {banner.price}
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-300">{banner.caption}</p>
+                </div>
+
+                <div className="mt-5 flex items-center justify-between border-t border-white/15 pt-2.5 text-[10px] text-slate-300">
+                  <div className="flex items-center gap-1.5">
+                    <span className="rounded bg-white/15 px-1.5 py-0.5 font-medium">
+                      {banner.banks.join(' / ')}
+                    </span>
+                    <span className="text-amber-200 font-semibold">{banner.bankOffer}</span>
+                  </div>
+                  <div className="flex items-center gap-1 font-bold text-emerald-200 group-hover:text-white">
+                    <span>Peek Deals</span>
+                    <span>&uarr;</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Carousel Pagination Indicator Dots */}
+          <div className="flex justify-center items-center gap-1.5 pt-2">
+            {promoBanners.map((banner) => (
+              <button
+                key={banner.id}
+                onClick={() => setActiveBanner(banner.id)}
+                aria-label={`Go to ${banner.title}`}
+                className={`h-1.5 rounded-full transition-all ${
+                  activeBanner === banner.id
+                    ? 'w-5 bg-[#059669] dark:bg-emerald-400'
+                    : 'w-1.5 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400 dark:hover:bg-slate-600'
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* 1. TOP SECTION: "Pick up where you left off" */}
       {data.recentSearches && data.recentSearches.length > 0 && (
         <section
           id="top-pickup-section"
-          className="rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-50/70 via-white to-violet-50/50 p-6 shadow-sm dark:border-indigo-950 dark:from-slate-900 dark:via-slate-900/60 dark:to-indigo-950/30"
+          className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50/70 via-white to-teal-50/50 p-6 shadow-sm dark:border-emerald-950 dark:from-slate-900 dark:via-slate-900/60 dark:to-emerald-950/30"
         >
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-sm">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#059669] text-white shadow-sm">
                 <Sparkles className="h-4 w-4" />
               </span>
               <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
@@ -510,7 +742,7 @@ export default function CustomerHomePage() {
             {data.recentSearches.slice(0, 5).map((query) => (
               <span
                 key={query}
-                className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200/80 bg-white px-3 py-1 text-xs font-medium text-indigo-900 shadow-sm transition hover:border-indigo-400 dark:border-indigo-800 dark:bg-slate-800 dark:text-indigo-200"
+                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-white px-3 py-1 text-xs font-medium text-emerald-900 shadow-sm transition hover:border-emerald-400 dark:border-emerald-800 dark:bg-slate-800 dark:text-emerald-200"
               >
                 <Link href={`/search?q=${encodeURIComponent(query)}`}>
                   {query}
@@ -542,7 +774,7 @@ export default function CustomerHomePage() {
                 </div>
                 <Link
                   href={`/search?q=${encodeURIComponent(rail.title.replace(/Because you searched "([^"]+)"/, '$1'))}`}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-[#059669] hover:text-[#047857] dark:text-emerald-400"
                 >
                   View more <ArrowRight className="h-3 w-3" />
                 </Link>
@@ -559,23 +791,23 @@ export default function CustomerHomePage() {
       )}
 
       {/* 1.5. APP STORE "TODAY" SPOTLIGHT BANNER */}
-      <section className="relative overflow-hidden rounded-3xl border border-indigo-500/20 bg-gradient-to-r from-slate-950 via-indigo-950/80 to-slate-900 p-6 sm:p-8 shadow-xl">
+      <section className="relative overflow-hidden rounded-3xl border border-emerald-600/20 bg-gradient-to-r from-[#065F46] via-[#047857] to-[#1F2937] p-6 sm:p-8 shadow-xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="max-w-xl space-y-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-500/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-indigo-300 border border-indigo-500/30">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-300 border border-emerald-500/30">
               <Sparkles className="h-3.5 w-3.5" />
               Featured Editorial
             </span>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
               Today in Shop:Sell Spotlight
             </h2>
-            <p className="text-sm text-slate-300">
+            <p className="text-sm text-stone-200">
               Experience our App Store &ldquo;Today&rdquo; style interactive shared-layout cards. Click into high-resolution artisan showcases with zero page flicker.
             </p>
           </div>
           <Link
             href="/demo/today"
-            className="inline-flex items-center gap-2 self-start md:self-auto rounded-2xl bg-indigo-600 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-indigo-600/30 transition hover:bg-indigo-500"
+            className="inline-flex items-center gap-2 self-start md:self-auto rounded-2xl bg-[#059669] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-950/30 transition hover:bg-[#047857]"
           >
             <span>Explore Today Cards</span>
             <ArrowRight className="h-4 w-4" />
@@ -587,7 +819,7 @@ export default function CustomerHomePage() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Compass className="h-5 w-5 text-indigo-600" />
+            <Compass className="h-5 w-5 text-[#059669] dark:text-emerald-400" />
             <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
               Recommended for You
             </h2>
@@ -610,14 +842,14 @@ export default function CustomerHomePage() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-indigo-600" />
+            <TrendingUp className="h-5 w-5 text-[#059669] dark:text-emerald-400" />
             <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
               Trending Near You
             </h2>
           </div>
           <Link
             href="/search?sort=popular"
-            className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
+            className="text-xs font-semibold text-[#059669] hover:text-[#047857] dark:text-emerald-400"
           >
             Explore trending collection &rarr;
           </Link>
@@ -636,7 +868,7 @@ export default function CustomerHomePage() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Tag className="h-5 w-5 text-indigo-600" />
+            <Tag className="h-5 w-5 text-[#059669] dark:text-emerald-400" />
             <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
               Explore Curated Departments
             </h2>
@@ -658,7 +890,7 @@ export default function CustomerHomePage() {
       {/* 5. TRUST BADGES */}
       <section className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-slate-50/50 p-6 sm:grid-cols-3 dark:border-slate-800 dark:bg-slate-900/40">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-[#047857] dark:bg-emerald-950 dark:text-emerald-400">
             <Truck className="h-5 w-5" />
           </div>
           <div>
@@ -699,6 +931,9 @@ export default function CustomerHomePage() {
           </div>
         </div>
       </section>
+
+      {/* 6. DRAGGABLE BOTTOM PEEK SHEET */}
+      <DraggablePeekSheet activeSpotlightId={activeBanner} />
     </div>
   );
 }
@@ -729,7 +964,7 @@ function ProductCard({ product }: { product: any }) {
           <span className="text-slate-400">({reviewCount})</span>
         </div>
         <Link href={`/product/${slug}`}>
-          <h4 className="line-clamp-2 text-sm font-semibold text-slate-900 transition hover:text-indigo-600 dark:text-white dark:hover:text-indigo-400">
+          <h4 className="line-clamp-2 text-sm font-semibold text-slate-900 transition hover:text-[#059669] dark:text-white dark:hover:text-emerald-400">
             {product.name}
           </h4>
         </Link>

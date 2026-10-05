@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth/auth-context';
 import { OtpInput } from '@/components/auth/otp-input';
 import { LoadingThreeDotsJumping } from '@/components/loading';
 import { Turnstile } from '@marsidev/react-turnstile';
+import { BrandIcon } from '@/components/brand/brand-icon';
 
 function LoginForm() {
   const router = useRouter();
@@ -149,11 +150,11 @@ function LoginForm() {
       {/* Brand Header */}
       <div className="mb-6 text-center">
         <Link href="/" className="inline-flex items-center gap-2 mb-3 group focus:outline-none">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#6D3DF5] to-[#8B5CF6] text-xl font-bold text-white shadow-md shadow-[#6D3DF5]/30">
-            S
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-[#047857] to-[#10B981] shadow-md shadow-emerald-900/20">
+            <BrandIcon className="h-6.5 w-6.5" />
           </div>
           <span className="text-2xl font-black tracking-tight text-[#111827] dark:text-white">
-            Shop<span className="text-[#6D3DF5]">:</span>Sell
+            Shop<span className="text-[#059669] dark:text-emerald-400">:</span>Sell
           </span>
         </Link>
 
@@ -168,7 +169,7 @@ function LoginForm() {
           </>
         ) : (
           <>
-            <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-[#6D3DF5]/10 text-[#6D3DF5] dark:bg-purple-950/50 dark:text-purple-400">
+            <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-[#059669]/10 text-[#059669] dark:bg-emerald-950/50 dark:text-emerald-400">
               <ShieldCheck className="h-5 w-5" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#111827] dark:text-white">
@@ -188,7 +189,7 @@ function LoginForm() {
                   setErrorMessage(null);
                   setInfoMessage(null);
                 }}
-                className="text-xs font-semibold text-[#6D3DF5] hover:underline focus:outline-none"
+                className="text-xs font-semibold text-[#059669] hover:underline focus:outline-none"
               >
                 Change
               </button>
@@ -235,7 +236,7 @@ function LoginForm() {
                 className={`relative flex items-center rounded-2xl border bg-white dark:bg-slate-800 transition-all duration-200 ${
                   errorMessage
                     ? 'border-red-300 ring-2 ring-red-100 dark:border-red-800 dark:ring-red-950'
-                    : 'border-[#E2E8F0] focus-within:border-[#6D3DF5] focus-within:ring-2 focus-within:ring-[#6D3DF5]/20 dark:border-slate-700'
+                    : 'border-[#E2E8F0] focus-within:border-[#059669] focus-within:ring-2 focus-within:ring-[#059669]/20 dark:border-slate-700'
                 }`}
               >
                 <div className="pl-3.5 pr-2 text-[#64748B] dark:text-slate-400">
@@ -275,7 +276,7 @@ function LoginForm() {
               type="submit"
               data-testid="send-otp-btn"
               disabled={isSubmitting}
-              className="relative flex w-full items-center justify-center rounded-2xl bg-[#6D3DF5] py-3.5 text-sm font-bold text-white shadow-lg shadow-[#6D3DF5]/25 transition duration-200 hover:bg-[#5B2FE0] focus:outline-none focus:ring-2 focus:ring-[#6D3DF5] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="relative flex w-full items-center justify-center rounded-2xl bg-[#059669] py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-950/20 transition duration-200 hover:bg-[#047857] focus:outline-none focus:ring-2 focus:ring-[#059669] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <LoadingThreeDotsJumping color="#FFFFFF" size={24} />
@@ -288,11 +289,11 @@ function LoginForm() {
           {/* Terms Agreement */}
           <p className="pt-1 text-center text-xs leading-relaxed text-[#64748B] dark:text-slate-400">
             By continuing, you agree to Shop:Sell&apos;s{' '}
-            <Link href="/terms" className="font-medium text-[#6D3DF5] hover:underline">
+            <Link href="/terms" className="font-medium text-[#059669] hover:underline">
               Terms of Service
             </Link>{' '}
             and{' '}
-            <Link href="/privacy" className="font-medium text-[#6D3DF5] hover:underline">
+            <Link href="/privacy" className="font-medium text-[#059669] hover:underline">
               Privacy Policy
             </Link>
             .
@@ -339,8 +340,8 @@ function LoginForm() {
 
           {/* Quick Demo Sign-In strictly gated for development/testing */}
           {process.env.NEXT_PUBLIC_ENABLE_DEMO_ACCOUNTS === 'true' && (
-            <div className="mt-5 rounded-2xl border border-dashed border-[#6D3DF5]/30 bg-[#6D3DF5]/5 p-3.5 text-center dark:border-purple-800 dark:bg-purple-950/20">
-              <p className="text-xs font-semibold text-[#6D3DF5] dark:text-purple-300 mb-2">
+            <div className="mt-5 rounded-2xl border border-dashed border-emerald-600/30 bg-emerald-500/5 p-3.5 text-center dark:border-emerald-800 dark:bg-emerald-950/20">
+              <p className="text-xs font-semibold text-[#059669] dark:text-emerald-300 mb-2">
                 ⚡ Quick Demo Sign-In (Dev Only)
               </p>
               <div className="flex flex-wrap items-center justify-center gap-2">
@@ -371,7 +372,7 @@ function LoginForm() {
                     await loginAsDevRole('admin', 'demo-admin@shopsell.test');
                     router.push('/admin');
                   }}
-                  className="rounded-xl bg-purple-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-purple-700 transition"
+                  className="rounded-xl bg-stone-800 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-stone-900 transition"
                 >
                   🛡️ Demo Admin
                 </button>
@@ -384,7 +385,7 @@ function LoginForm() {
             Don&apos;t have an account?{' '}
             <Link
               href={`/signup${redirectUrl && redirectUrl !== '/' ? `?redirect=${encodeURIComponent(redirectUrl)}` : ''}`}
-              className="font-bold text-[#6D3DF5] hover:text-[#5B2FE0] hover:underline"
+              className="font-bold text-[#059669] hover:text-[#047857] hover:underline"
             >
               Sign up
             </Link>
@@ -409,7 +410,7 @@ function LoginForm() {
             data-testid="verify-otp-btn"
             onClick={() => handleVerifyOtp()}
             disabled={isSubmitting || otp.length !== 6}
-            className="relative flex w-full items-center justify-center rounded-2xl bg-[#6D3DF5] py-3.5 text-sm font-bold text-white shadow-lg shadow-[#6D3DF5]/25 transition duration-200 hover:bg-[#5B2FE0] focus:outline-none focus:ring-2 focus:ring-[#6D3DF5] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="relative flex w-full items-center justify-center rounded-2xl bg-[#059669] py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-950/20 transition duration-200 hover:bg-[#047857] focus:outline-none focus:ring-2 focus:ring-[#059669] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
               <LoadingThreeDotsJumping color="#FFFFFF" size={24} />
@@ -430,7 +431,7 @@ function LoginForm() {
                 type="button"
                 onClick={handleResendOtp}
                 disabled={isResending}
-                className="font-bold text-[#6D3DF5] hover:text-[#5B2FE0] hover:underline focus:outline-none disabled:opacity-50"
+                className="font-bold text-[#059669] hover:text-[#047857] hover:underline focus:outline-none disabled:opacity-50"
               >
                 {isResending ? 'Resending...' : 'Resend Code'}
               </button>
@@ -467,7 +468,7 @@ export default function LoginPage() {
     <Suspense
       fallback={
         <div className="flex h-64 w-full items-center justify-center">
-          <LoadingThreeDotsJumping color="#6D3DF5" size={28} />
+          <LoadingThreeDotsJumping color="#059669" size={28} />
         </div>
       }
     >

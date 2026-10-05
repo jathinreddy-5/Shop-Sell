@@ -58,7 +58,7 @@ export default function SellerLayout({
           <div className="flex flex-col gap-2.5 pt-2">
             <Link
               href="/become-a-seller"
-              className="w-full rounded-2xl bg-[#6D3DF5] py-3 text-xs font-bold text-white shadow-md shadow-[#6D3DF5]/20 hover:bg-[#5B2FE0] transition text-center"
+              className="w-full rounded-2xl bg-[#059669] py-3 text-xs font-bold text-white shadow-md shadow-emerald-950/20 hover:bg-[#047857] transition text-center"
             >
               Submit or View Seller Application
             </Link>

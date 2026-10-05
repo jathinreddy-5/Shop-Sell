@@ -68,7 +68,7 @@ function ResetPasswordContent() {
       className="w-full rounded-3xl border border-[#E2E8F0] bg-white p-6 sm:p-10 shadow-xl shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none"
     >
       <div className="mb-6 text-center">
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#6D3DF5]/10 text-[#6D3DF5] dark:bg-purple-950/50 dark:text-purple-400">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#059669]/10 text-[#059669] dark:bg-emerald-950/50 dark:text-emerald-400">
           <KeyRound className="h-6 w-6" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#111827] dark:text-white">
@@ -97,7 +97,7 @@ function ResetPasswordContent() {
 
           <Link
             href="/login"
-            className="flex h-12 w-full items-center justify-center rounded-2xl bg-[#6D3DF5] px-4 font-semibold text-white shadow-lg shadow-[#6D3DF5]/25 transition hover:bg-[#5B2FE0] active:scale-[0.99]"
+            className="flex h-12 w-full items-center justify-center rounded-2xl bg-[#059669] px-4 font-semibold text-white shadow-lg shadow-emerald-950/20 transition hover:bg-[#047857] active:scale-[0.99]"
           >
             <span>Continue to Sign In</span>
           </Link>
@@ -132,7 +132,7 @@ function ResetPasswordContent() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={isSubmitting}
-                className="w-full rounded-2xl border border-[#E2E8F0] bg-white py-2.5 pl-10 pr-11 text-sm text-[#111827] outline-none transition placeholder:text-slate-400 focus:border-[#6D3DF5] focus:ring-2 focus:ring-[#6D3DF5]/20 dark:border-slate-800 dark:bg-slate-800/80 dark:text-white"
+                className="w-full rounded-2xl border border-[#E2E8F0] bg-white py-2.5 pl-10 pr-11 text-sm text-[#111827] outline-none transition placeholder:text-slate-400 focus:border-[#059669] focus:ring-2 focus:ring-[#059669]/20 dark:border-slate-800 dark:bg-slate-800/80 dark:text-white"
               />
               <Lock className="absolute left-3.5 top-3 h-4 w-4 text-[#64748B]" />
               <button
@@ -168,7 +168,7 @@ function ResetPasswordContent() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 disabled={isSubmitting}
-                className="w-full rounded-2xl border border-[#E2E8F0] bg-white py-2.5 pl-10 pr-11 text-sm text-[#111827] outline-none transition placeholder:text-slate-400 focus:border-[#6D3DF5] focus:ring-2 focus:ring-[#6D3DF5]/20 dark:border-slate-800 dark:bg-slate-800/80 dark:text-white"
+                className="w-full rounded-2xl border border-[#E2E8F0] bg-white py-2.5 pl-10 pr-11 text-sm text-[#111827] outline-none transition placeholder:text-slate-400 focus:border-[#059669] focus:ring-2 focus:ring-[#059669]/20 dark:border-slate-800 dark:bg-slate-800/80 dark:text-white"
               />
               <Lock className="absolute left-3.5 top-3 h-4 w-4 text-[#64748B]" />
               <button
@@ -240,7 +240,7 @@ function ResetPasswordContent() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#6D3DF5] px-4 font-semibold text-white shadow-lg shadow-[#6D3DF5]/25 transition hover:bg-[#5B2FE0] active:scale-[0.99] disabled:opacity-70"
+            className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#059669] px-4 font-semibold text-white shadow-lg shadow-emerald-950/20 transition hover:bg-[#047857] active:scale-[0.99] disabled:opacity-70"
           >
             {isSubmitting ? (
               <LoadingThreeDotsJumping
@@ -266,7 +266,7 @@ export default function ResetPasswordPage() {
       fallback={
         <div className="flex min-h-[300px] items-center justify-center">
           <LoadingThreeDotsJumping
-            color="#6D3DF5"
+            color="#059669"
             label="Loading password reset form"
           />
         </div>

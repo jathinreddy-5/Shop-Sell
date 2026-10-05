@@ -449,7 +449,7 @@ export function LiquidNav({
                 {/* Badge on inactive item */}
                 {!isActive && item.badge !== undefined && item.badge !== null && (
                   <span
-                    className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-indigo-600 px-1 text-[10px] font-bold text-white shadow-sm"
+                    className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#059669] px-1 text-[10px] font-bold text-white shadow-sm"
                     data-testid={`liquid-nav-badge-${item.id}`}
                   >
                     {item.badge}

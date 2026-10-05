@@ -244,7 +244,7 @@ export function ExpandingCardGrid({
                   visibility: hideInGrid ? 'hidden' : 'visible',
                 }}
                 transition={transition}
-                className={`group relative block w-full overflow-hidden text-left focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500/80 focus-visible:ring-offset-4 focus-visible:ring-offset-slate-950 shadow-xl shadow-black/40 hover:shadow-2xl border border-slate-800 bg-slate-900 ${
+                className={`group relative block w-full overflow-hidden text-left focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/80 focus-visible:ring-offset-4 focus-visible:ring-offset-slate-950 shadow-xl shadow-black/40 hover:shadow-2xl border border-slate-800 bg-slate-900 ${
                   item.aspectRatio || cardAspect
                 }`}
                 aria-haspopup="dialog"
@@ -286,7 +286,7 @@ export function ExpandingCardGrid({
                     layoutId={
                       shouldReduceMotion ? undefined : `category-${item.id}`
                     }
-                    className="text-xs font-bold uppercase tracking-widest text-indigo-400 drop-shadow mb-1"
+                    className="text-xs font-bold uppercase tracking-widest text-emerald-400 drop-shadow mb-1"
                   >
                     {item.category}
                   </motion.span>
@@ -401,7 +401,7 @@ export function ExpandingCardGrid({
                               ? undefined
                               : `category-${activeItem.id}`
                           }
-                          className="text-xs font-bold uppercase tracking-widest text-indigo-400 drop-shadow mb-1"
+                          className="text-xs font-bold uppercase tracking-widest text-emerald-400 drop-shadow mb-1"
                         >
                           {activeItem.category}
                         </motion.span>

@@ -88,8 +88,8 @@ function SignupForm() {
       className="w-full rounded-3xl border border-[#E2E8F0] bg-white p-6 sm:p-10 shadow-xl shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none"
     >
       <div className="mb-6 text-center sm:text-left">
-        <div className="inline-flex items-center gap-1.5 rounded-full bg-[#6D3DF5]/10 px-3 py-1 text-xs font-semibold text-[#6D3DF5] dark:text-purple-400">
-          <Sparkles className="h-3.5 w-3.5 text-[#6D3DF5]" />
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-[#059669] dark:bg-emerald-950/50 dark:text-emerald-400">
+          <Sparkles className="h-3.5 w-3.5 text-[#059669]" />
           <span>Join Shop:Sell</span>
         </div>
         <h1 className="mt-3 text-2xl sm:text-3xl font-extrabold tracking-tight text-[#111827] dark:text-white">
@@ -129,7 +129,7 @@ function SignupForm() {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               disabled={isSubmitting}
-              className="w-full rounded-2xl border border-[#E2E8F0] bg-white py-2.5 pl-10 pr-4 text-sm text-[#111827] outline-none transition placeholder:text-slate-400 focus:border-[#6D3DF5] focus:ring-2 focus:ring-[#6D3DF5]/20 dark:border-slate-800 dark:bg-slate-800/80 dark:text-white"
+              className="w-full rounded-2xl border border-[#E2E8F0] bg-white py-2.5 pl-10 pr-4 text-sm text-[#111827] outline-none transition placeholder:text-slate-400 focus:border-[#059669] focus:ring-2 focus:ring-[#059669]/20 dark:border-slate-800 dark:bg-slate-800/80 dark:text-white"
             />
             <User className="absolute left-3.5 top-3 h-4 w-4 text-[#64748B]" />
           </div>
@@ -153,7 +153,7 @@ function SignupForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isSubmitting}
-              className="w-full rounded-2xl border border-[#E2E8F0] bg-white py-2.5 pl-10 pr-4 text-sm text-[#111827] outline-none transition placeholder:text-slate-400 focus:border-[#6D3DF5] focus:ring-2 focus:ring-[#6D3DF5]/20 dark:border-slate-800 dark:bg-slate-800/80 dark:text-white"
+              className="w-full rounded-2xl border border-[#E2E8F0] bg-white py-2.5 pl-10 pr-4 text-sm text-[#111827] outline-none transition placeholder:text-slate-400 focus:border-[#059669] focus:ring-2 focus:ring-[#059669]/20 dark:border-slate-800 dark:bg-slate-800/80 dark:text-white"
             />
             <Mail className="absolute left-3.5 top-3 h-4 w-4 text-[#64748B]" />
           </div>
@@ -177,7 +177,7 @@ function SignupForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isSubmitting}
-              className="w-full rounded-2xl border border-[#E2E8F0] bg-white py-2.5 pl-10 pr-11 text-sm text-[#111827] outline-none transition placeholder:text-slate-400 focus:border-[#6D3DF5] focus:ring-2 focus:ring-[#6D3DF5]/20 dark:border-slate-800 dark:bg-slate-800/80 dark:text-white"
+              className="w-full rounded-2xl border border-[#E2E8F0] bg-white py-2.5 pl-10 pr-11 text-sm text-[#111827] outline-none transition placeholder:text-slate-400 focus:border-[#059669] focus:ring-2 focus:ring-[#059669]/20 dark:border-slate-800 dark:bg-slate-800/80 dark:text-white"
             />
             <Lock className="absolute left-3.5 top-3 h-4 w-4 text-[#64748B]" />
             <button
@@ -213,7 +213,7 @@ function SignupForm() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={isSubmitting}
-              className="w-full rounded-2xl border border-[#E2E8F0] bg-white py-2.5 pl-10 pr-11 text-sm text-[#111827] outline-none transition placeholder:text-slate-400 focus:border-[#6D3DF5] focus:ring-2 focus:ring-[#6D3DF5]/20 dark:border-slate-800 dark:bg-slate-800/80 dark:text-white"
+              className="w-full rounded-2xl border border-[#E2E8F0] bg-white py-2.5 pl-10 pr-11 text-sm text-[#111827] outline-none transition placeholder:text-slate-400 focus:border-[#059669] focus:ring-2 focus:ring-[#059669]/20 dark:border-slate-800 dark:bg-slate-800/80 dark:text-white"
             />
             <Lock className="absolute left-3.5 top-3 h-4 w-4 text-[#64748B]" />
             <button
@@ -289,7 +289,7 @@ function SignupForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#6D3DF5] px-4 font-semibold text-white shadow-lg shadow-[#6D3DF5]/25 transition hover:bg-[#5B2FE0] active:scale-[0.99] disabled:opacity-70"
+          className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#059669] px-4 font-semibold text-white shadow-lg shadow-emerald-950/20 transition hover:bg-[#047857] active:scale-[0.99] disabled:opacity-70"
         >
           {isSubmitting ? (
             <LoadingThreeDotsJumping
@@ -349,7 +349,7 @@ function SignupForm() {
         Already have an account?{' '}
         <Link
           href={`/login${redirectUrl && redirectUrl !== '/' ? `?redirect=${encodeURIComponent(redirectUrl)}` : ''}`}
-          className="font-bold text-[#6D3DF5] transition hover:text-[#5B2FE0] hover:underline"
+          className="font-bold text-[#059669] transition hover:text-[#047857] hover:underline"
         >
           Sign in
         </Link>
@@ -364,7 +364,7 @@ export default function SignupPage() {
       fallback={
         <div className="flex min-h-[300px] items-center justify-center">
           <LoadingThreeDotsJumping
-            color="#6D3DF5"
+            color="#059669"
             label="Loading sign up form"
           />
         </div>
