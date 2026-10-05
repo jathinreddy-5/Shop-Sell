@@ -39,6 +39,10 @@ jobs:
 
       - name: Run Backend Test Suite (NestJS)
         run: npm test --workspace=@shop-sell/api
+        env:
+          JWT_SECRET: ci-test-jwt-secret-0123456789-abcdefghijklmnop
+          ADMIN_JWT_SECRET: ci-test-admin-secret-9876543210-zyxwvutsrqponm
+          INTERNAL_API_SECRET: ci-test-internal-secret-abcdef0123456789xyz
 
       - name: Build Web Application (Next.js 15)
         run: npm run build --workspace=@shop-sell/web
