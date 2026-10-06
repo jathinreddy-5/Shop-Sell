@@ -3,6 +3,11 @@ import './globals.css';
 import { AuthProvider } from '@/lib/auth/auth-context';
 import { CartProvider } from '@/lib/cart/cart-context';
 
+// Render every page per request so Next.js can apply the CSP nonce
+// set by middleware.ts. Without this, cached static HTML has no nonce
+// and the browser blocks all scripts (blocked:csp).
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Shop:Sell | High Performance Multi-Vendor Marketplace',
   description:
@@ -33,4 +38,3 @@ export default function RootLayout({
     </html>
   );
 }
-
