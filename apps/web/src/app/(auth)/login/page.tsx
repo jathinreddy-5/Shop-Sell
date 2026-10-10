@@ -99,15 +99,7 @@ function LoginForm() {
         setMaskedTarget(res.email || maskEmail(cleanEmail));
         setCountdown(res.cooldownSeconds || 30);
         setOtp('');
-        if (res.warning) {
-          setInfoMessage(res.warning);
-          const codeMatch = res.warning.match(/\b\d{6}\b/);
-          if (codeMatch) {
-            setOtp(codeMatch[0]);
-          }
-        } else {
-          setInfoMessage('Verification code sent! Please check your inbox and Spam/Junk folder.');
-        }
+        setInfoMessage('Verification code sent! Please check your inbox and Spam/Junk folder.');
         setStep('verify');
       } else {
         setErrorMessage(res.error || 'Failed to send verification code. Please try again.');
@@ -173,15 +165,7 @@ function LoginForm() {
       if (res.success) {
         setCountdown(30);
         setOtp('');
-        if (res.warning) {
-          setInfoMessage(res.warning);
-          const codeMatch = res.warning.match(/\b\d{6}\b/);
-          if (codeMatch) {
-            setOtp(codeMatch[0]);
-          }
-        } else {
-          setInfoMessage('A new verification code has been dispatched. Please check your inbox and Spam/Junk folder.');
-        }
+        setInfoMessage('A new verification code has been dispatched. Please check your inbox and Spam/Junk folder.');
       } else {
         setErrorMessage(res.error || 'Failed to resend verification code. Please try again.');
       }

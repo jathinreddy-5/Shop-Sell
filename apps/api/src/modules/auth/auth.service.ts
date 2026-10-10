@@ -419,7 +419,6 @@ export class AuthService implements OnModuleDestroy {
         cooldownSeconds: 30,
         email: maskedTarget,
         target: maskedTarget,
-        warning: emailResult.warning,
       };
     }
 

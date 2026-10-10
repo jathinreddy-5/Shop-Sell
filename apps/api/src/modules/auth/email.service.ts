@@ -89,11 +89,11 @@ export class EmailService {
     const from = match ? `"${match[1].trim()}" <${match[2].trim()}>` : cleanFrom;
 
     if (!apiKey) {
-      this.logger.warn(`[Email Dev Mode]: Neither Gmail SMTP nor RESEND_API_KEY configured. OTP for ${to} is: ${otp}`);
+      this.logger.warn(`[Email Service]: Neither Gmail SMTP nor RESEND_API_KEY configured.`);
       return {
-        success: true,
+        success: false,
         provider: 'simulated',
-        warning: `Verification code: ${otp}`,
+        error: 'Email service is not configured. Please configure Gmail SMTP or Resend API.',
       };
     }
 
@@ -116,36 +116,37 @@ export class EmailService {
       const data = await response.json();
 
       if (!response.ok) {
-        // Handle Resend sandbox domain restriction gracefully
+        // Handle Resend sandbox domain restriction
         if (
           data?.name === 'validation_error' ||
           data?.statusCode === 403 ||
           data?.statusCode === 422 ||
           data?.message?.includes('testing emails')
         ) {
-          this.logger.warn(`[Resend Sandbox Notice]: ${data.message} OTP for ${to} is: ${otp}`);
+          this.logger.error(`[Resend Sandbox Notice]: ${data?.message || 'Domain restriction'}`);
           return {
-            success: true,
-            provider: 'simulated',
-            warning: `Resend sandbox active: Verification code is ${otp}`,
+            success: false,
+            provider: 'resend',
+            error:
+              'Email delivery restricted by Resend sandbox domain. To send verification emails to any customer, please set GMAIL_USER and GMAIL_APP_PASSWORD in Render or verify a custom domain in Resend.',
           };
         }
         this.logger.error(`Resend API error: ${data?.message || JSON.stringify(data)}`);
         return {
-          success: true,
-          provider: 'simulated',
-          warning: `Verification code: ${otp}`,
+          success: false,
+          provider: 'resend',
+          error: data?.message || 'Failed to dispatch verification email',
         };
       }
 
       this.logger.log(`Resend OTP successfully dispatched to ${to}, id: ${data.id}`);
       return { success: true, messageId: data.id, provider: 'resend' };
     } catch (err: any) {
-      this.logger.warn(`Failed to send email via Resend: ${err?.message || err}. Falling back to simulation mode.`);
+      this.logger.warn(`Failed to send email via Resend: ${err?.message || err}.`);
       return {
-        success: true,
-        provider: 'simulated',
-        warning: `Verification code: ${otp}`,
+        success: false,
+        provider: 'resend',
+        error: 'Email delivery failed. Please try again.',
       };
     }
   }

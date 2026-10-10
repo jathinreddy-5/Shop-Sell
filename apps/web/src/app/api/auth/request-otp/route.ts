@@ -321,8 +321,6 @@ export async function POST(request: NextRequest) {
         backendData.phone ||
         backendData.target ||
         masked,
-
-      warning: backendData.warning,
     }, {
       headers: {
         'x-build-ver': 'v2-no-cf-ip',
