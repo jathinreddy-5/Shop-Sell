@@ -1,14 +1,22 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Pool, PoolClient, QueryResult } from 'pg';
 
+const DEFAULT_PROD_DB =
+  'postgresql://postgres.vlvkmednwsjpcdarnabo:ShopSell1012@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres?sslmode=require';
+
 @Injectable()
 export class DatabaseService implements OnModuleInit, OnModuleDestroy {
   private pool: Pool;
 
   constructor() {
+    const raw = process.env.DATABASE_URL?.trim();
+    const isProd = process.env.NODE_ENV === 'production';
     const connectionString =
-      process.env.DATABASE_URL ||
-      'postgresql://postgres:postgres@localhost:54322/postgres';
+      raw && (!isProd || (!raw.includes('localhost') && !raw.includes('127.0.0.1')))
+        ? raw
+        : isProd
+          ? DEFAULT_PROD_DB
+          : 'postgresql://postgres:postgres@localhost:54322/postgres';
 
     const isRemote =
       connectionString.includes('supabase.com') ||
