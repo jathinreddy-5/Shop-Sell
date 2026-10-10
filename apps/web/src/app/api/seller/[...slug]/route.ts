@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifySellerAuth } from '@/lib/auth/server-auth';
+import { verifySellerAuth, getBackendUrl } from '@/lib/auth/server-auth';
 import { verifyOriginAndHost } from '@/lib/security/csrf';
 import { validateInternalApiSecret } from '@shop-sell/shared';
 
@@ -26,7 +26,7 @@ async function handleSellerProxy(request: NextRequest, { params }: { params: Pro
 
   const { slug } = await params;
   const path = slug.join('/');
-  const backendUrl = process.env.BACKEND_URL || process.env.API_PROXY_URL || 'http://localhost:4000';
+  const backendUrl = getBackendUrl();
   const targetUrl = `${backendUrl}/api/sellers/${path}${request.nextUrl.search}`;
 
   // Forward request to backend with original Bearer token

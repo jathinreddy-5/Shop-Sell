@@ -25,6 +25,21 @@ export function getJwtSecretKey(): Uint8Array {
 }
 
 /**
+ * Resolves the backend API base URL.
+ * Sanitizes template placeholders (e.g. 'your-render-service.onrender.com') and trailing slashes.
+ * In production, falls back to the live Render backend if unset or invalid.
+ */
+export function getBackendUrl(): string {
+  const candidate = process.env.BACKEND_URL || process.env.API_PROXY_URL;
+  if (candidate && !candidate.includes('your-render-service')) {
+    return candidate.replace(/\/+$/, '');
+  }
+  return process.env.NODE_ENV === 'production'
+    ? 'https://shop-sell-api.onrender.com'
+    : 'http://localhost:4000';
+}
+
+/**
  * Extracts and cryptographically verifies the JWT token from a NextRequest.
  * Supports HttpOnly cookie 'shopsell_token' (preferred) and 'Authorization: Bearer <token>' header.
  * Uses 'jose' (jwtVerify) with HS256 algorithm.

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateInternalApiSecret } from '@shop-sell/shared';
+import { getBackendUrl } from '@/lib/auth/server-auth';
 
 export const runtime = 'nodejs';
 
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 3. Forward verified identity to NestJS backend to create/link user and generate Shop:Sell JWT
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:4000';
+    const backendUrl = getBackendUrl();
     const internalSecret = validateInternalApiSecret(
       process.env.INTERNAL_API_SECRET,
       process.env.NODE_ENV

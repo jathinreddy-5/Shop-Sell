@@ -3,6 +3,7 @@ import { verifyOriginAndHost } from '@/lib/security/csrf';
 import { verifyTurnstileToken, getClientIp } from '@/lib/security/turnstile';
 import { checkLoginRateLimit, resetLoginRateLimit } from '@/lib/security/rate-limit';
 import { validateInternalApiSecret, hashIdentifier, logSecurityAlert } from '@shop-sell/shared';
+import { getBackendUrl } from '@/lib/auth/server-auth';
 
 export const runtime = 'nodejs';
 
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Forward to Backend Auth Service
-    const backendUrl = process.env.BACKEND_URL || process.env.API_PROXY_URL || 'http://localhost:4000';
+    const backendUrl = getBackendUrl();
     let res: Response;
     try {
       res = await fetch(`${backendUrl}/api/auth/login`, {

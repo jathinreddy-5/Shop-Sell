@@ -7,6 +7,7 @@ import {
 } from '@/lib/security/turnstile';
 import { checkOtpRequestRateLimit } from '@/lib/security/rate-limit';
 import { validateInternalApiSecret } from '@shop-sell/shared';
+import { getBackendUrl } from '@/lib/auth/server-auth';
 
 export const runtime = 'nodejs';
 
@@ -184,10 +185,7 @@ export async function POST(request: NextRequest) {
     // ----------------------------------------------------------
     // 7. Backend configuration
     // ----------------------------------------------------------
-    const backendUrl =
-      process.env.BACKEND_URL ||
-      process.env.API_PROXY_URL ||
-      'http://localhost:4000';
+    const backendUrl = getBackendUrl();
 
     const internalSecret = validateInternalApiSecret(
       process.env.INTERNAL_API_SECRET,
