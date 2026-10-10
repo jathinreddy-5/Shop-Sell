@@ -239,11 +239,13 @@ export async function POST(request: NextRequest) {
     // 9. Read backend response safely
     // ----------------------------------------------------------
     let backendData: any = {};
+    let rawText = '';
 
     try {
-      backendData = await backendResponse.json();
+      rawText = await backendResponse.text();
+      backendData = JSON.parse(rawText);
     } catch {
-      backendData = {};
+      backendData = { raw: rawText ? rawText.slice(0, 300) : '' };
     }
 
     // ----------------------------------------------------------
@@ -262,6 +264,7 @@ export async function POST(request: NextRequest) {
           error:
             backendData.message ||
             backendData.error ||
+            backendData.raw ||
             `Backend error (${backendResponse.status} from ${backendUrl})`,
         },
         {
@@ -270,6 +273,9 @@ export async function POST(request: NextRequest) {
               backendResponse.status < 600
               ? backendResponse.status
               : 502,
+          headers: {
+            'x-build-ver': 'v2-no-cf-ip',
+          },
         }
       );
     }
@@ -317,6 +323,10 @@ export async function POST(request: NextRequest) {
         masked,
 
       warning: backendData.warning,
+    }, {
+      headers: {
+        'x-build-ver': 'v2-no-cf-ip',
+      },
     });
   } catch (error) {
     console.error(
