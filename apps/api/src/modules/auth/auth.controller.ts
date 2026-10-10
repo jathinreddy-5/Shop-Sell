@@ -3,6 +3,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpException,
+  InternalServerErrorException,
   Post,
   Res,
   UseGuards,
@@ -112,7 +114,13 @@ export class AuthController {
     @Body() body: { phone?: string; identifier?: string; otp: string; firebaseVerified?: boolean }
   ) {
     const target = body.phone || body.identifier;
-    return this.authService.verifyOtp(target!, body.otp, body.firebaseVerified);
+    try {
+      return await this.authService.verifyOtp(target!, body.otp, body.firebaseVerified);
+    } catch (err: any) {
+      if (err instanceof HttpException) throw err;
+      console.error('[verifyOtpLegacy Error]:', err?.message || err);
+      throw new InternalServerErrorException(err?.message || 'Verification failed');
+    }
   }
 
   @Public()
@@ -121,7 +129,13 @@ export class AuthController {
     @Body() body: { phone?: string; identifier?: string; otp: string; firebaseVerified?: boolean }
   ) {
     const target = body.phone || body.identifier;
-    return this.authService.verifyOtp(target!, body.otp, body.firebaseVerified);
+    try {
+      return await this.authService.verifyOtp(target!, body.otp, body.firebaseVerified);
+    } catch (err: any) {
+      if (err instanceof HttpException) throw err;
+      console.error('[verifyOtp Error]:', err?.message || err);
+      throw new InternalServerErrorException(err?.message || 'Verification failed');
+    }
   }
 
   @Public()

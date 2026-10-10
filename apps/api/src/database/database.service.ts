@@ -2,7 +2,7 @@ import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Pool, PoolClient, QueryResult } from 'pg';
 
 const DEFAULT_PROD_DB =
-  'postgresql://postgres.vlvkmednwsjpcdarnabo:ShopSell1012@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres?sslmode=require';
+  'postgresql://postgres.vlvkmednwsjpcdarnabo:ShopSell1012@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres';
 
 @Injectable()
 export class DatabaseService implements OnModuleInit, OnModuleDestroy {
@@ -18,13 +18,23 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
           ? DEFAULT_PROD_DB
           : 'postgresql://postgres:postgres@localhost:54322/postgres';
 
+    // Strip sslmode so pg doesn't alias 'require' to 'verify-full' and reject Supabase pooler certs
+    let cleanConnectionString = connectionString;
+    try {
+      const parsedUrl = new URL(connectionString);
+      parsedUrl.searchParams.delete('sslmode');
+      cleanConnectionString = parsedUrl.toString();
+    } catch {
+      cleanConnectionString = connectionString.replace(/[?&]sslmode=[^&]+/g, '');
+    }
+
     const isRemote =
-      connectionString.includes('supabase.com') ||
-      connectionString.includes('pooler') ||
-      connectionString.includes('aws-');
+      cleanConnectionString.includes('supabase.com') ||
+      cleanConnectionString.includes('pooler') ||
+      cleanConnectionString.includes('aws-');
 
     this.pool = new Pool({
-      connectionString,
+      connectionString: cleanConnectionString,
       ssl: isRemote ? { rejectUnauthorized: false } : undefined,
       max: 20,
       idleTimeoutMillis: 30000,
