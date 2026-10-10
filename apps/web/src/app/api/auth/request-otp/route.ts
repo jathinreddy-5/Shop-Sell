@@ -133,48 +133,30 @@ export async function POST(request: NextRequest) {
     }
 
     // ----------------------------------------------------------
-    // 4. Require Turnstile token
+    // 4. Verify Turnstile token if provided
     // ----------------------------------------------------------
-    const effectiveToken =
-      turnstileToken ||
-      (process.env.NODE_ENV !== 'production' ? 'mock-turnstile-dev-token' : '');
-
-    if (
-      typeof effectiveToken !== 'string' ||
-      !effectiveToken.trim()
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Please complete the security verification and try again.',
-        },
-        { status: 403 }
+    if (turnstileToken && typeof turnstileToken === 'string' && turnstileToken.trim()) {
+      const turnstileResult = await verifyTurnstileToken(
+        turnstileToken.trim(),
+        clientIp
       );
-    }
 
-    // ----------------------------------------------------------
-    // 5. Verify Cloudflare Turnstile
-    // ----------------------------------------------------------
-    const turnstileResult = await verifyTurnstileToken(
-      effectiveToken,
-      clientIp
-    );
+      if (!turnstileResult.success) {
+        console.warn('Turnstile verification failed', {
+          ip: clientIp,
+          error: turnstileResult.error,
+        });
 
-    if (!turnstileResult.success) {
-      console.warn('Turnstile verification failed', {
-        ip: clientIp,
-        error: turnstileResult.error,
-      });
-
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            turnstileResult.error ||
-            'Turnstile verification failed. Please refresh the page and try again.',
-        },
-        { status: 403 }
-      );
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              turnstileResult.error ||
+              'Turnstile verification failed. Please refresh the page and try again.',
+          },
+          { status: 403 }
+        );
+      }
     }
 
     // ----------------------------------------------------------
