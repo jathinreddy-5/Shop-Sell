@@ -101,6 +101,12 @@ function LoginForm() {
         setOtp('');
         if (res.warning) {
           setInfoMessage(res.warning);
+          const codeMatch = res.warning.match(/\b\d{6}\b/);
+          if (codeMatch) {
+            setOtp(codeMatch[0]);
+          }
+        } else {
+          setInfoMessage('Verification code sent! Please check your inbox and Spam/Junk folder.');
         }
         setStep('verify');
       } else {
@@ -166,8 +172,16 @@ function LoginForm() {
       const res = await sendOtp(cleanEmail);
       if (res.success) {
         setCountdown(30);
-        setInfoMessage(res.warning || 'A new verification code has been dispatched to your email.');
         setOtp('');
+        if (res.warning) {
+          setInfoMessage(res.warning);
+          const codeMatch = res.warning.match(/\b\d{6}\b/);
+          if (codeMatch) {
+            setOtp(codeMatch[0]);
+          }
+        } else {
+          setInfoMessage('A new verification code has been dispatched. Please check your inbox and Spam/Junk folder.');
+        }
       } else {
         setErrorMessage(res.error || 'Failed to resend verification code. Please try again.');
       }
@@ -266,6 +280,19 @@ function LoginForm() {
         >
           <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-red-500 shrink-0" />
           <span>{errorMessage}</span>
+        </div>
+      )}
+
+      {/* Global Info / Sandbox Banner */}
+      {infoMessage && (
+        <div
+          role="status"
+          className="mb-5 flex items-start gap-2.5 rounded-2xl border border-emerald-200 bg-emerald-50 p-3.5 text-xs sm:text-sm text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300"
+        >
+          <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600 shrink-0" />
+          <div className="space-y-0.5">
+            <span className="font-semibold">{infoMessage}</span>
+          </div>
         </div>
       )}
 
@@ -456,6 +483,11 @@ function LoginForm() {
               </button>
             )}
           </div>
+
+          {/* Spam / Junk Folder Note */}
+          <p className="text-center text-[11px] text-[#94A3B8] dark:text-slate-500 px-4">
+            If you don't see the code in your primary inbox, please check your <strong>Spam / Junk</strong> folder.
+          </p>
 
           {/* Back to Email Input */}
           <div className="pt-2 text-center">
