@@ -30,19 +30,19 @@ interface CartContextType {
 
 const defaultCartItems: CartItem[] = [
   {
-    id: 'ci-1',
-    name: 'AcousticPro True Wireless Earbuds',
-    slug: 'acousticpro-true-wireless-earbuds',
-    store: 'SoundWave Audio Lab',
+    id: '44444444-0001-0000-0000-000000000000',
+    name: 'Organic Noise-Cancelling Headphones',
+    slug: 'organic-noise-cancelling-headphones-1',
+    store: 'Apex Tech India',
     price: 3499,
     qty: 1,
     image: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=400&q=80',
   },
   {
-    id: 'ci-2',
-    name: 'Handthrown Ceramic Coffee Mug 350ml',
-    slug: 'handthrown-ceramic-coffee-mug-350ml',
-    store: 'Aura Artisanal Living',
+    id: '44444444-0002-0000-0000-000000000000',
+    name: 'Ergonomic Mechanical Keyboard',
+    slug: 'ergonomic-mechanical-keyboard-2',
+    store: 'Apex Tech India',
     price: 699,
     qty: 2,
     image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400&q=80',

@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'media.shopsell.example.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'api.qrserver.com',
+      },
     ],
   },
   async rewrites() {

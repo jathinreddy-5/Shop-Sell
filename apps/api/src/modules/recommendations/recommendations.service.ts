@@ -176,6 +176,24 @@ export class RecommendationsService {
       }
     }
 
+    // Always seed candidate pool with all curated products so personalized preferences match
+    const allCatalogProducts = this.getFallbackTrendingProducts();
+    for (const p of allCatalogProducts) {
+      if (!candidateMap.has(p.id)) {
+        candidateMap.set(p.id, {
+          product: p,
+          queryRelevance: 0.1,
+          interestAffinity: 0.2,
+          vectorSimilarity: 0.4,
+          popularity: Math.min((p.sales_count || 50) / 150, 1.0),
+          ratingQuality: (p.rating_avg || 4.5) / 5.0,
+          freshness: 0.7,
+          stockPriceFit: 1.0,
+          finalScore: 0,
+        });
+      }
+    }
+
     // Add trending to candidates
     for (const p of trendingProducts) {
       if (!candidateMap.has(p.id)) {
@@ -193,16 +211,90 @@ export class RecommendationsService {
       }
     }
 
+    // (C) Personalized Preference Rails
+    if (userProfile?.shopping_for && userProfile.shopping_for !== 'prefer_not_to_say') {
+      const sf = userProfile.shopping_for;
+      const sfLabel =
+        sf === 'womens'
+          ? "Women's Collection"
+          : sf === 'mens'
+          ? "Men's Collection"
+          : sf === 'kids'
+          ? "Kids' Picks"
+          : 'Curated Styles';
+
+      const sfMatches = Array.from(candidateMap.values())
+        .map((c) => c.product)
+        .filter((p) => {
+          const pCat = (p.category_name || '').toLowerCase();
+          const pName = (p.name || '').toLowerCase();
+          if (sf === 'womens')
+            return (
+              pCat.includes('women') ||
+              pName.includes('women') ||
+              pName.includes('dress') ||
+              pName.includes('kurta') ||
+              pCat.includes('couture')
+            );
+          if (sf === 'mens')
+            return (
+              pCat.includes('men') ||
+              pName.includes('men') ||
+              pName.includes('shirt') ||
+              pName.includes('loafer') ||
+              pCat.includes('accessories')
+            );
+          if (sf === 'kids')
+            return (
+              pCat.includes('kid') ||
+              pName.includes('kid') ||
+              pName.includes('toddler') ||
+              pName.includes('child')
+            );
+          return true;
+        });
+
+      if (sfMatches.length > 0) {
+        queryRails.unshift({
+          title: `Selected for You: ${sfLabel}`,
+          reason: `Personalized for your ${sfLabel} preference`,
+          products: sfMatches.slice(0, 4),
+        });
+      }
+    }
+
+    if (userInterests.length > 0) {
+      const intMatches = Array.from(candidateMap.values())
+        .map((c) => c.product)
+        .filter((p) => {
+          const pCat = (p.category_name || '').toLowerCase();
+          const pName = (p.name || '').toLowerCase();
+          return userInterests.some((intSlug) => {
+            const cleanSlug = intSlug
+              .replace('apparel-', '')
+              .replace('-living', '')
+              .replace('-shoes', '')
+              .replace('footwear-', 'footwear');
+            return pCat.includes(cleanSlug) || pName.includes(cleanSlug);
+          });
+        });
+
+      if (intMatches.length > 0) {
+        queryRails.push({
+          title: 'Matches Your Category Interests',
+          reason: 'Curated based on your selected personal preferences',
+          products: intMatches.slice(0, 4),
+        });
+      }
+    }
+
     // 4. Compute Blended Ranking Scores
-    // Weights:
-    // score = 0.35 * query_relevance + 0.20 * interest_affinity + 0.20 * vector_similarity
-    //       + 0.10 * popularity + 0.05 * rating_quality + 0.05 * freshness + 0.05 * in_stock_and_price_fit
     const isColdStart = recentSearches.length === 0;
 
     const wQuery = isColdStart ? 0.05 : 0.35;
-    const wInterest = isColdStart ? 0.05 : 0.20;
+    const wInterest = isColdStart ? 0.25 : 0.20;
     const wVector = isColdStart ? 0.10 : 0.20;
-    const wPop = isColdStart ? 0.35 : 0.10;
+    const wPop = isColdStart ? 0.20 : 0.10;
     const wRating = 0.15;
     const wFresh = 0.05;
     const wStock = 0.10;
@@ -221,26 +313,50 @@ export class RecommendationsService {
       const pCat = (c.product.category_name || '').toLowerCase();
       const pName = (c.product.name || '').toLowerCase();
 
-      // Interest categories boost
+      // Interest categories boost (+0.35)
       if (userInterests.length > 0) {
-        const matchesInterest = userInterests.some((intSlug) =>
-          pCat.includes(intSlug.replace('apparel-', '').replace('-living', '')) ||
-          pName.includes(intSlug.replace('apparel-', '').replace('-living', ''))
-        );
+        const matchesInterest = userInterests.some((intSlug) => {
+          const cleanSlug = intSlug
+            .replace('apparel-', '')
+            .replace('-living', '')
+            .replace('-shoes', '')
+            .replace('footwear-', 'footwear');
+          return pCat.includes(cleanSlug) || pName.includes(cleanSlug);
+        });
         if (matchesInterest) {
-          score += 0.25;
+          score += 0.35;
         }
       }
 
-      // "Shopping for" preference boost
+      // "Shopping for" preference boost (+0.30)
       if (userProfile?.shopping_for && userProfile.shopping_for !== 'prefer_not_to_say') {
         const sf = userProfile.shopping_for;
-        if (sf === 'mens' && (pCat.includes('men') || pName.includes('men') || pCat.includes('male'))) {
-          score += 0.20;
-        } else if (sf === 'womens' && (pCat.includes('women') || pName.includes('women') || pCat.includes('couture'))) {
-          score += 0.20;
-        } else if (sf === 'kids' && (pCat.includes('kid') || pName.includes('kid') || pName.includes('child'))) {
-          score += 0.20;
+        if (
+          sf === 'mens' &&
+          (pCat.includes('men') || pName.includes('men') || pCat.includes('male') || pName.includes('shirt'))
+        ) {
+          score += 0.30;
+        } else if (
+          sf === 'womens' &&
+          (pCat.includes('women') || pName.includes('women') || pCat.includes('couture') || pName.includes('dress') || pName.includes('kurta'))
+        ) {
+          score += 0.30;
+        } else if (
+          sf === 'kids' &&
+          (pCat.includes('kid') || pName.includes('kid') || pName.includes('toddler') || pName.includes('child'))
+        ) {
+          score += 0.30;
+        }
+      }
+
+      // Size profile boost (+0.15) if size matches apparel/shoe product
+      if (userProfile?.size_profile) {
+        const { topSize, shoeSize } = userProfile.size_profile;
+        if (topSize && (pCat.includes('apparel') || pCat.includes('clothing'))) {
+          score += 0.15;
+        }
+        if (shoeSize && (pCat.includes('footwear') || pCat.includes('shoe'))) {
+          score += 0.15;
         }
       }
 
@@ -307,7 +423,112 @@ export class RecommendationsService {
   private getFallbackTrendingProducts() {
     return [
       {
-        id: 'prod-fallback-1',
+        id: 'prod-fallback-womens-1',
+        name: 'Silk Chanderi Hand-Block Printed Kurta Set',
+        slug: 'silk-chanderi-hand-block-kurta-set',
+        price: 2899,
+        compare_at_price: 3699,
+        stock: 22,
+        rating_avg: 4.9,
+        rating_count: 64,
+        sales_count: 140,
+        store_name: 'Zari Couture',
+        category_name: 'Womenswear & Couture',
+        images: ['https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=500'],
+        image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=500',
+      },
+      {
+        id: 'prod-fallback-womens-2',
+        name: 'Contemporary Floral Tiered Midi Dress',
+        slug: 'contemporary-floral-tiered-midi-dress',
+        price: 2199,
+        compare_at_price: 2799,
+        stock: 28,
+        rating_avg: 4.8,
+        rating_count: 52,
+        sales_count: 110,
+        store_name: 'Mira Floral Studio',
+        category_name: 'Womenswear & Couture',
+        images: ['https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=500'],
+        image: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=500',
+      },
+      {
+        id: 'prod-fallback-mens-1',
+        name: 'Pure Khadi Linen Casual Relaxed Shirt',
+        slug: 'pure-khadi-linen-casual-relaxed-shirt',
+        price: 2499,
+        compare_at_price: 3299,
+        stock: 30,
+        rating_avg: 4.75,
+        rating_count: 112,
+        sales_count: 180,
+        store_name: 'Vedic Loom Collective',
+        category_name: 'Menswear & Accessories',
+        images: ['https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=500'],
+        image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=500',
+      },
+      {
+        id: 'prod-fallback-mens-2',
+        name: 'Full Grain Leather Weekender Duffel',
+        slug: 'full-grain-leather-weekender-duffel',
+        price: 6899,
+        compare_at_price: 8999,
+        stock: 18,
+        rating_avg: 4.91,
+        rating_count: 150,
+        sales_count: 220,
+        store_name: 'Heritage Leathers Co',
+        category_name: 'Menswear & Accessories',
+        images: ['https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500'],
+        image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500',
+      },
+      {
+        id: 'prod-fallback-kids-1',
+        name: 'Organic Cotton Breathable Toddler Playwear Set',
+        slug: 'organic-cotton-toddler-playwear-set',
+        price: 999,
+        compare_at_price: 1399,
+        stock: 35,
+        rating_avg: 4.85,
+        rating_count: 48,
+        sales_count: 95,
+        store_name: 'TinySprout Essentials',
+        category_name: "Kids' Apparel",
+        images: ['https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=500'],
+        image: 'https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=500',
+      },
+      {
+        id: 'prod-fallback-gadgets-1',
+        name: 'Custom Walnut Mechanical Keyboard',
+        slug: 'custom-walnut-mechanical-keyboard',
+        price: 7499,
+        compare_at_price: 9999,
+        stock: 14,
+        rating_avg: 4.96,
+        rating_count: 65,
+        sales_count: 165,
+        store_name: 'Apex Tech India',
+        category_name: 'Smart Gadgets & Electronics',
+        images: ['https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500'],
+        image: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=500',
+      },
+      {
+        id: 'prod-fallback-gadgets-2',
+        name: 'Minimalist Magnetic Wireless Charging Pad',
+        slug: 'minimalist-magnetic-wireless-charging-pad',
+        price: 999,
+        compare_at_price: 1499,
+        stock: 40,
+        rating_avg: 4.7,
+        rating_count: 89,
+        sales_count: 210,
+        store_name: 'TechGear Labs',
+        category_name: 'Smart Gadgets & Electronics',
+        images: ['https://images.unsplash.com/photo-1586816879360-004f5b0c51e5?w=500'],
+        image: 'https://images.unsplash.com/photo-1586816879360-004f5b0c51e5?w=500',
+      },
+      {
+        id: 'prod-fallback-crafts-1',
         name: 'Handcrafted Wooden Desk Organizer',
         slug: 'handcrafted-wooden-desk-organizer',
         price: 1499,
@@ -317,55 +538,86 @@ export class RecommendationsService {
         rating_count: 42,
         sales_count: 120,
         store_name: 'Artisan Works',
-        category_name: 'Home & Living',
+        category_name: 'Artisanal Crafts',
         images: ['https://images.unsplash.com/photo-1544816155-12df9643f363?w=500'],
         image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=500',
       },
       {
-        id: 'prod-fallback-2',
-        name: 'Organic Cotton Casual Oversized Shirt',
-        slug: 'organic-cotton-casual-oversized-shirt',
-        price: 1299,
-        compare_at_price: 1899,
-        stock: 30,
-        rating_avg: 4.6,
-        rating_count: 58,
-        sales_count: 95,
-        store_name: 'EcoWear Co.',
-        category_name: 'Apparel',
-        images: ['https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=500'],
-        image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=500',
-      },
-      {
-        id: 'prod-fallback-3',
-        name: 'Minimalist Wireless Charging Pad',
-        slug: 'minimalist-wireless-charging-pad',
-        price: 999,
-        compare_at_price: 1499,
-        stock: 40,
-        rating_avg: 4.7,
-        rating_count: 89,
-        sales_count: 210,
-        store_name: 'TechGear Labs',
-        category_name: 'Electronics',
-        images: ['https://images.unsplash.com/photo-1586816879360-004f5b0c51e5?w=500'],
-        image: 'https://images.unsplash.com/photo-1586816879360-004f5b0c51e5?w=500',
-      },
-      {
-        id: 'prod-fallback-4',
-        name: 'Handmade Ceramic Coffee Mug Set',
-        slug: 'handmade-ceramic-coffee-mug-set',
-        price: 799,
-        compare_at_price: 1199,
-        stock: 15,
-        rating_avg: 4.9,
-        rating_count: 34,
-        sales_count: 75,
-        store_name: 'Clay & Co',
-        category_name: 'Home & Living',
+        id: 'prod-fallback-crafts-2',
+        name: 'Handcrafted Ceramic Pour-Over Dripper Set',
+        slug: 'handcrafted-ceramic-dripper-set',
+        price: 1899,
+        compare_at_price: 2200,
+        stock: 18,
+        rating_avg: 4.85,
+        rating_count: 76,
+        sales_count: 90,
+        store_name: 'Clay & Kiln Studio',
+        category_name: 'Artisanal Crafts',
         images: ['https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500'],
         image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500',
+      },
+      {
+        id: 'prod-fallback-sustainable-1',
+        name: 'Bamboo Fiber Reusable Travel Flask & Cutlery',
+        slug: 'bamboo-fiber-reusable-travel-flask',
+        price: 899,
+        compare_at_price: 1199,
+        stock: 45,
+        rating_avg: 4.8,
+        rating_count: 70,
+        sales_count: 130,
+        store_name: 'GreenLiving India',
+        category_name: 'Sustainable & Eco Living',
+        images: ['https://images.unsplash.com/photo-1544816155-12df9643f363?w=500'],
+        image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?w=500',
+      },
+      {
+        id: 'prod-fallback-foods-1',
+        name: 'Organic Wildflower Forest Honey 500g',
+        slug: 'organic-wildflower-forest-honey',
+        price: 649,
+        compare_at_price: 799,
+        stock: 50,
+        rating_avg: 4.9,
+        rating_count: 320,
+        sales_count: 350,
+        store_name: 'Himalayan Organics',
+        category_name: 'Gourmet & Organic Foods',
+        images: ['https://images.unsplash.com/photo-1587049352847-4a222e784d38?w=500'],
+        image: 'https://images.unsplash.com/photo-1587049352847-4a222e784d38?w=500',
+      },
+      {
+        id: 'prod-fallback-beauty-1',
+        name: 'Cold-Pressed Virgin Coconut & Argan Hair Elixir',
+        slug: 'cold-pressed-virgin-coconut-oil',
+        price: 499,
+        compare_at_price: 599,
+        stock: 60,
+        rating_avg: 4.92,
+        rating_count: 410,
+        sales_count: 420,
+        store_name: 'Himalayan Organics',
+        category_name: 'Clean Beauty & Wellness',
+        images: ['https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=500'],
+        image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=500',
+      },
+      {
+        id: 'prod-fallback-footwear-1',
+        name: 'Hand-Stitched Genuine Leather Penny Loafers',
+        slug: 'hand-stitched-leather-penny-loafers',
+        price: 4299,
+        compare_at_price: 5499,
+        stock: 20,
+        rating_avg: 4.88,
+        rating_count: 95,
+        sales_count: 145,
+        store_name: 'Heritage Leathers Co',
+        category_name: 'Designer Footwear',
+        images: ['https://images.unsplash.com/photo-1533867617858-e7b97e060509?w=500'],
+        image: 'https://images.unsplash.com/photo-1533867617858-e7b97e060509?w=500',
       },
     ];
   }
 }
+

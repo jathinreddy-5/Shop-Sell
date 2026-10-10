@@ -1,8 +1,10 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
   Param,
+  Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -33,12 +35,25 @@ export class OrdersController {
       idempotency_key: string;
       items?: Array<{ productId: string; variantId?: string; qty: number }>;
       razorpay_order_id?: string;
+      payment_method?: string;
+      upi_id?: string;
+      utr_number?: string;
     }
   ) {
     CheckoutInputSchema.parse({
       shipping_address: body.shipping_address,
       idempotency_key: body.idempotency_key,
+      payment_method: body.payment_method,
+      upi_id: body.upi_id,
+      utr_number: body.utr_number,
     });
+
+    if (body.utr_number) {
+      const cleanUtr = body.utr_number.trim();
+      if (!/^\d{12}$/.test(cleanUtr)) {
+        throw new BadRequestException('UTR number must be exactly 12 digits');
+      }
+    }
 
     let orderItems = body.items;
 
@@ -58,7 +73,10 @@ export class OrdersController {
       body.shipping_address,
       orderItems,
       body.idempotency_key,
-      body.razorpay_order_id
+      body.razorpay_order_id,
+      body.payment_method || 'upi',
+      body.upi_id,
+      body.utr_number?.trim()
     );
 
     return { success: true, ...result };
@@ -79,8 +97,44 @@ export class OrdersController {
   @Roles('owner', 'admin')
   @Get('seller/manage')
   async getSellerOrders(@CurrentUser() user: AuthUserPayload) {
-    const storeId = await this.productsService.getStoreIdForOwner(user.sub);
+    let storeId: string | null = null;
+    if (!user.roles.includes('admin')) {
+      storeId = await this.productsService.getStoreIdForOwner(user.sub);
+    } else {
+      try {
+        storeId = await this.productsService.getStoreIdForOwner(user.sub);
+      } catch {
+        storeId = null;
+      }
+    }
     const items = await this.ordersService.getSellerOrders(storeId);
     return { items };
+  }
+
+  @Roles('owner', 'admin')
+  @Patch(':id/verify-utr')
+  async verifyUtr(
+    @CurrentUser() user: AuthUserPayload,
+    @Param('id') orderId: string,
+    @Body() body: { decision: 'accept' | 'reject'; notes?: string }
+  ) {
+    if (!body || !['accept', 'reject'].includes(body.decision)) {
+      throw new BadRequestException('Decision must be "accept" or "reject"');
+    }
+
+    let storeId: string | null = null;
+    if (!user.roles.includes('admin')) {
+      storeId = await this.productsService.getStoreIdForOwner(user.sub);
+    }
+
+    const result = await this.ordersService.verifyUtrPayment(
+      orderId,
+      body.decision,
+      user.sub,
+      storeId,
+      body.notes
+    );
+
+    return result;
   }
 }

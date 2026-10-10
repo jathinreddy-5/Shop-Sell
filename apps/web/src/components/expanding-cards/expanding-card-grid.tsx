@@ -242,6 +242,7 @@ export function ExpandingCardGrid({
                 style={{
                   borderRadius: 24,
                   visibility: hideInGrid ? 'hidden' : 'visible',
+                  position: 'relative',
                 }}
                 transition={transition}
                 className={`group relative block w-full overflow-hidden text-left focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/80 focus-visible:ring-offset-4 focus-visible:ring-offset-slate-950 shadow-xl shadow-black/40 hover:shadow-2xl border border-slate-800 bg-slate-900 ${

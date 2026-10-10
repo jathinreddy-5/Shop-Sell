@@ -1,10 +1,13 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
   Post,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { AuthUserPayload, UserRole } from '@shop-sell/shared';
 import { AuthService } from './auth.service';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -16,6 +19,58 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 @UseGuards(SupabaseAuthGuard, RolesGuard)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Public()
+  @Post('firebase')
+  async loginWithFirebase(
+    @Body() body: { idToken: string },
+    @Res({ passthrough: true }) res: Response
+  ) {
+    if (!body?.idToken || typeof body.idToken !== 'string' || !body.idToken.trim()) {
+      throw new BadRequestException('Firebase ID token is required');
+    }
+    const result = await this.authService.loginWithFirebase(body.idToken.trim());
+    const isProd = process.env.NODE_ENV === 'production';
+    res.cookie('shopsell_token', result.token, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 15 * 60 * 1000,
+    });
+    return {
+      success: true,
+      token: result.token,
+      user: result.user,
+      roles: result.roles,
+    };
+  }
+
+  @Public()
+  @Post('google')
+  async loginWithGoogle(
+    @Body() body: { email: string; name?: string; googleId: string },
+    @Res({ passthrough: true }) res: Response
+  ) {
+    if (!body?.email || !body?.googleId) {
+      throw new BadRequestException('Email and Google ID are required');
+    }
+    const result = await this.authService.loginWithGoogle(body);
+    const isProd = process.env.NODE_ENV === 'production';
+    res.cookie('shopsell_token', result.token, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 15 * 60 * 1000,
+    });
+    return {
+      success: true,
+      token: result.token,
+      user: result.user,
+      roles: result.roles,
+    };
+  }
 
   @Public()
   @Post('login')

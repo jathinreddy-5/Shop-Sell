@@ -184,11 +184,13 @@ export async function resetRateLimit(key: string): Promise<void> {
  * Rate limit helpers for specific auth vectors:
  */
 
-// 1. OTP Request (Max 5 per hour per email and per IP - strictly fails closed in production)
+// 1. OTP Request (Max 5 per hour per email and per IP in prod - strictly fails closed in production)
 export async function checkOtpRequestRateLimit(emailOrPhone: string, ip: string) {
+  const isDev = process.env.NODE_ENV !== 'production';
   const cleanId = emailOrPhone.trim().toLowerCase();
-  const emailLimit = await checkRateLimit(`rl:otp_req:id:${cleanId}`, 5, 3600, { failClosed: true });
-  const ipLimit = await checkRateLimit(`rl:otp_req:ip:${ip}`, 5, 3600, { failClosed: true });
+  const maxAttempts = isDev ? 100 : 5;
+  const emailLimit = await checkRateLimit(`rl:otp_req:id:${cleanId}`, maxAttempts, 3600, { failClosed: !isDev });
+  const ipLimit = await checkRateLimit(`rl:otp_req:ip:${ip}`, maxAttempts, 3600, { failClosed: !isDev });
 
   if (!emailLimit.allowed) {
     logSecurityAlert({

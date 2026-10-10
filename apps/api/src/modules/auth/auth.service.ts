@@ -24,6 +24,7 @@ import { createRedisClient } from '../../common/redis';
 
 import { SmsService } from './sms.service';
 import { EmailService } from './email.service';
+import { FirebaseAuthService } from './firebase-auth.service';
 
 interface OtpRecord {
   identifier: string;
@@ -53,7 +54,8 @@ export class AuthService implements OnModuleDestroy {
   constructor(
     private readonly db: DatabaseService,
     private readonly smsService: SmsService,
-    private readonly emailService: EmailService
+    private readonly emailService: EmailService,
+    private readonly firebaseAuthService: FirebaseAuthService
   ) {
     if (process.env.NODE_ENV === 'production' && process.env.ENABLE_DEMO_ACCOUNTS === 'true') {
       throw new Error('FATAL SECURITY ERROR: ENABLE_DEMO_ACCOUNTS cannot be enabled in production.');
@@ -402,21 +404,34 @@ export class AuthService implements OnModuleDestroy {
     };
     await this.saveOtpRecord(cleanId, record, 10 * 60);
 
-    // Deliver OTP via real SMS provider or real SMTP email service
-    let maskedTarget: string;
-    if (isPhone) {
-      await this.smsService.sendOtpSms(cleanId, rawOtp);
-      maskedTarget = this.smsService.maskPhone(cleanId);
-    } else {
-      await this.emailService.sendOtpEmail(cleanId, rawOtp);
-      maskedTarget = cleanId.replace(/(.{1,2})(.*)(@.*)/, '$1***$3');
+    if (!isPhone) {
+      const emailResult = await this.emailService.sendOtpEmail(cleanId, rawOtp);
+      if (!emailResult.success) {
+        await this.deleteOtpRecord(cleanId);
+        throw new BadRequestException(
+          emailResult.error || 'Failed to dispatch verification email. Please check your email and try again.'
+        );
+      }
+      const maskedTarget = this.emailService.maskEmail(cleanId);
+      return {
+        success: true,
+        message: 'Verification code sent to your email',
+        cooldownSeconds: 30,
+        email: maskedTarget,
+        target: maskedTarget,
+        warning: emailResult.warning,
+      };
     }
+
+    // Deliver OTP via real SMS provider
+    await this.smsService.sendOtpSms(cleanId, rawOtp);
+    const maskedTarget = this.smsService.maskPhone(cleanId);
 
     return {
       success: true,
-      message: isPhone ? 'OTP sent via SMS' : 'Verification code sent successfully',
+      message: 'OTP sent via SMS',
       cooldownSeconds: 30,
-      phone: isPhone ? maskedTarget : undefined,
+      phone: maskedTarget,
       target: maskedTarget,
     };
   }
@@ -550,6 +565,183 @@ export class AuthService implements OnModuleDestroy {
     return { token, user: userPayload, roles };
   }
 
+  // --- Firebase Phone Authentication ---
+  async loginWithFirebase(idToken: string) {
+    const verified = await this.firebaseAuthService.verifyIdToken(idToken);
+    const { uid, phoneNumber, email: verifiedEmail, name } = verified;
+
+    if (!phoneNumber && !verifiedEmail) {
+      throw new BadRequestException('Firebase identity must contain a verified email or phone number');
+    }
+
+    const cleanPhone = phoneNumber ? this.smsService.normalizeIndianPhone(phoneNumber) : null;
+    const cleanEmail = verifiedEmail
+      ? verifiedEmail.trim().toLowerCase()
+      : (cleanPhone ? `${cleanPhone.replace('+', '')}@phone.shopsell.dev` : '');
+    const fullName = name?.trim() || 'Shop:Sell Member';
+
+    // Look for existing user by firebase_uid, email, or phone
+    let userRes = await this.db.query(
+      `SELECT u.id, u.email, u.phone, u.raw_user_meta_data, p.firebase_uid, p.roles, p.full_name
+       FROM auth.users u
+       LEFT JOIN public.profiles p ON p.id = u.id
+       WHERE p.firebase_uid = $1
+          OR ($2::text != '' AND LOWER(u.email) = $2)
+          OR ($3::text IS NOT NULL AND (u.phone = $3 OR p.phone = $3))
+       LIMIT 1`,
+      [uid, cleanEmail, cleanPhone]
+    );
+
+    let userId: string;
+    let email: string = cleanEmail || (cleanPhone ? `${cleanPhone.replace('+', '')}@phone.shopsell.dev` : '');
+    let phone: string | null = cleanPhone;
+    let roles: UserRole[] = ['customer'];
+
+    if (userRes.rows.length === 0) {
+      // New user registration via Firebase Auth (Google or Phone)
+      userId = crypto.randomUUID();
+      await this.db.query(
+        `INSERT INTO auth.users (id, email, phone, raw_user_meta_data, created_at, updated_at)
+         VALUES ($1, $2, $3, $4::jsonb, NOW(), NOW())`,
+        [
+          userId,
+          email,
+          phone,
+          JSON.stringify({ full_name: fullName, phone, email, firebase_uid: uid }),
+        ]
+      );
+
+      await this.db.query(
+        `INSERT INTO public.profiles (id, full_name, phone, firebase_uid, roles)
+         VALUES ($1, $2, $3, $4, ARRAY['customer']::text[])
+         ON CONFLICT (id) DO UPDATE SET
+           firebase_uid = COALESCE(public.profiles.firebase_uid, EXCLUDED.firebase_uid),
+           phone = COALESCE(public.profiles.phone, EXCLUDED.phone),
+           updated_at = NOW()`,
+        [userId, fullName, phone, uid]
+      );
+    } else {
+      // Existing user login
+      const row = userRes.rows[0];
+      userId = row.id;
+      email = row.email || email;
+      phone = row.phone || phone;
+      roles = row.roles && row.roles.length > 0 ? row.roles : ['customer'];
+
+      // Link firebase_uid if not already linked
+      if (!row.firebase_uid) {
+        await this.db.query(
+          `UPDATE public.profiles SET firebase_uid = $1, phone = COALESCE(phone, $2), updated_at = NOW() WHERE id = $3`,
+          [uid, cleanPhone, userId]
+        );
+      }
+
+      await this.db.query(
+        `UPDATE auth.users SET last_sign_in_at = NOW() WHERE id = $1`,
+        [userId]
+      );
+    }
+
+    const profile = await this.getProfile(userId).catch(() => null);
+    const resolvedRoles: UserRole[] =
+      profile && profile.roles && profile.roles.length > 0 ? profile.roles : roles;
+
+    const userPayload: AuthUserPayload = {
+      sub: userId,
+      email,
+      phone: phone || undefined,
+      firebase_uid: uid,
+      roles: resolvedRoles,
+      user_metadata: {
+        full_name: fullName,
+        phone,
+        email,
+        firebase_uid: uid,
+      },
+      app_metadata: {
+        provider: cleanPhone ? 'firebase_phone' : 'google',
+        roles: resolvedRoles,
+      },
+    };
+
+    const token = this.generateToken(userPayload);
+    return { token, user: userPayload, roles: resolvedRoles };
+  }
+
+  // --- Native Direct Google OAuth (No Firebase) ---
+  async loginWithGoogle(data: { email: string; name?: string; googleId: string }) {
+    const { email: rawEmail, name, googleId } = data;
+    if (!rawEmail || !rawEmail.includes('@')) {
+      throw new BadRequestException('A valid email address is required from Google account');
+    }
+    const cleanEmail = rawEmail.trim().toLowerCase();
+    const fullName = name?.trim() || 'Shop:Sell Member';
+
+    // Look for existing user by email
+    let userRes = await this.db.query(
+      `SELECT u.id, u.email, u.phone, u.raw_user_meta_data, p.roles, p.full_name
+       FROM auth.users u
+       LEFT JOIN public.profiles p ON p.id = u.id
+       WHERE LOWER(u.email) = $1
+       LIMIT 1`,
+      [cleanEmail]
+    );
+
+    let userId: string;
+    let roles: UserRole[] = ['customer'];
+
+    if (userRes.rows.length === 0) {
+      // Create new user in auth.users and public.profiles
+      userId = crypto.randomUUID();
+      await this.db.query(
+        `INSERT INTO auth.users (id, email, raw_user_meta_data, created_at, updated_at)
+         VALUES ($1, $2, $3::jsonb, NOW(), NOW())`,
+        [
+          userId,
+          cleanEmail,
+          JSON.stringify({ full_name: fullName, google_id: googleId }),
+        ]
+      );
+
+      await this.db.query(
+        `INSERT INTO public.profiles (id, full_name, roles)
+         VALUES ($1, $2, ARRAY['customer']::text[])
+         ON CONFLICT (id) DO NOTHING`,
+        [userId, fullName]
+      );
+    } else {
+      userId = userRes.rows[0].id;
+      roles = userRes.rows[0].roles && userRes.rows[0].roles.length > 0 ? userRes.rows[0].roles : ['customer'];
+
+      await this.db.query(
+        `UPDATE auth.users SET last_sign_in_at = NOW() WHERE id = $1`,
+        [userId]
+      );
+    }
+
+    const profile = await this.getProfile(userId).catch(() => null);
+    const resolvedRoles: UserRole[] =
+      profile && profile.roles && profile.roles.length > 0 ? profile.roles : roles;
+
+    const userPayload: AuthUserPayload = {
+      sub: userId,
+      email: cleanEmail,
+      roles: resolvedRoles,
+      user_metadata: {
+        full_name: fullName,
+        email: cleanEmail,
+        google_id: googleId,
+      },
+      app_metadata: {
+        provider: 'google',
+        roles: resolvedRoles,
+      },
+    };
+
+    const token = this.generateToken(userPayload);
+    return { token, user: userPayload, roles: resolvedRoles };
+  }
+
   // --- Password Reset Request (Forgot Password) ---
   async forgotPassword(email: string) {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
@@ -669,6 +861,7 @@ export class AuthService implements OnModuleDestroy {
     const payload = {
       sub: user.sub,
       email: user.email,
+      phone: user.phone,
       role: 'authenticated',
       aud: 'authenticated',
       iss: 'shopsell-api',

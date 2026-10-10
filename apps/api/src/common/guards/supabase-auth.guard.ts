@@ -27,16 +27,26 @@ export class SupabaseAuthGuard implements CanActivate {
     ]);
 
     const request = context.switchToHttp().getRequest();
-    const authHeader = request.headers.authorization;
+    let token: string | null = null;
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const authHeader = request.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    } else if (request.cookies?.shopsell_token) {
+      token = request.cookies.shopsell_token;
+    } else if (request.headers.cookie) {
+      const match = request.headers.cookie.match(/(?:^|;\s*)shopsell_token=([^;]+)/);
+      if (match) {
+        token = decodeURIComponent(match[1]);
+      }
+    }
+
+    if (!token) {
       if (isPublic) {
         return true;
       }
-      throw new UnauthorizedException('Missing or invalid Authorization header');
+      throw new UnauthorizedException('Missing or invalid Authorization header or session cookie');
     }
-
-    const token = authHeader.split(' ')[1];
 
     // Resolve JWT secrets: primary from JWT_SECRET or SUPABASE_JWT_SECRET
     const rawPrimary = process.env.JWT_SECRET || process.env.SUPABASE_JWT_SECRET;

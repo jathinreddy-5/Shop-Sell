@@ -33,8 +33,13 @@ interface AuthContextType {
     turnstileToken?: string
   ) => Promise<{
     success: boolean;
+    isAdminBypass?: boolean;
+    redirectUrl?: string;
     message?: string;
     phone?: string;
+    email?: string;
+    target?: string;
+    warning?: string;
     cooldownSeconds?: number;
     error?: string;
   }>;
@@ -43,6 +48,7 @@ interface AuthContextType {
     otp: string,
     firebaseVerified?: boolean
   ) => Promise<{ success: boolean; error?: string }>;
+  loginWithFirebase: (idToken: string) => Promise<{ success: boolean; error?: string }>;
   forgotPassword: (email: string) => Promise<{ success: boolean; message?: string; error?: string }>;
   resetPassword: (token: string, newPassword: string) => Promise<{ success: boolean; message?: string; error?: string }>;
   loginAsDevRole: (role: UserRole, customEmail?: string) => Promise<void>;
@@ -62,6 +68,7 @@ const AuthContext = createContext<AuthContextType>({
   signup: async () => ({ success: false }),
   sendOtp: async () => ({ success: false }),
   verifyOtp: async () => ({ success: false }),
+  loginWithFirebase: async () => ({ success: false }),
   forgotPassword: async () => ({ success: false }),
   resetPassword: async () => ({ success: false }),
   loginAsDevRole: async () => {},
@@ -164,10 +171,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
       }
 
+      if (data.isAdminBypass) {
+        await refreshSession();
+        return {
+          success: true,
+          isAdminBypass: true,
+          redirectUrl: data.redirectUrl || '/admin',
+          message: data.message,
+        };
+      }
+
       return {
         success: true,
         message: data.message,
         phone: data.phone || data.target,
+        email: data.email || data.target,
+        target: data.target || data.email || data.phone,
+        warning: data.warning,
         cooldownSeconds: data.cooldownSeconds || 30,
       };
     } catch {
@@ -187,6 +207,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await res.json();
       if (!res.ok) {
         return { success: false, error: data.error || data.message || 'Verification failed' };
+      }
+
+      await refreshSession();
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Network error. Please try again.' };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loginWithFirebase = async (idToken: string) => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/auth/firebase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data.error || data.message || 'Authentication failed' };
       }
 
       await refreshSession();
@@ -290,6 +333,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signup,
         sendOtp,
         verifyOtp,
+        loginWithFirebase,
         forgotPassword,
         resetPassword,
         loginAsDevRole,

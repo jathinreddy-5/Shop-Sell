@@ -13,7 +13,7 @@ function SignupForm() {
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get('redirect') || searchParams.get('returnUrl') || '/';
 
-  const { signup } = useAuth();
+  const { signup, loginWithFirebase } = useAuth();
   const shouldReduceMotion = useReducedMotion();
 
   // Form fields
@@ -70,13 +70,51 @@ function SignupForm() {
     }
   };
 
-  const handleGoogleSignup = () => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    if (supabaseUrl && !supabaseUrl.includes('[YOUR-PROJECT-REF]')) {
-      const returnTarget = window.location.origin + redirectUrl;
-      window.location.href = `${supabaseUrl}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(returnTarget)}`;
-    } else {
-      setErrorMessage('Google OAuth is currently in configuration. Please sign up with email and password.');
+  const handleGoogleSignup = async () => {
+    setErrorMessage(null);
+    setIsSubmitting(true);
+
+    try {
+      const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
+      const { firebaseAuth } = await import('@/lib/firebase');
+
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+
+      const credential = await signInWithPopup(firebaseAuth, provider);
+      const idToken = await credential.user.getIdToken();
+
+      const authRes = await loginWithFirebase(idToken);
+      if (authRes.success) {
+        const target =
+          redirectUrl.startsWith('/') && !redirectUrl.startsWith('//')
+            ? redirectUrl
+            : '/';
+        router.push(target);
+      } else {
+        setErrorMessage(authRes.error || 'Google authentication failed. Please try again.');
+      }
+    } catch (err: any) {
+      if (
+        err?.code === 'auth/popup-closed-by-user' ||
+        err?.code === 'auth/cancelled-popup-request'
+      ) {
+        return;
+      }
+
+      if (
+        err?.code === 'auth/operation-not-allowed' ||
+        err?.message?.includes('OPERATION_NOT_ALLOWED')
+      ) {
+        setErrorMessage(
+          'Google Sign-In needs to be enabled in Firebase Console (project: shopsell-176ab): Authentication > Sign-in method > Add new provider > Google (1-click toggle).'
+        );
+        return;
+      }
+
+      setErrorMessage(err?.message || 'Failed to sign in with Google. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

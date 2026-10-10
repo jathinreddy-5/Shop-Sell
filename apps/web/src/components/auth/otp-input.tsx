@@ -19,7 +19,9 @@ export function OtpInput({
 }: OtpInputProps) {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
+  const digitsRef = useRef<string[]>(Array.from({ length: 6 }, (_, i) => value[i] || ''));
   const digits = Array.from({ length: 6 }, (_, i) => value[i] || '');
+  digitsRef.current = digits;
 
   useEffect(() => {
     if (autoFocus && inputRefs.current[0]) {
@@ -31,9 +33,10 @@ export function OtpInput({
     const char = e.target.value.slice(-1);
     if (char && !/^\d$/.test(char)) return;
 
-    const newDigits = [...digits];
-    newDigits[index] = char;
-    const combined = newDigits.join('').slice(0, 6);
+    const nextDigits = [...digitsRef.current];
+    nextDigits[index] = char;
+    digitsRef.current = nextDigits;
+    const combined = nextDigits.join('').slice(0, 6);
     onChange(combined);
 
     if (char && index < 5) {
@@ -43,11 +46,12 @@ export function OtpInput({
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Backspace') {
-      if (!digits[index] && index > 0) {
+      if (!digitsRef.current[index] && index > 0) {
         inputRefs.current[index - 1]?.focus();
-        const newDigits = [...digits];
-        newDigits[index - 1] = '';
-        onChange(newDigits.join(''));
+        const nextDigits = [...digitsRef.current];
+        nextDigits[index - 1] = '';
+        digitsRef.current = nextDigits;
+        onChange(nextDigits.join(''));
       }
     } else if (e.key === 'ArrowLeft' && index > 0) {
       e.preventDefault();

@@ -83,13 +83,28 @@ async function bootstrap() {
     next();
   });
 
-  // Fallback: CORS enabled only in development, restricted to http://localhost:3008 with credentials
-  if (process.env.NODE_ENV !== 'production') {
+  // CORS configuration: support production CORS_ORIGIN/FRONTEND_URL or development ports
+  const allowedOrigins: (string | RegExp)[] = [];
+  if (process.env.CORS_ORIGIN) {
+    allowedOrigins.push(...process.env.CORS_ORIGIN.split(',').map((o) => o.trim()));
+  } else if (process.env.FRONTEND_URL) {
+    allowedOrigins.push(process.env.FRONTEND_URL.trim());
+  } else if (process.env.NODE_ENV !== 'production') {
+    allowedOrigins.push('http://localhost:3008', 'http://localhost:3000');
+  }
+
+  if (allowedOrigins.length > 0) {
     app.enableCors({
-      origin: 'http://localhost:3008',
+      origin: allowedOrigins,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'x-anonymous-id'],
+      allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'X-Requested-With',
+        'x-anonymous-id',
+        'x-internal-proxy-secret',
+      ],
     });
   }
 

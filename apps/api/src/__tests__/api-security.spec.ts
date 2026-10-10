@@ -571,8 +571,9 @@ describe('API Security Hardening Test Suite (NestJS apps/api)', () => {
 
     const mockSms: any = { normalizeIndianPhone: (p: string) => p };
     const mockEmail: any = {};
+    const mockFirebaseAuth: any = {};
     const { AuthService } = await import('../modules/auth/auth.service');
-    const authService = new AuthService(mockDb, mockSms, mockEmail);
+    const authService = new AuthService(mockDb, mockSms, mockEmail, mockFirebaseAuth);
 
     // 1. Unknown email
     let unknownEmailError: any;

@@ -169,17 +169,17 @@ export async function middleware(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
   const isDev = process.env.NODE_ENV !== 'production';
   const scriptSrc = isDev
-    ? `'self' 'unsafe-eval' 'nonce-${nonce}' https://challenges.cloudflare.com`
-    : `'self' 'nonce-${nonce}' 'strict-dynamic' https://challenges.cloudflare.com`;
+    ? `'self' 'unsafe-eval' 'nonce-${nonce}' https://challenges.cloudflare.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://apis.google.com`
+    : `'self' 'nonce-${nonce}' 'strict-dynamic' https://challenges.cloudflare.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/ https://apis.google.com`;
 
   const cspHeader = `
     default-src 'self';
     script-src ${scriptSrc};
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-    img-src 'self' blob: data: https://images.unsplash.com https://challenges.cloudflare.com;
+    img-src 'self' blob: data: https://images.unsplash.com https://challenges.cloudflare.com https://www.gstatic.com https://api.qrserver.com;
     font-src 'self' data: https://fonts.gstatic.com;
-    frame-src 'self' https://challenges.cloudflare.com;
-    connect-src 'self' https://challenges.cloudflare.com https://*.supabase.co wss://*.supabase.co;
+    frame-src 'self' https://challenges.cloudflare.com https://www.google.com/recaptcha/ https://recaptcha.google.com https://*.firebaseapp.com https://accounts.google.com;
+    connect-src 'self' https://challenges.cloudflare.com https://*.supabase.co wss://*.supabase.co https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://*.firebaseio.com https://*.googleapis.com https://accounts.google.com;
     object-src 'none';
     base-uri 'self';
     form-action 'self';

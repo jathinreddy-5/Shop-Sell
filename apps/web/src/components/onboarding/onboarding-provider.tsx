@@ -9,40 +9,29 @@ import {
 } from './onboarding-modal';
 
 export function OnboardingProvider({ children }: { children: React.ReactNode }) {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const [profileData, setProfileData] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchProfileAndEvaluate = useCallback(async () => {
-    if (!user || !token) return;
+    if (!user) return;
 
     try {
-      const res = await fetch('/api/profile/me', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
+      const res = await fetch('/api/profile/me');
       if (!res.ok) return;
 
       const profile = await res.json();
       setProfileData(profile);
 
-      // Evaluate whether to display the onboarding modal
+      // Only display the onboarding modal if user has not completed it yet
       const status = profile.onboarding_status || 'not_started';
-      const skippedCount = profile.onboarding_skipped_count || 0;
-      const lastPromptedAt = profile.onboarding_last_prompted_at
-        ? new Date(profile.onboarding_last_prompted_at).getTime()
-        : 0;
-
-      const now = Date.now();
-      const daysSinceLastPrompt = (now - lastPromptedAt) / (1000 * 60 * 60 * 24);
-
-      if (status === 'not_started') {
+      if (status !== 'completed') {
         setIsModalOpen(true);
-      } else if (status !== 'completed' && skippedCount < MAX_ONBOARDING_SKIPS && daysSinceLastPrompt >= REPROMPT_INTERVAL_DAYS) {
-        setIsModalOpen(true);
+      } else {
+        setIsModalOpen(false);
       }
     } catch {}
-  }, [user, token]);
+  }, [user]);
 
   useEffect(() => {
     fetchProfileAndEvaluate();

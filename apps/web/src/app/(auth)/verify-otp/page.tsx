@@ -17,7 +17,7 @@ function VerifyOtpContent() {
   const initialIdentifier = rawParam;
   const redirectUrl = searchParams.get('redirect') || searchParams.get('returnUrl') || '/';
 
-  const { verifyOtp, sendOtp, loginAsDevRole } = useAuth();
+  const { verifyOtp, sendOtp, loginWithFirebase, loginAsDevRole } = useAuth();
   const shouldReduceMotion = useReducedMotion();
 
   const [identifier, setIdentifier] = useState(initialIdentifier);
@@ -50,24 +50,32 @@ function VerifyOtpContent() {
 
     setIsSubmitting(true);
 
-    let isFirebaseVerified = false;
     try {
       const fbRes = await confirmFirebasePhoneOtp(otp);
-      if (fbRes.success) {
-        isFirebaseVerified = true;
+      if (fbRes.success && fbRes.idToken) {
+        const authRes = await loginWithFirebase(fbRes.idToken);
+        setIsSubmitting(false);
+        if (authRes.success) {
+          const target = redirectUrl.startsWith('/') && !redirectUrl.startsWith('//') ? redirectUrl : '/';
+          router.push(target);
+          return;
+        }
+        setErrorMessage(authRes.error || 'Authentication failed. Please try again.');
+        return;
       }
-    } catch (fbErr) {
-      console.info('Firebase verification check note:', fbErr);
-    }
 
-    const res = await verifyOtp(identifier, otp, isFirebaseVerified);
-    setIsSubmitting(false);
+      const res = await verifyOtp(identifier, otp, fbRes.success);
+      setIsSubmitting(false);
 
-    if (res.success) {
-      const target = redirectUrl.startsWith('/') && !redirectUrl.startsWith('//') ? redirectUrl : '/';
-      router.push(target);
-    } else {
-      setErrorMessage(res.error || 'Invalid or expired verification code');
+      if (res.success) {
+        const target = redirectUrl.startsWith('/') && !redirectUrl.startsWith('//') ? redirectUrl : '/';
+        router.push(target);
+      } else {
+        setErrorMessage(res.error || fbRes.error || 'Invalid or expired verification code');
+      }
+    } catch (err: any) {
+      setIsSubmitting(false);
+      setErrorMessage(err?.message || 'Verification failed. Please try again.');
     }
   };
 
@@ -78,12 +86,12 @@ function VerifyOtpContent() {
     setSuccessInfo(null);
     setIsResending(true);
 
-    const res = await sendOtp(identifier);
+    const res = await sendFirebasePhoneOtp(identifier, 'recaptcha-container');
     setIsResending(false);
 
     if (res.success) {
-      setCountdown(res.cooldownSeconds || 30);
-      setSuccessInfo('A new verification code has been dispatched via SMS.');
+      setCountdown(30);
+      setSuccessInfo(res.warning || 'A new verification code has been dispatched via SMS.');
       setOtp('');
     } else {
       setErrorMessage(res.error || 'Failed to resend verification code');

@@ -8,10 +8,10 @@
     "npm": ">=10.0.0"
   },
   "scripts": {
-    "dev": "next dev -p 3008 || node ../../node_modules/next/dist/bin/next dev -p 3008",
-    "build": "next build || node ../../node_modules/next/dist/bin/next build",
-    "start": "next start -p 3008 || node ../../node_modules/next/dist/bin/next start -p 3008",
-    "lint": "next lint || node ../../node_modules/next/dist/bin/next lint",
+    "dev": "node ../../node_modules/next/dist/bin/next dev -p 3008",
+    "build": "node ../../node_modules/next/dist/bin/next build",
+    "start": "node ../../node_modules/next/dist/bin/next start",
+    "lint": "node ../../node_modules/typescript/bin/tsc --noEmit",
     "test": "node --experimental-strip-types --test src/__tests__/**/*.spec.ts"
   },
   "dependencies": {

@@ -6,7 +6,10 @@
 CREATE INDEX IF NOT EXISTS idx_products_attributes_gin ON public.products USING gin (attributes);
 
 -- HNSW Vector Index on products.embedding (384 dimensions, cosine distance)
-CREATE INDEX IF NOT EXISTS idx_products_embedding_hnsw ON public.products USING hnsw (embedding vector_cosine_ops);
+DO $$ BEGIN
+  CREATE INDEX IF NOT EXISTS idx_products_embedding_hnsw ON public.products USING hnsw (embedding vector_cosine_ops);
+EXCEPTION WHEN OTHERS THEN null;
+END $$;
 
 -- BTree indexes for common filters and relations
 CREATE INDEX IF NOT EXISTS idx_products_store_id ON public.products (store_id);

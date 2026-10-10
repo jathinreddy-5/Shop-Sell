@@ -59,6 +59,7 @@ export interface Profile {
   email_verified?: boolean;
   avatar_url: string | null;
   roles: UserRole[];
+  firebase_uid?: string | null;
   gender?: GenderType | null;
   shopping_for?: ShoppingForType | null;
   default_pincode?: string | null;
@@ -194,6 +195,12 @@ export interface Order {
   razorpay_order_id: string | null;
   shipping_address: ShippingAddress;
   idempotency_key?: string | null;
+  payment_method?: string;
+  upi_id?: string | null;
+  utr_number?: string | null;
+  utr_status?: 'pending_verification' | 'accepted' | 'rejected' | string;
+  verified_at?: string | null;
+  verified_by?: string | null;
   created_at: string;
   items?: OrderItem[];
 }
@@ -266,6 +273,7 @@ export interface AuthUserPayload {
   sub: string; // user id
   email?: string;
   phone?: string;
+  firebase_uid?: string;
   roles: UserRole[];
   app_metadata?: {
     roles?: UserRole[];

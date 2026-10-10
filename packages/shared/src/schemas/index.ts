@@ -104,6 +104,14 @@ export const UpdateCartItemSchema = z.object({
 export const CheckoutInputSchema = z.object({
   shipping_address: ShippingAddressSchema,
   idempotency_key: z.string().min(10, 'Idempotency key required'),
+  payment_method: z.string().default('upi').optional(),
+  upi_id: z.string().optional(),
+  utr_number: z.string().optional(),
+});
+
+export const VerifyUtrInputSchema = z.object({
+  decision: z.enum(['accept', 'reject']),
+  notes: z.string().optional(),
 });
 
 export const RazorpayVerifyPaymentSchema = z.object({

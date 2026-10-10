@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Sparkles,
@@ -580,24 +580,34 @@ export default function CustomerHomePage() {
   const [activeBanner, setActiveBanner] = useState<string | null>(null);
   const [activeCategoryTab, setActiveCategoryTab] = useState<string>('For You');
 
-  useEffect(() => {
-    // Attempt real API fetch
-    const fetchFeed = async () => {
-      try {
-        const apiBase = process.env.NEXT_PUBLIC_API_URL || '';
-        const res = await fetch(`${apiBase}/api/recommendations/home`);
-        if (res.ok) {
-          const json = await res.json();
-          if (json && (json.rails?.length > 0 || json.trending?.length > 0)) {
-            setData(json);
-          }
+  const fetchFeed = useCallback(async () => {
+    try {
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || '';
+      const res = await fetch(`${apiBase}/api/recommendations/home`, {
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json && (json.rails?.length > 0 || json.trending?.length > 0 || json.recommended?.length > 0)) {
+          setData(json);
         }
-      } catch {
-        // Use initial fallback
       }
-    };
-    fetchFeed();
+    } catch {
+      // Use initial fallback
+    }
   }, []);
+
+  useEffect(() => {
+    fetchFeed();
+
+    const handleProfileUpdate = () => {
+      fetchFeed();
+    };
+    window.addEventListener('shopsell:profile-updated', handleProfileUpdate);
+    return () => {
+      window.removeEventListener('shopsell:profile-updated', handleProfileUpdate);
+    };
+  }, [fetchFeed]);
 
   if (loading) {
     return (
@@ -711,52 +721,56 @@ export default function CustomerHomePage() {
         </div>
       </section>
 
-      {/* 1. TOP SECTION: "Pick up where you left off" */}
-      {data.recentSearches && data.recentSearches.length > 0 && (
+      {/* 1. TOP SECTION: "Pick up where you left off" / "Personalized For You" */}
+      {((data.recentSearches && data.recentSearches.length > 0) || (data.rails && data.rails.length > 0)) && (
         <section
           id="top-pickup-section"
           className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50/70 via-white to-teal-50/50 p-6 shadow-sm dark:border-emerald-950 dark:from-slate-900 dark:via-slate-900/60 dark:to-emerald-950/30"
         >
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#059669] text-white shadow-sm">
-                <Sparkles className="h-4 w-4" />
-              </span>
-              <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
-                Pick up where you left off
-              </h2>
-            </div>
-            <button
-              onClick={clearHistory}
-              className="text-xs font-medium text-slate-500 hover:text-rose-600 dark:text-slate-400"
-            >
-              Clear search history
-            </button>
-          </div>
-
-          {/* Recent Search Chips */}
-          <div className="mb-6 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-              Recent searches:
-            </span>
-            {data.recentSearches.slice(0, 5).map((query) => (
-              <span
-                key={query}
-                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-white px-3 py-1 text-xs font-medium text-emerald-900 shadow-sm transition hover:border-emerald-400 dark:border-emerald-800 dark:bg-slate-800 dark:text-emerald-200"
-              >
-                <Link href={`/search?q=${encodeURIComponent(query)}`}>
-                  {query}
-                </Link>
+          {data.recentSearches && data.recentSearches.length > 0 && (
+            <>
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#059669] text-white shadow-sm">
+                    <Sparkles className="h-4 w-4" />
+                  </span>
+                  <h2 className="text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                    Pick up where you left off
+                  </h2>
+                </div>
                 <button
-                  onClick={() => removeSearch(query)}
-                  className="rounded-full p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-700"
-                  aria-label={`Remove ${query}`}
+                  onClick={clearHistory}
+                  className="text-xs font-medium text-slate-500 hover:text-rose-600 dark:text-slate-400"
                 >
-                  <X className="h-3 w-3" />
+                  Clear search history
                 </button>
-              </span>
-            ))}
-          </div>
+              </div>
+
+              {/* Recent Search Chips */}
+              <div className="mb-6 flex flex-wrap items-center gap-2">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  Recent searches:
+                </span>
+                {data.recentSearches.slice(0, 5).map((query) => (
+                  <span
+                    key={query}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 bg-white px-3 py-1 text-xs font-medium text-emerald-900 shadow-sm transition hover:border-emerald-400 dark:border-emerald-800 dark:bg-slate-800 dark:text-emerald-200"
+                  >
+                    <Link href={`/search?q=${encodeURIComponent(query)}`}>
+                      {query}
+                    </Link>
+                    <button
+                      onClick={() => removeSearch(query)}
+                      className="rounded-full p-0.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-700"
+                      aria-label={`Remove ${query}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
 
           {/* Dynamic Personalized Rails */}
           {data.rails && data.rails.map((rail, idx) => (

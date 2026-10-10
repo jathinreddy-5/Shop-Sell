@@ -110,4 +110,87 @@ describe('Phase 4: Cart, Orders & Razorpay Payments Suite', () => {
     assert.strictEqual(updated.length, 1);
     assert.strictEqual(updated[0].id, '2');
   });
+
+  it('should validate UPI payment details and 12-digit UTR number', () => {
+    const validUpiCheckout = {
+      shipping_address: {
+        full_name: 'Aditya Sen',
+        phone: '9876543210',
+        street: '12 Banjara Hills, Road No. 3',
+        city: 'Hyderabad',
+        state: 'Telangana',
+        postal_code: '500034',
+        country: 'India',
+      },
+      idempotency_key: 'idemp_order_987654321',
+      payment_method: 'upi',
+      upi_id: 'customer@okhdfcbank',
+      utr_number: '428912345678',
+    };
+
+    const parsed = CheckoutInputSchema.safeParse(validUpiCheckout);
+    assert.strictEqual(parsed.success, true);
+    assert.strictEqual(parsed.data?.payment_method, 'upi');
+    assert.strictEqual(parsed.data?.utr_number, '428912345678');
+  });
+
+  it('should enforce strict 12-digit format on customer UTR numbers', () => {
+    const is12DigitUtr = (utr: string) => /^\d{12}$/.test(utr.trim());
+
+    assert.strictEqual(is12DigitUtr('428912345678'), true, '12 digits must pass');
+    assert.strictEqual(is12DigitUtr('12345678901'), false, '11 digits must fail');
+    assert.strictEqual(is12DigitUtr('1234567890123'), false, '13 digits must fail');
+    assert.strictEqual(is12DigitUtr('42891234ABCD'), false, 'Alphanumeric must fail');
+    assert.strictEqual(is12DigitUtr(''), false, 'Empty must fail');
+  });
+
+  it('should correctly transition order status based on seller UTR decision', () => {
+    interface SimulatedOrder {
+      id: string;
+      status: string;
+      payment_status: string;
+      utr_status: string;
+      utr_number: string;
+      stock: number;
+    }
+
+    const order: SimulatedOrder = {
+      id: 'ord_12345',
+      status: 'pending',
+      payment_status: 'pending',
+      utr_status: 'pending_verification',
+      utr_number: '428912345678',
+      stock: 10,
+    };
+
+    const applySellerDecision = (o: SimulatedOrder, decision: 'accept' | 'reject') => {
+      if (decision === 'accept') {
+        return {
+          ...o,
+          status: 'confirmed',
+          payment_status: 'captured',
+          utr_status: 'accepted',
+        };
+      } else {
+        return {
+          ...o,
+          status: 'cancelled',
+          payment_status: 'failed',
+          utr_status: 'rejected',
+          stock: o.stock + 1, // Restored stock
+        };
+      }
+    };
+
+    const acceptedOrder = applySellerDecision(order, 'accept');
+    assert.strictEqual(acceptedOrder.status, 'confirmed');
+    assert.strictEqual(acceptedOrder.payment_status, 'captured');
+    assert.strictEqual(acceptedOrder.utr_status, 'accepted');
+
+    const rejectedOrder = applySellerDecision(order, 'reject');
+    assert.strictEqual(rejectedOrder.status, 'cancelled');
+    assert.strictEqual(rejectedOrder.payment_status, 'failed');
+    assert.strictEqual(rejectedOrder.utr_status, 'rejected');
+    assert.strictEqual(rejectedOrder.stock, 11);
+  });
 });

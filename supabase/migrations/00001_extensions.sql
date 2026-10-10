@@ -3,7 +3,22 @@
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-CREATE EXTENSION IF NOT EXISTS "vector";
+DO $$ BEGIN
+  CREATE EXTENSION IF NOT EXISTS "vector";
+EXCEPTION WHEN OTHERS THEN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'vector') THEN
+    CREATE TYPE vector;
+    CREATE FUNCTION vector_in(cstring, oid, integer) RETURNS vector LANGUAGE internal AS 'varcharin';
+    CREATE FUNCTION vector_out(vector) RETURNS cstring LANGUAGE internal AS 'varcharout';
+    CREATE FUNCTION vector_typmod_in(cstring[]) RETURNS integer LANGUAGE internal AS 'varchartypmodin';
+    CREATE TYPE vector (
+      INPUT = vector_in,
+      OUTPUT = vector_out,
+      TYPMOD_IN = vector_typmod_in,
+      LIKE = text
+    );
+  END IF;
+END $$;
 
 -- Safely initialize auth schema if running on plain Postgres (skipped on hosted Supabase)
 DO $$

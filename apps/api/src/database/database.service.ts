@@ -10,8 +10,14 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       process.env.DATABASE_URL ||
       'postgresql://postgres:postgres@localhost:54322/postgres';
 
+    const isRemote =
+      connectionString.includes('supabase.com') ||
+      connectionString.includes('pooler') ||
+      connectionString.includes('aws-');
+
     this.pool = new Pool({
       connectionString,
+      ssl: isRemote ? { rejectUnauthorized: false } : undefined,
       max: 20,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,

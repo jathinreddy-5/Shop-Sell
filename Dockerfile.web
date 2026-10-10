@@ -1,0 +1,32 @@
+# syntax=docker/dockerfile:1
+FROM node:20-alpine AS base
+
+# Step 1: Install dependencies
+FROM base AS deps
+WORKDIR /app
+COPY package*.json ./
+COPY apps/web/package*.json ./apps/web/
+COPY packages/shared/package*.json ./packages/shared/
+RUN npm ci
+
+# Step 2: Build the frontend
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+ENV NODE_ENV=production
+RUN npm run --workspace=@shop-sell/shared build
+RUN npm run --workspace=@shop-sell/web build
+
+# Step 3: Minimal production runner
+FROM base AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=3000
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/apps/web ./apps/web
+COPY --from=builder /app/packages/shared ./packages/shared
+
+EXPOSE 3000
+CMD ["npm", "--workspace=@shop-sell/web", "run", "start"]
