@@ -4,7 +4,7 @@ import * as nodemailer from 'nodemailer';
 export interface EmailSendResult {
   success: boolean;
   messageId?: string;
-  provider: 'gmail_smtp' | 'resend' | 'simulated';
+  provider: 'gmail_smtp' | 'brevo' | 'resend' | 'simulated';
   warning?: string;
   error?: string;
 }
@@ -56,14 +56,16 @@ export class EmailService {
     if (gmailUser && gmailPass) {
       try {
         const transporter = nodemailer.createTransport({
-          service: 'gmail',
+          host: 'smtp.gmail.com',
+          port: 465,
+          secure: true,
           auth: {
             user: gmailUser,
             pass: gmailPass,
           },
-          connectionTimeout: 2500,
-          greetingTimeout: 2500,
-          socketTimeout: 3000,
+          connectionTimeout: 8000,
+          greetingTimeout: 8000,
+          socketTimeout: 10000,
         });
 
         const info = await transporter.sendMail({
@@ -77,11 +79,41 @@ export class EmailService {
         this.logger.log(`Gmail SMTP OTP successfully dispatched to ${to}, id: ${info.messageId}`);
         return { success: true, messageId: info.messageId, provider: 'gmail_smtp' };
       } catch (err: any) {
-        this.logger.warn(`Gmail SMTP connection unavailable or blocked by host firewall: ${err?.message || err}. Failing over to Resend HTTP API...`);
+        this.logger.warn(`Gmail SMTP connection unavailable or timed out: ${err?.message || err}. Failing over to HTTP email APIs...`);
       }
     }
 
-    // 2. Fallback: Resend API (HTTP REST over port 443 — works behind any cloud firewall)
+    // 2. Brevo HTTP REST API (Port 443 HTTPS REST - 100% Free, no custom domain needed)
+    const brevoKey = process.env.BREVO_API_KEY?.trim();
+    if (brevoKey) {
+      try {
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'api-key': brevoKey,
+            'Content-Type': 'application/json',
+            accept: 'application/json',
+          },
+          body: JSON.stringify({
+            sender: { name: 'Shop:Sell', email: gmailUser || 'jathinreddy105@gmail.com' },
+            to: [{ email: to }],
+            subject: `${otp} is your Shop:Sell verification code`,
+            htmlContent: this.getEmailHtml(otp),
+          }),
+        });
+        const data = await response.json();
+        if (response.ok && data?.messageId) {
+          this.logger.log(`Brevo HTTP API OTP successfully dispatched to ${to}, id: ${data.messageId}`);
+          return { success: true, messageId: data.messageId, provider: 'brevo' };
+        } else {
+          this.logger.warn(`Brevo API returned error: ${JSON.stringify(data)}`);
+        }
+      } catch (err: any) {
+        this.logger.warn(`Brevo HTTP connection error: ${err?.message || err}`);
+      }
+    }
+
+    // 3. Fallback: Resend API (HTTP REST over port 443 — works behind any cloud firewall)
     const apiKey = process.env.RESEND_API_KEY;
     const rawFrom = process.env.EMAIL_FROM || 'Shop:Sell <onboarding@resend.dev>';
     const cleanFrom = rawFrom.replace(/^["']|["']$/g, '').trim();
