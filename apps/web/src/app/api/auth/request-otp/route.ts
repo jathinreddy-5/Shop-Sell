@@ -226,7 +226,7 @@ export async function POST(request: NextRequest) {
           signal: AbortSignal.timeout(10000),
         }
       );
-    } catch (backendError) {
+    } catch (backendError: any) {
       console.error(
         'Backend OTP service unavailable:',
         backendError
@@ -236,7 +236,7 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error:
-            'Unable to send the verification code right now. Please try again.',
+            `Unable to reach backend (${backendUrl}): ${backendError?.message || 'Connection failed'}. Please try again.`,
         },
         { status: 502 }
       );
@@ -267,9 +267,9 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error:
-            backendData.error ||
             backendData.message ||
-            'Unable to send the verification code. Please try again.',
+            backendData.error ||
+            `Backend error (${backendResponse.status} from ${backendUrl})`,
         },
         {
           status:
