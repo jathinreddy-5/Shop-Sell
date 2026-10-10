@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@marsidev/react-turnstile": "^1.6.1",
+    "@sentry/nextjs": "^11.6.0",
     "@shop-sell/shared": "file:../../packages/shared",
     "clsx": "^2.1.1",
     "firebase": "^12.19.0",
