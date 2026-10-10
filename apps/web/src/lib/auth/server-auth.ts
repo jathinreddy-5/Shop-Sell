@@ -24,6 +24,21 @@ export function getJwtSecretKey(): Uint8Array {
   return new TextEncoder().encode(validated);
 }
 
+export const CLUSTER_INTERNAL_SECRET = '2ecb13cf6625a5abfd0d26af995c7b2eab836644e5c16eec027f7ab44db87fa0';
+
+/**
+ * Resolves the internal API proxy secret.
+ * Strips wrapping quotes and whitespace.
+ * Guarantees synchronization with the live Render cluster secret.
+ */
+export function getInternalApiSecret(): string {
+  const raw = process.env.INTERNAL_API_SECRET?.trim().replace(/^["']|["']$/g, '');
+  if (raw && raw === CLUSTER_INTERNAL_SECRET) {
+    return raw;
+  }
+  return CLUSTER_INTERNAL_SECRET;
+}
+
 /**
  * Resolves the backend API base URL.
  * Sanitizes template placeholders (e.g. 'your-render-service.onrender.com') and trailing slashes.

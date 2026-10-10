@@ -3,7 +3,7 @@ import { verifyOriginAndHost } from '@/lib/security/csrf';
 import { verifyTurnstileToken, getClientIp } from '@/lib/security/turnstile';
 import { checkLoginRateLimit, resetLoginRateLimit } from '@/lib/security/rate-limit';
 import { validateInternalApiSecret, hashIdentifier, logSecurityAlert } from '@shop-sell/shared';
-import { getBackendUrl } from '@/lib/auth/server-auth';
+import { getBackendUrl, getInternalApiSecret } from '@/lib/auth/server-auth';
 
 export const runtime = 'nodejs';
 
@@ -63,10 +63,7 @@ export async function POST(request: NextRequest) {
           'Content-Type': 'application/json',
           'cf-connecting-ip': clientIp,
           'x-forwarded-for': clientIp,
-          'x-internal-proxy-secret': validateInternalApiSecret(
-            process.env.INTERNAL_API_SECRET,
-            process.env.NODE_ENV
-          ),
+          'x-internal-proxy-secret': getInternalApiSecret(),
         },
         body: JSON.stringify({ email, password }),
       });

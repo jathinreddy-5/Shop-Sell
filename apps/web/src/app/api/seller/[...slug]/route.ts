@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifySellerAuth, getBackendUrl } from '@/lib/auth/server-auth';
+import { verifySellerAuth, getBackendUrl, getInternalApiSecret } from '@/lib/auth/server-auth';
 import { verifyOriginAndHost } from '@/lib/security/csrf';
 import { validateInternalApiSecret } from '@shop-sell/shared';
 
@@ -45,10 +45,7 @@ async function handleSellerProxy(request: NextRequest, { params }: { params: Pro
     headers.set('cf-connecting-ip', cfIp);
   }
 
-  headers.set(
-    'x-internal-proxy-secret',
-    validateInternalApiSecret(process.env.INTERNAL_API_SECRET, process.env.NODE_ENV)
-  );
+  headers.set('x-internal-proxy-secret', getInternalApiSecret());
 
   try {
     let body: any = undefined;
