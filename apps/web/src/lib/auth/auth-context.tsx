@@ -46,7 +46,8 @@ interface AuthContextType {
   verifyOtp: (
     identifier: string,
     otp: string,
-    firebaseVerified?: boolean
+    firebaseVerified?: boolean,
+    fullName?: string
   ) => Promise<{ success: boolean; error?: string }>;
   loginWithFirebase: (idToken: string) => Promise<{ success: boolean; error?: string }>;
   forgotPassword: (email: string) => Promise<{ success: boolean; message?: string; error?: string }>;
@@ -195,13 +196,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const verifyOtp = async (identifier: string, otp: string, firebaseVerified = false) => {
+  const verifyOtp = async (
+    identifier: string,
+    otp: string,
+    firebaseVerified = false,
+    fullName?: string
+  ) => {
     setIsLoading(true);
     try {
       const res = await fetch('/api/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier, phone: identifier, otp, firebaseVerified }),
+        body: JSON.stringify({ identifier, phone: identifier, otp, firebaseVerified, fullName }),
       });
 
       const data = await res.json();

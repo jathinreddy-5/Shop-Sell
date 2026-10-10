@@ -111,11 +111,11 @@ export class AuthController {
   @Public()
   @Post('verify-otp')
   async verifyOtpLegacy(
-    @Body() body: { phone?: string; identifier?: string; otp: string; firebaseVerified?: boolean }
+    @Body() body: { phone?: string; identifier?: string; otp: string; firebaseVerified?: boolean; fullName?: string }
   ) {
     const target = body.phone || body.identifier;
     try {
-      return await this.authService.verifyOtp(target!, body.otp, body.firebaseVerified);
+      return await this.authService.verifyOtp(target!, body.otp, body.firebaseVerified, body.fullName);
     } catch (err: any) {
       if (err instanceof HttpException) throw err;
       console.error('[verifyOtpLegacy Error]:', err?.message || err);
@@ -126,11 +126,11 @@ export class AuthController {
   @Public()
   @Post('otp/verify')
   async verifyOtp(
-    @Body() body: { phone?: string; identifier?: string; otp: string; firebaseVerified?: boolean }
+    @Body() body: { phone?: string; identifier?: string; otp: string; firebaseVerified?: boolean; fullName?: string }
   ) {
     const target = body.phone || body.identifier;
     try {
-      return await this.authService.verifyOtp(target!, body.otp, body.firebaseVerified);
+      return await this.authService.verifyOtp(target!, body.otp, body.firebaseVerified, body.fullName);
     } catch (err: any) {
       if (err instanceof HttpException) throw err;
       console.error('[verifyOtp Error]:', err?.message || err);

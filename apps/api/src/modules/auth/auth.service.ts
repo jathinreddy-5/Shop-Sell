@@ -436,7 +436,7 @@ export class AuthService implements OnModuleDestroy {
   }
 
   // --- OTP: Verify ---
-  async verifyOtp(identifier: string, otp: string, firebaseVerified = false) {
+  async verifyOtp(identifier: string, otp: string, firebaseVerified = false, fullNameInput?: string) {
     const cleanId = this.normalizeIdentifier(identifier);
 
     if (!identifier || !otp || otp.length !== 6 || !/^\d{6}$/.test(otp)) {
@@ -516,10 +516,11 @@ export class AuthService implements OnModuleDestroy {
     let userId: string;
     let email: string = isPhone ? `${cleanId.replace('+', '')}@phone.shopsell.dev` : cleanId;
     let phone: string | null = isPhone ? cleanId : null;
-    let fullName: string = 'Shop:Sell Member';
+    let fullName: string =
+      fullNameInput && fullNameInput.trim().length >= 2 ? fullNameInput.trim() : 'Shop:Sell Member';
 
     if (userRes.rows.length === 0) {
-      // New user registration flow via Phone OTP
+      // New user registration flow via Phone/Email OTP
       userId = crypto.randomUUID();
       await this.db.query(
         `INSERT INTO auth.users (id, email, phone, raw_user_meta_data, created_at, updated_at)
@@ -534,7 +535,9 @@ export class AuthService implements OnModuleDestroy {
       await this.db.query(
         `INSERT INTO public.profiles (id, full_name, phone, roles)
          VALUES ($1, $2, $3, ARRAY['customer']::text[])
-         ON CONFLICT (id) DO NOTHING`,
+         ON CONFLICT (id) DO UPDATE SET
+           full_name = EXCLUDED.full_name,
+           updated_at = NOW()`,
         [userId, fullName, phone]
       );
     } else {
@@ -542,7 +545,15 @@ export class AuthService implements OnModuleDestroy {
       userId = userRes.rows[0].id;
       email = userRes.rows[0].email || email;
       phone = userRes.rows[0].phone || phone;
-      fullName = userRes.rows[0].raw_user_meta_data?.full_name || fullName;
+      if (fullNameInput && fullNameInput.trim().length >= 2) {
+        fullName = fullNameInput.trim();
+        await this.db.query(
+          `UPDATE public.profiles SET full_name = $1, updated_at = NOW() WHERE id = $2 AND (full_name IS NULL OR full_name = 'Shop:Sell Member')`,
+          [fullName, userId]
+        );
+      } else {
+        fullName = userRes.rows[0].raw_user_meta_data?.full_name || fullName;
+      }
     }
 
     const profile = await this.getProfile(userId).catch(() => null);

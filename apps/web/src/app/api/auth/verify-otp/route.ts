@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { identifier, phone, otp, firebaseVerified } = body;
+    const { identifier, phone, otp, firebaseVerified, fullName } = body;
     const target = (identifier || phone || '').trim().toLowerCase();
 
     if (!target || !otp || otp.length !== 6) {
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
           'x-forwarded-for': clientIp,
           'x-internal-proxy-secret': getInternalApiSecret(),
         },
-        body: JSON.stringify({ identifier: target, phone: target, otp, firebaseVerified }),
+        body: JSON.stringify({ identifier: target, phone: target, otp, firebaseVerified, fullName }),
       });
     } catch (netErr) {
       return NextResponse.json(
