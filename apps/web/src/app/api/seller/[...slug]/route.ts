@@ -40,9 +40,9 @@ async function handleSellerProxy(request: NextRequest, { params }: { params: Pro
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  const cfIp = request.headers.get('cf-connecting-ip');
-  if (cfIp) {
-    headers.set('cf-connecting-ip', cfIp);
+  const clientIp = request.headers.get('x-forwarded-for') || request.headers.get('cf-connecting-ip');
+  if (clientIp) {
+    headers.set('x-forwarded-for', clientIp);
   }
 
   headers.set('x-internal-proxy-secret', getInternalApiSecret());

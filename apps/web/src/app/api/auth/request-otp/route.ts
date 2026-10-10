@@ -203,9 +203,7 @@ export async function POST(request: NextRequest) {
           headers: {
             'Content-Type': 'application/json',
 
-            // Forward client IP for backend rate limiting /
-            // audit purposes.
-            'cf-connecting-ip': clientIp,
+            // Forward client IP for backend rate limiting / audit purposes.
             'x-forwarded-for': clientIp,
 
             // Authenticate this internal proxy request.

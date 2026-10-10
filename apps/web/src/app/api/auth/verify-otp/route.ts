@@ -45,7 +45,6 @@ export async function POST(request: NextRequest) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'cf-connecting-ip': clientIp,
           'x-forwarded-for': clientIp,
           'x-internal-proxy-secret': getInternalApiSecret(),
         },
