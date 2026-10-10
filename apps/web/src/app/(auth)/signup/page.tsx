@@ -70,52 +70,9 @@ function SignupForm() {
     }
   };
 
-  const handleGoogleSignup = async () => {
+  const handleGoogleSignup = () => {
     setErrorMessage(null);
-    setIsSubmitting(true);
-
-    try {
-      const { GoogleAuthProvider, signInWithPopup } = await import('firebase/auth');
-      const { firebaseAuth } = await import('@/lib/firebase');
-
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-
-      const credential = await signInWithPopup(firebaseAuth, provider);
-      const idToken = await credential.user.getIdToken();
-
-      const authRes = await loginWithFirebase(idToken);
-      if (authRes.success) {
-        const target =
-          redirectUrl.startsWith('/') && !redirectUrl.startsWith('//')
-            ? redirectUrl
-            : '/';
-        router.push(target);
-      } else {
-        setErrorMessage(authRes.error || 'Google authentication failed. Please try again.');
-      }
-    } catch (err: any) {
-      if (
-        err?.code === 'auth/popup-closed-by-user' ||
-        err?.code === 'auth/cancelled-popup-request'
-      ) {
-        return;
-      }
-
-      if (
-        err?.code === 'auth/operation-not-allowed' ||
-        err?.message?.includes('OPERATION_NOT_ALLOWED')
-      ) {
-        setErrorMessage(
-          'Google Sign-In needs to be enabled in Firebase Console (project: shopsell-176ab): Authentication > Sign-in method > Add new provider > Google (1-click toggle).'
-        );
-        return;
-      }
-
-      setErrorMessage(err?.message || 'Failed to sign in with Google. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    window.location.href = '/api/auth/google';
   };
 
   return (
