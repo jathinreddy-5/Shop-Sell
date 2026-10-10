@@ -427,12 +427,11 @@ export default function BecomeASellerPage() {
       OwnerApplicationSchema.parse(payload);
 
       // Submit to backend if authenticated
-      if (token) {
+      if (user) {
         await fetch('/api/sellers/apply', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ ...payload, turnstileToken }),
         }).catch(() => null);

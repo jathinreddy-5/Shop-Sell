@@ -40,7 +40,7 @@ interface OrderRecord {
 }
 
 export default function OrdersHistoryPage() {
-  const { user, token } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -50,7 +50,6 @@ export default function OrdersHistoryPage() {
       const res = await fetch('/api/orders', {
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
 
@@ -66,8 +65,10 @@ export default function OrdersHistoryPage() {
   };
 
   useEffect(() => {
-    fetchOrders();
-  }, [token]);
+    if (!isAuthLoading) {
+      fetchOrders();
+    }
+  }, [user, isAuthLoading]);
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">

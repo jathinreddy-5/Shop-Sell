@@ -18,7 +18,7 @@ interface OrderRecord {
 }
 
 export default function AccountOrdersPage() {
-  const { user, token, isLoading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -29,7 +29,6 @@ export default function AccountOrdersPage() {
         const res = await fetch('/api/orders', {
           headers: {
             'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
         });
         if (res.ok) {
@@ -43,10 +42,12 @@ export default function AccountOrdersPage() {
       }
     }
 
-    if (!authLoading) {
+    if (!authLoading && user) {
       loadOrders();
+    } else if (!authLoading && !user) {
+      setIsLoading(false);
     }
-  }, [token, authLoading]);
+  }, [user, authLoading]);
 
   if (authLoading || isLoading) {
     return (

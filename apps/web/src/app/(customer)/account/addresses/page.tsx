@@ -61,7 +61,7 @@ const INDIAN_STATES = [
 ];
 
 export default function AccountAddressesPage() {
-  const { user, token, isLoading: isAuthLoading } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddressForm, setShowAddressForm] = useState(false);
@@ -84,11 +84,9 @@ export default function AccountAddressesPage() {
 
   // Load Addresses
   const loadAddresses = async () => {
-    if (!token) return;
+    if (!user) return;
     try {
-      const res = await fetch('/api/addresses', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch('/api/addresses');
       if (res.ok) {
         const data = await res.json();
         setAddresses(data);
@@ -101,8 +99,13 @@ export default function AccountAddressesPage() {
   };
 
   useEffect(() => {
-    loadAddresses();
-  }, [token]);
+    if (isAuthLoading) return;
+    if (user) {
+      loadAddresses();
+    } else {
+      setIsLoading(false);
+    }
+  }, [user, isAuthLoading]);
 
   // Handle Pincode Auto-Fill for City/State
   const handlePincodeChange = async (val: string) => {
@@ -137,7 +140,7 @@ export default function AccountAddressesPage() {
   // Save Address
   const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token) return;
+    if (!user) return;
     setErrorMessage(null);
     setSuccessMessage(null);
 
@@ -163,7 +166,6 @@ export default function AccountAddressesPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           label: addressType,
@@ -203,7 +205,6 @@ export default function AccountAddressesPage() {
     try {
       const res = await fetch(`/api/addresses/${id}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         await loadAddresses();
@@ -218,7 +219,6 @@ export default function AccountAddressesPage() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ type: 'shipping' }),
       });
