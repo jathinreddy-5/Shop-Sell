@@ -3,6 +3,7 @@ import { validateInternalApiSecret } from '@shop-sell/shared';
 import { getBackendUrl, getInternalApiSecret } from '@/lib/auth/server-auth';
 
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code');
@@ -83,6 +84,7 @@ export async function GET(request: NextRequest) {
         name: userData.name || userData.given_name,
         googleId: userData.sub,
       }),
+      signal: AbortSignal.timeout(45000),
     });
 
     const backendData = await backendRes.json();

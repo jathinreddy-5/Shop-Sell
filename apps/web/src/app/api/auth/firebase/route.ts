@@ -5,6 +5,7 @@ import { validateInternalApiSecret, logSecurityAlert } from '@shop-sell/shared';
 import { getBackendUrl, getInternalApiSecret } from '@/lib/auth/server-auth';
 
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   // 1. Origin / Host check (CSRF protection)
@@ -45,16 +46,24 @@ export async function POST(request: NextRequest) {
           'x-internal-proxy-secret': internalSecret,
         },
         body: JSON.stringify({ idToken: idToken.trim() }),
-        signal: AbortSignal.timeout(30000), // 30s timeout to accommodate cold starts
+        signal: AbortSignal.timeout(45000), // 45s timeout to accommodate cold starts
       });
     } catch (backendError: any) {
       console.error('Backend Firebase auth service unreachable:', backendError?.message || backendError);
+      const isTimeout =
+        backendError?.name === 'TimeoutError' ||
+        backendError?.name === 'AbortError' ||
+        String(backendError?.message).toLowerCase().includes('timeout') ||
+        String(backendError?.message).toLowerCase().includes('aborted');
+
       return NextResponse.json(
         {
           success: false,
-          error: 'Authentication service temporarily unreachable. Please try again.',
+          error: isTimeout
+            ? 'Backend authentication timed out while waking up. Please try again.'
+            : 'Authentication service temporarily unreachable. Please try again.',
         },
-        { status: 502 }
+        { status: 504 }
       );
     }
 

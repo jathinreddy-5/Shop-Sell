@@ -10,6 +10,7 @@ import { validateInternalApiSecret } from '@shop-sell/shared';
 import { getBackendUrl, getInternalApiSecret } from '@/lib/auth/server-auth';
 
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   // ------------------------------------------------------------
@@ -215,8 +216,8 @@ export async function POST(request: NextRequest) {
             phone: target,
           }),
 
-          // Don't leave the request hanging forever.
-          signal: AbortSignal.timeout(10000),
+          // Accommodate Render free-tier cold boot time (~25-40s)
+          signal: AbortSignal.timeout(45000),
         }
       );
     } catch (backendError: any) {
@@ -225,13 +226,22 @@ export async function POST(request: NextRequest) {
         backendError
       );
 
+      const isTimeout =
+        backendError?.name === 'TimeoutError' ||
+        backendError?.name === 'AbortError' ||
+        String(backendError?.message).toLowerCase().includes('timeout') ||
+        String(backendError?.message).toLowerCase().includes('aborted');
+
+      const userFriendlyError = isTimeout
+        ? 'The backend server was dormant and is now waking up. Please wait 5 seconds and click Send OTP again.'
+        : `Unable to reach backend: ${backendError?.message || 'Connection failed'}. Please try again.`;
+
       return NextResponse.json(
         {
           success: false,
-          error:
-            `Unable to reach backend (${backendUrl}): ${backendError?.message || 'Connection failed'}. Please try again.`,
+          error: userFriendlyError,
         },
-        { status: 502 }
+        { status: 504 }
       );
     }
 

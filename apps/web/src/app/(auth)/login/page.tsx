@@ -52,8 +52,25 @@ function LoginForm() {
   const [countdown, setCountdown] = useState(30);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [isSlowResponse, setIsSlowResponse] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
+
+  // Pre-warm backend container if dormant (fire & forget)
+  useEffect(() => {
+    fetch('/api/health').catch(() => {});
+  }, []);
+
+  // Show friendly indicator if server is cold starting (>3.5s)
+  useEffect(() => {
+    let t: NodeJS.Timeout;
+    if (isSubmitting) {
+      t = setTimeout(() => setIsSlowResponse(true), 3500);
+    } else {
+      setIsSlowResponse(false);
+    }
+    return () => clearTimeout(t);
+  }, [isSubmitting]);
 
   // Resend countdown timer for OTP
   useEffect(() => {
@@ -341,11 +358,20 @@ function LoginForm() {
               className="relative flex w-full items-center justify-center rounded-2xl bg-[#059669] py-3.5 text-sm sm:text-base font-bold text-white shadow-lg shadow-emerald-950/20 transition duration-200 hover:bg-[#047857] focus:outline-none focus:ring-2 focus:ring-[#059669] focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
-                <LoadingThreeDotsJumping color="#FFFFFF" size={24} />
+                <div className="flex items-center gap-2">
+                  <LoadingThreeDotsJumping color="#FFFFFF" size={24} />
+                  <span className="text-xs sm:text-sm font-medium">Sending code...</span>
+                </div>
               ) : (
                 <span>Send OTP</span>
               )}
             </button>
+
+            {isSubmitting && isSlowResponse && (
+              <p className="text-center text-xs text-amber-600 dark:text-amber-400 animate-pulse pt-1">
+                Waking up secure server... Please hold on a moment.
+              </p>
+            )}
           </form>
 
           {/* Terms Agreement */}

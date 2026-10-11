@@ -6,6 +6,7 @@ import { validateInternalApiSecret, hashIdentifier, logSecurityAlert } from '@sh
 import { getBackendUrl, getInternalApiSecret } from '@/lib/auth/server-auth';
 
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 export async function POST(request: NextRequest) {
   // 1. CSRF Origin/Host check
@@ -65,11 +66,23 @@ export async function POST(request: NextRequest) {
           'x-internal-proxy-secret': getInternalApiSecret(),
         },
         body: JSON.stringify({ email, password }),
+        signal: AbortSignal.timeout(45000),
       });
-    } catch (netErr) {
+    } catch (netErr: any) {
+      const isTimeout =
+        netErr?.name === 'TimeoutError' ||
+        netErr?.name === 'AbortError' ||
+        String(netErr?.message).toLowerCase().includes('timeout') ||
+        String(netErr?.message).toLowerCase().includes('aborted');
+
       return NextResponse.json(
-        { success: false, error: 'Authentication service temporarily unreachable' },
-        { status: 503 }
+        {
+          success: false,
+          error: isTimeout
+            ? 'Backend authentication timed out while waking up. Please try again.'
+            : 'Authentication service temporarily unreachable. Please try again.',
+        },
+        { status: 504 }
       );
     }
 

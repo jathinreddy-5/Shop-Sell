@@ -28,9 +28,26 @@ function SignupForm() {
   // Status & Feedback
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const [isSlowResponse, setIsSlowResponse] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(0);
+
+  // Pre-warm backend container if dormant (fire & forget)
+  useEffect(() => {
+    fetch('/api/health').catch(() => {});
+  }, []);
+
+  // Show friendly indicator if server is cold starting (>3.5s)
+  useEffect(() => {
+    let t: NodeJS.Timeout;
+    if (isSubmitting) {
+      t = setTimeout(() => setIsSlowResponse(true), 3500);
+    } else {
+      setIsSlowResponse(false);
+    }
+    return () => clearTimeout(t);
+  }, [isSubmitting]);
 
   // Timer countdown for resending code
   useEffect(() => {
@@ -245,17 +262,26 @@ function SignupForm() {
             className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#059669] px-4 font-semibold text-white shadow-lg shadow-emerald-950/20 transition hover:bg-[#047857] active:scale-[0.99] disabled:opacity-70"
           >
             {isSubmitting ? (
-              <LoadingThreeDotsJumping
-                color="#FFFFFF"
-                size={7}
-                jumpHeight={8}
-                gap={4}
-                label="Sending verification code"
-              />
+              <div className="flex items-center gap-2">
+                <LoadingThreeDotsJumping
+                  color="#FFFFFF"
+                  size={7}
+                  jumpHeight={8}
+                  gap={4}
+                  label="Sending verification code"
+                />
+                <span className="text-xs sm:text-sm font-medium">Sending code...</span>
+              </div>
             ) : (
               <span>Get Verification Code</span>
             )}
           </button>
+
+          {isSubmitting && isSlowResponse && (
+            <p className="text-center text-xs text-amber-600 dark:text-amber-400 animate-pulse pt-1">
+              Waking up secure server... Please hold on a moment.
+            </p>
+          )}
 
           {/* Divider */}
           <div className="relative my-6 text-center">

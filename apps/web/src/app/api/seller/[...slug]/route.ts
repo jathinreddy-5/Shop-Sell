@@ -4,6 +4,7 @@ import { verifyOriginAndHost } from '@/lib/security/csrf';
 import { validateInternalApiSecret } from '@shop-sell/shared';
 
 export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 async function handleSellerProxy(request: NextRequest, { params }: { params: Promise<{ slug: string[] }> }) {
   // 1. Verify Origin and Host on state-changing requests
@@ -57,6 +58,7 @@ async function handleSellerProxy(request: NextRequest, { params }: { params: Pro
       method: request.method,
       headers,
       body,
+      signal: AbortSignal.timeout(45000),
     });
 
     const data = await response.text();
